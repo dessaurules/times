@@ -229,16 +229,16 @@ Für Intel-Mac stattdessen: `pocketbase_0.21.3_darwin_amd64.zip`
 
 Erwartete Ausgabe:
 ```
-Server started at http://127.0.0.1:8090
-  - REST API: http://127.0.0.1:8090/api/
-  - Admin UI: http://127.0.0.1:8090/_/
+Server started at http://127.0.0.1:8091
+  - REST API: http://127.0.0.1:8091/api/
+  - Admin UI: http://127.0.0.1:8091/_/
 ```
 
 PocketBase läuft im Vordergrund. Neues Terminal für die nächsten Schritte öffnen.
 
 - [ ] **Step 3: Admin-Account anlegen**
 
-Browser öffnen: `http://127.0.0.1:8090/_/`
+Browser öffnen: `http://127.0.0.1:8091/_/`
 Admin-E-Mail: `admin@schichtplan.de`
 Admin-Passwort: `Admin1234!` (danach ändern)
 
@@ -247,7 +247,7 @@ Admin-Passwort: `Admin1234!` (danach ändern)
 `scripts/setup-pb.mjs`:
 ```javascript
 // Requires Node 18+ (native fetch). Run: node scripts/setup-pb.mjs
-const BASE = 'http://127.0.0.1:8090'
+const BASE = 'http://127.0.0.1:8091'
 const EMAIL = process.argv[2] ?? 'admin@schichtplan.de'
 const PASS  = process.argv[3] ?? 'Admin1234!'
 
@@ -494,7 +494,7 @@ for (const s of defaultSettings) {
 }
 
 console.log('\n✅ PocketBase Schema vollständig eingerichtet.')
-console.log('👉 Erstelle jetzt einen GF-Nutzer unter http://127.0.0.1:8090/_/')
+console.log('👉 Erstelle jetzt einen GF-Nutzer unter http://127.0.0.1:8091/_/')
 ```
 
 - [ ] **Step 5: Script ausführen (chef-app muss noch nicht installiert sein)**
@@ -521,7 +521,7 @@ Erwartete Ausgabe:
 
 - [ ] **Step 6: Test-Nutzer (GF) anlegen**
 
-PocketBase Admin UI → `http://127.0.0.1:8090/_/` → Collections → users → „New record":
+PocketBase Admin UI → `http://127.0.0.1:8091/_/` → Collections → users → „New record":
 - email: `gf@schichtplan.de`
 - password: `Test1234!`
 - role: `gf`
@@ -561,12 +561,12 @@ cd ..
 
 `chef-app/.env.example`:
 ```
-VITE_PB_URL=http://127.0.0.1:8090
+VITE_PB_URL=http://127.0.0.1:8091
 ```
 
 `chef-app/.env` (nicht in git):
 ```
-VITE_PB_URL=http://127.0.0.1:8090
+VITE_PB_URL=http://127.0.0.1:8091
 ```
 
 - [ ] **Step 4: `.gitignore` anpassen**
@@ -856,7 +856,7 @@ Grund: `auth.ts` und `pb.ts` existieren noch nicht.
 ```typescript
 import PocketBase from 'pocketbase'
 
-export const pb = new PocketBase(import.meta.env.VITE_PB_URL ?? 'http://127.0.0.1:8090')
+export const pb = new PocketBase(import.meta.env.VITE_PB_URL ?? 'http://127.0.0.1:8091')
 
 // Token beim Start wiederherstellen (localStorage)
 pb.authStore.loadFromCookie(document.cookie)
