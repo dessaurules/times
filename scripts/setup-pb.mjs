@@ -1,10 +1,10 @@
 // Requires Node 18+ (native fetch). Run: node scripts/setup-pb.mjs
-// Compatible with PocketBase v0.23+
+// Compatible with PocketBase v0.23+ (flat field API, _superusers auth)
 const BASE  = 'http://127.0.0.1:8091'
 const EMAIL = process.argv[2] ?? 'admin@example.com'
 const PASS  = process.argv[3] ?? 'Admin1234!'
 
-// ── Auth (v0.23+: _superusers statt admins) ───────────
+// ── Auth ───────────────────────────────────────────────
 let token
 try {
   const authRes = await fetch(`${BASE}/api/collections/_superusers/auth-with-password`, {
@@ -23,17 +23,13 @@ try {
   console.error(err.message)
   process.exit(1)
 }
-if (!token) { console.error('Kein Token erhalten'); process.exit(1) }
 console.log('✓ Admin authentifiziert')
 
 const H = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
 
-// users-Collection-ID einmalig holen (für Relation-Felder)
+// users-Collection-ID holen
 const usersColRes = await fetch(`${BASE}/api/collections/users`, { headers: H })
-if (!usersColRes.ok) {
-  console.error('Konnte users-Collection nicht laden:', await usersColRes.text())
-  process.exit(1)
-}
+if (!usersColRes.ok) { console.error('users-Collection nicht gefunden'); process.exit(1) }
 const usersCol = await usersColRes.json()
 const USERS_ID = usersCol.id
 console.log(`✓ users Collection ID: ${USERS_ID}`)
@@ -54,7 +50,7 @@ async function create(body) {
   return d
 }
 
-async function patch(id, body) {
+async function patchCollection(id, body) {
   const r = await fetch(`${BASE}/api/collections/${id}`, {
     method: 'PATCH', headers: H, body: JSON.stringify(body),
   })
@@ -64,19 +60,21 @@ async function patch(id, body) {
   return d
 }
 
-// ── Hilfsfunktionen für Felder (v0.23+ API) ──────────
-const textField   = (name, opts = {}) => ({ type: 'text',     name, ...opts })
-const emailField  = (name, opts = {}) => ({ type: 'email',    name, ...opts })
-const numberField = (name, opts = {}) => ({ type: 'number',   name, ...opts })
-const boolField   = (name, opts = {}) => ({ type: 'bool',     name, ...opts })
-const dateField   = (name, opts = {}) => ({ type: 'date',     name, ...opts })
-const selectField = (name, values, opts = {}) => ({ type: 'select', name, options: { maxSelect: 1, values }, ...opts })
-const fileField   = (name, opts = {}) => ({ type: 'file',     name, ...opts })
-const relationField = (name, collectionId, opts = {}) => ({
-  type: 'relation', name,
-  options: { collectionId, cascadeDelete: false, minSelect: null, maxSelect: 1, displayFields: [] },
-  ...opts,
-})
+// ── Feld-Definitionen (PocketBase v0.23+ flat API) ────
+const f = {
+  text:     (name, o = {}) => ({ type: 'text',     name, required: false, ...o }),
+  email:    (name, o = {}) => ({ type: 'email',    name, required: false, ...o }),
+  number:   (name, o = {}) => ({ type: 'number',   name, required: false, ...o }),
+  bool:     (name, o = {}) => ({ type: 'bool',     name, required: false, ...o }),
+  date:     (name, o = {}) => ({ type: 'date',     name, required: false, ...o }),
+  file:     (name, o = {}) => ({ type: 'file',     name, required: false, maxSelect: 1, ...o }),
+  select:   (name, values, o = {}) => ({ type: 'select',   name, required: false, maxSelect: 1, values, ...o }),
+  relation: (name, collectionId, o = {}) => ({
+    type: 'relation', name, required: false,
+    collectionId, cascadeDelete: false, minSelect: 0, maxSelect: 1,
+    ...o,
+  }),
+}
 
 // ── 1. departments ────────────────────────────────────
 const departments = await create({
@@ -87,9 +85,9 @@ const departments = await create({
   updateRule: "@request.auth.record.role = 'gf'",
   deleteRule: "@request.auth.record.role = 'gf'",
   fields: [
-    textField('name',       { required: true  }),
-    textField('color',      { required: true  }),
-    numberField('sort_order'),
+    f.text('name',       { required: true }),
+    f.text('color',      { required: true }),
+    f.number('sort_order'),
   ],
 })
 
@@ -102,8 +100,8 @@ await create({
   updateRule: "@request.auth.record.role = 'gf'",
   deleteRule: "@request.auth.record.role = 'gf'",
   fields: [
-    textField('key',   { required: true }),
-    textField('value'),
+    f.text('key',   { required: true }),
+    f.text('value'),
   ],
 })
 
@@ -116,113 +114,112 @@ const employees = await create({
   updateRule: "@request.auth.record.role = 'gf'",
   deleteRule: "@request.auth.record.role = 'gf'",
   fields: [
-    textField('first_name',    { required: true }),
-    textField('last_name',     { required: true }),
-    emailField('email',        { required: true }),
-    textField('phone'),
-    dateField('birthday'),
-    textField('street'),
-    textField('zip'),
-    textField('city'),
-    relationField('department', departments.id, { options: { collectionId: departments.id, cascadeDelete: false, minSelect: null, maxSelect: 1, displayFields: ['name'] } }),
-    textField('position'),
-    selectField('contract_type', ['vz','tz','mj','az'], { required: true }),
-    numberField('weekly_hours',  { required: true }),
-    dateField('start_date',      { required: true }),
-    dateField('end_date'),
-    numberField('vacation_days', { required: true }),
-    boolField('active'),
+    f.text('first_name',    { required: true }),
+    f.text('last_name',     { required: true }),
+    f.email('email',        { required: true }),
+    f.text('phone'),
+    f.date('birthday'),
+    f.text('street'),
+    f.text('zip'),
+    f.text('city'),
+    f.relation('department', departments.id),
+    f.text('position'),
+    f.select('contract_type', ['vz','tz','mj','az'], { required: true }),
+    f.number('weekly_hours',  { required: true }),
+    f.date('start_date',      { required: true }),
+    f.date('end_date'),
+    f.number('vacation_days', { required: true }),
+    f.bool('active'),
   ],
 })
 
 // ── 4. users: role + employee Felder hinzufügen ───────
-const existingFieldNames = (usersCol.fields ?? usersCol.schema ?? []).map(f => f.name)
+const existingNames = (usersCol.fields ?? []).map(fld => fld.name)
 const newUserFields = []
-if (!existingFieldNames.includes('role')) {
-  newUserFields.push(selectField('role', ['gf','sl','mitarbeiter'], { required: true }))
+if (!existingNames.includes('role')) {
+  newUserFields.push(f.select('role', ['gf','sl','mitarbeiter'], { required: true }))
 }
-if (!existingFieldNames.includes('employee')) {
-  newUserFields.push(relationField('employee', employees.id))
+if (!existingNames.includes('employee')) {
+  newUserFields.push(f.relation('employee', employees.id))
 }
 if (newUserFields.length > 0) {
-  const currentFields = usersCol.fields ?? usersCol.schema ?? []
-  await patch(usersCol.id, { fields: [...currentFields, ...newUserFields] })
+  await patchCollection(usersCol.id, { fields: [...(usersCol.fields ?? []), ...newUserFields] })
 } else {
-  console.log('✓ users-Felder bereits vorhanden, übersprungen')
+  console.log('✓ users-Felder bereits vorhanden')
 }
 
 // ── 5. absences ───────────────────────────────────────
 await create({
   name: 'absences', type: 'base',
-  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee.user = @request.auth.id",
-  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee.user = @request.auth.id",
-  createRule: "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || (employee.user = @request.auth.id && @request.data.status = 'pending')",
-  updateRule: "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || (employee.user = @request.auth.id && status = 'pending')",
+  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
+  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
+  createRule: "@request.auth.id != ''",
+  updateRule: "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || (employee = @request.auth.record.employee && status = 'pending')",
   deleteRule: "@request.auth.record.role = 'gf'",
   fields: [
-    { ...relationField('employee', employees.id), required: true,  options: { collectionId: employees.id, cascadeDelete: true, minSelect: null, maxSelect: 1, displayFields: [] } },
-    dateField('date_from', { required: true }),
-    dateField('date_to',   { required: true }),
-    selectField('type',   ['U','RU','U3','SU','K','KK','AT','S','ÜA'], { required: true }),
-    selectField('status', ['pending','approved','rejected'], { required: true }),
-    textField('note'),
-    fileField('document',  { options: { maxSelect: 1, maxSize: 10485760, mimeTypes: ['application/pdf','image/jpeg','image/png'] } }),
-    { ...relationField('created_by',  USERS_ID), required: true  },
-    relationField('approved_by', USERS_ID),
-    dateField('approved_at'),
+    f.relation('employee',    employees.id, { required: true, cascadeDelete: true }),
+    f.date('date_from',   { required: true }),
+    f.date('date_to',     { required: true }),
+    f.select('type',   ['U','RU','U3','SU','K','KK','AT','S','ÜA'], { required: true }),
+    f.select('status', ['pending','approved','rejected'],            { required: true }),
+    f.text('note'),
+    f.file('document',  { mimeTypes: ['application/pdf','image/jpeg','image/png'], maxSize: 10485760 }),
+    f.relation('created_by',  USERS_ID, { required: true }),
+    f.relation('approved_by', USERS_ID),
+    f.date('approved_at'),
   ],
 })
 
 // ── 6. vacation_accounts ──────────────────────────────
 await create({
   name: 'vacation_accounts', type: 'base',
-  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee.user = @request.auth.id",
-  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee.user = @request.auth.id",
+  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
+  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
   createRule: "@request.auth.record.role = 'gf'",
   updateRule: "@request.auth.record.role = 'gf'",
   deleteRule: "@request.auth.record.role = 'gf'",
   fields: [
-    { ...relationField('employee', employees.id), required: true, options: { collectionId: employees.id, cascadeDelete: true, minSelect: null, maxSelect: 1, displayFields: [] } },
-    numberField('year',               { required: true }),
-    numberField('entitlement',        { required: true }),
-    numberField('carry_over',         { required: true }),
-    dateField('carry_over_expires',   { required: true }),
+    f.relation('employee',         employees.id, { required: true, cascadeDelete: true }),
+    f.number('year',               { required: true }),
+    f.number('entitlement',        { required: true }),
+    f.number('carry_over',         { required: true }),
+    f.date('carry_over_expires',   { required: true }),
   ],
 })
 
 // ── 7. time_entries ───────────────────────────────────
 await create({
   name: 'time_entries', type: 'base',
-  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee.user = @request.auth.id",
-  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee.user = @request.auth.id",
+  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
+  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
   createRule: "@request.auth.id != ''",
-  updateRule: "@request.auth.record.role = 'gf' || (employee.user = @request.auth.id && end_time = '')",
+  updateRule: "@request.auth.record.role = 'gf' || (employee = @request.auth.record.employee && end_time = '')",
   deleteRule: "@request.auth.record.role = 'gf'",
   fields: [
-    { ...relationField('employee', employees.id), required: true, options: { collectionId: employees.id, cascadeDelete: true, minSelect: null, maxSelect: 1, displayFields: [] } },
-    dateField('start_time',    { required: true }),
-    dateField('end_time'),
-    numberField('break_minutes'),
-    textField('note'),
-    relationField('corrected_by', USERS_ID),
+    f.relation('employee',      employees.id, { required: true, cascadeDelete: true }),
+    f.date('start_time',        { required: true }),
+    f.date('end_time'),
+    f.number('break_minutes'),
+    f.text('note'),
+    f.relation('corrected_by',  USERS_ID),
   ],
 })
 
 // ── 8. documents ──────────────────────────────────────
 await create({
   name: 'documents', type: 'base',
-  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee.user = @request.auth.id",
-  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee.user = @request.auth.id",
+  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
+  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
   createRule: "@request.auth.record.role = 'gf'",
   updateRule: "@request.auth.record.role = 'gf'",
   deleteRule: "@request.auth.record.role = 'gf'",
   fields: [
-    { ...relationField('employee', employees.id), required: true, options: { collectionId: employees.id, cascadeDelete: true, minSelect: null, maxSelect: 1, displayFields: [] } },
-    textField('name',        { required: true }),
-    selectField('type',     ['vertrag','lohnschein','au_schein','sonstiges'], { required: true }),
-    fileField('file',       { required: true, options: { maxSelect: 1, maxSize: 20971520, mimeTypes: ['application/pdf','image/jpeg','image/png'] } }),
-    dateField('date',        { required: true }),
-    { ...relationField('uploaded_by', USERS_ID), required: true },
+    f.relation('employee',    employees.id, { required: true, cascadeDelete: true }),
+    f.text('name',            { required: true }),
+    f.select('type',         ['vertrag','lohnschein','au_schein','sonstiges'], { required: true }),
+    f.file('file',           { required: true, mimeTypes: ['application/pdf','image/jpeg','image/png'], maxSize: 20971520 }),
+    f.date('date',            { required: true }),
+    f.relation('uploaded_by', USERS_ID, { required: true }),
   ],
 })
 
@@ -235,29 +232,29 @@ await create({
   updateRule: "user = @request.auth.id",
   deleteRule: "user = @request.auth.id",
   fields: [
-    { ...relationField('user', USERS_ID), required: true, options: { collectionId: USERS_ID, cascadeDelete: true, minSelect: null, maxSelect: 1, displayFields: [] } },
-    textField('title',        { required: true }),
-    textField('message'),
-    selectField('type', ['absence_request','absence_approved','absence_rejected','general'], { required: true }),
-    boolField('read'),
-    textField('reference_id'),
+    f.relation('user',         USERS_ID, { required: true, cascadeDelete: true }),
+    f.text('title',            { required: true }),
+    f.text('message'),
+    f.select('type', ['absence_request','absence_approved','absence_rejected','general'], { required: true }),
+    f.bool('read'),
+    f.text('reference_id'),
   ],
 })
 
 // ── 10. availability ──────────────────────────────────
 await create({
   name: 'availability', type: 'base',
-  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee.user = @request.auth.id",
-  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee.user = @request.auth.id",
-  createRule: "@request.auth.record.role = 'gf' || employee.user = @request.auth.id",
-  updateRule: "@request.auth.record.role = 'gf' || employee.user = @request.auth.id",
-  deleteRule: "@request.auth.record.role = 'gf' || employee.user = @request.auth.id",
+  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
+  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
+  createRule: "@request.auth.record.role = 'gf' || employee = @request.auth.record.employee",
+  updateRule: "@request.auth.record.role = 'gf' || employee = @request.auth.record.employee",
+  deleteRule: "@request.auth.record.role = 'gf' || employee = @request.auth.record.employee",
   fields: [
-    { ...relationField('employee', employees.id), required: true, options: { collectionId: employees.id, cascadeDelete: true, minSelect: null, maxSelect: 1, displayFields: [] } },
-    numberField('day_of_week', { required: true }),
-    textField('from_time',     { required: true }),
-    textField('to_time',       { required: true }),
-    boolField('available'),
+    f.relation('employee',    employees.id, { required: true, cascadeDelete: true }),
+    f.number('day_of_week',   { required: true }),
+    f.text('from_time',       { required: true }),
+    f.text('to_time',         { required: true }),
+    f.bool('available'),
   ],
 })
 
