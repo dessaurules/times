@@ -81,9 +81,9 @@ const departments = await create({
   name: 'departments', type: 'base',
   listRule: "@request.auth.id != ''",
   viewRule: "@request.auth.id != ''",
-  createRule: "@request.auth.record.role = 'gf'",
-  updateRule: "@request.auth.record.role = 'gf'",
-  deleteRule: "@request.auth.record.role = 'gf'",
+  createRule: "@request.auth.role = 'gf'",
+  updateRule: "@request.auth.role = 'gf'",
+  deleteRule: "@request.auth.role = 'gf'",
   fields: [
     f.text('name',       { required: true }),
     f.text('color',      { required: true }),
@@ -94,11 +94,11 @@ const departments = await create({
 // ── 2. settings ───────────────────────────────────────
 await create({
   name: 'settings', type: 'base',
-  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl'",
-  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl'",
-  createRule: "@request.auth.record.role = 'gf'",
-  updateRule: "@request.auth.record.role = 'gf'",
-  deleteRule: "@request.auth.record.role = 'gf'",
+  listRule:   "@request.auth.id != ''",
+  viewRule:   "@request.auth.id != ''",
+  createRule: "@request.auth.role = 'gf'",
+  updateRule: "@request.auth.role = 'gf'",
+  deleteRule: "@request.auth.role = 'gf'",
   fields: [
     f.text('key',   { required: true }),
     f.text('value'),
@@ -108,11 +108,11 @@ await create({
 // ── 3. employees ──────────────────────────────────────
 const employees = await create({
   name: 'employees', type: 'base',
-  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl'",
-  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || id = @request.auth.record.employee",
-  createRule: "@request.auth.record.role = 'gf'",
-  updateRule: "@request.auth.record.role = 'gf'",
-  deleteRule: "@request.auth.record.role = 'gf'",
+  listRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || id = @request.auth.employee",
+  viewRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || id = @request.auth.employee",
+  createRule: "@request.auth.role = 'gf'",
+  updateRule: "@request.auth.role = 'gf'",
+  deleteRule: "@request.auth.role = 'gf'",
   fields: [
     f.text('first_name',    { required: true }),
     f.text('last_name',     { required: true }),
@@ -133,7 +133,7 @@ const employees = await create({
   ],
 })
 
-// ── 4. users: role + employee Felder hinzufügen ───────
+// ── 4. users: role + employee Felder + Zugriffsregeln ───────
 const existingNames = (usersCol.fields ?? []).map(fld => fld.name)
 const newUserFields = []
 if (!existingNames.includes('role')) {
@@ -142,20 +142,22 @@ if (!existingNames.includes('role')) {
 if (!existingNames.includes('employee')) {
   newUserFields.push(f.relation('employee', employees.id))
 }
-if (newUserFields.length > 0) {
-  await patchCollection(usersCol.id, { fields: [...(usersCol.fields ?? []), ...newUserFields] })
-} else {
-  console.log('✓ users-Felder bereits vorhanden')
-}
+await patchCollection(usersCol.id, {
+  ...(newUserFields.length > 0 ? { fields: [...(usersCol.fields ?? []), ...newUserFields] } : {}),
+  listRule:   "@request.auth.role = 'gf'",
+  viewRule:   "@request.auth.role = 'gf' || id = @request.auth.id",
+  updateRule: "@request.auth.role = 'gf' || id = @request.auth.id",
+})
+console.log('✓ users-Zugriffsregeln gesetzt')
 
 // ── 5. absences ───────────────────────────────────────
 await create({
   name: 'absences', type: 'base',
-  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
-  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
+  listRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || employee = @request.auth.employee",
+  viewRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || employee = @request.auth.employee",
   createRule: "@request.auth.id != ''",
-  updateRule: "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || (employee = @request.auth.record.employee && status = 'pending')",
-  deleteRule: "@request.auth.record.role = 'gf'",
+  updateRule: "@request.auth.role = 'gf' || @request.auth.role = 'sl' || (employee = @request.auth.employee && status = 'pending')",
+  deleteRule: "@request.auth.role = 'gf'",
   fields: [
     f.relation('employee',    employees.id, { required: true, cascadeDelete: true }),
     f.date('date_from',   { required: true }),
@@ -173,11 +175,11 @@ await create({
 // ── 6. vacation_accounts ──────────────────────────────
 await create({
   name: 'vacation_accounts', type: 'base',
-  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
-  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
-  createRule: "@request.auth.record.role = 'gf'",
-  updateRule: "@request.auth.record.role = 'gf'",
-  deleteRule: "@request.auth.record.role = 'gf'",
+  listRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || employee = @request.auth.employee",
+  viewRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || employee = @request.auth.employee",
+  createRule: "@request.auth.role = 'gf'",
+  updateRule: "@request.auth.role = 'gf'",
+  deleteRule: "@request.auth.role = 'gf'",
   fields: [
     f.relation('employee',         employees.id, { required: true, cascadeDelete: true }),
     f.number('year',               { required: true }),
@@ -190,11 +192,11 @@ await create({
 // ── 7. time_entries ───────────────────────────────────
 await create({
   name: 'time_entries', type: 'base',
-  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
-  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
+  listRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || employee = @request.auth.employee",
+  viewRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || employee = @request.auth.employee",
   createRule: "@request.auth.id != ''",
-  updateRule: "@request.auth.record.role = 'gf' || (employee = @request.auth.record.employee && end_time = '')",
-  deleteRule: "@request.auth.record.role = 'gf'",
+  updateRule: "@request.auth.role = 'gf' || (employee = @request.auth.employee && end_time = '')",
+  deleteRule: "@request.auth.role = 'gf'",
   fields: [
     f.relation('employee',      employees.id, { required: true, cascadeDelete: true }),
     f.date('start_time',        { required: true }),
@@ -208,11 +210,11 @@ await create({
 // ── 8. documents ──────────────────────────────────────
 await create({
   name: 'documents', type: 'base',
-  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
-  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
-  createRule: "@request.auth.record.role = 'gf'",
-  updateRule: "@request.auth.record.role = 'gf'",
-  deleteRule: "@request.auth.record.role = 'gf'",
+  listRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || employee = @request.auth.employee",
+  viewRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || employee = @request.auth.employee",
+  createRule: "@request.auth.role = 'gf'",
+  updateRule: "@request.auth.role = 'gf'",
+  deleteRule: "@request.auth.role = 'gf'",
   fields: [
     f.relation('employee',    employees.id, { required: true, cascadeDelete: true }),
     f.text('name',            { required: true }),
@@ -228,7 +230,7 @@ await create({
   name: 'notifications', type: 'base',
   listRule:   "user = @request.auth.id",
   viewRule:   "user = @request.auth.id",
-  createRule: "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl'",
+  createRule: "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
   updateRule: "user = @request.auth.id",
   deleteRule: "user = @request.auth.id",
   fields: [
@@ -244,11 +246,11 @@ await create({
 // ── 10. availability ──────────────────────────────────
 await create({
   name: 'availability', type: 'base',
-  listRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
-  viewRule:   "@request.auth.record.role = 'gf' || @request.auth.record.role = 'sl' || employee = @request.auth.record.employee",
-  createRule: "@request.auth.record.role = 'gf' || employee = @request.auth.record.employee",
-  updateRule: "@request.auth.record.role = 'gf' || employee = @request.auth.record.employee",
-  deleteRule: "@request.auth.record.role = 'gf' || employee = @request.auth.record.employee",
+  listRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || employee = @request.auth.employee",
+  viewRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || employee = @request.auth.employee",
+  createRule: "@request.auth.role = 'gf' || employee = @request.auth.employee",
+  updateRule: "@request.auth.role = 'gf' || employee = @request.auth.employee",
+  deleteRule: "@request.auth.role = 'gf' || employee = @request.auth.employee",
   fields: [
     f.relation('employee',    employees.id, { required: true, cascadeDelete: true }),
     f.number('day_of_week',   { required: true }),

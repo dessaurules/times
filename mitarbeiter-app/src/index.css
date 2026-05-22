@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+.blink {
+  animation: blink 1.6s step-start infinite;
+}
+
+@layer base {
+  :root {
+    /* ── Mitarbeiter-App Indigo/Violet-Theme ──────── */
+    --primary:           #4F46E5;
+    --primary-foreground:#FFFFFF;
+    --primary-light:     rgba(79,70,229,0.10);
+    --primary-hover:     #4338CA;
+
+    --background:        #F3F4F6;
+    --bg:                #F3F4F6;
+    --foreground:        #111827;
+    --text:              #111827;
+    --text-muted:        #6B7280;
+
+    --card:              #FFFFFF;
+    --card-foreground:   #111827;
+
+    --border:            #E5E7EB;
+    --input:             #E5E7EB;
+    --ring:              #4F46E5;
+
+    --muted-foreground:  #6B7280;
+    --muted:             #F3F4F6;
+
+    --popover:           #FFFFFF;
+    --popover-foreground:#111827;
+
+    --secondary:         #EEF2FF;
+    --secondary-foreground: #3730A3;
+
+    --accent:            rgba(79,70,229,0.08);
+    --accent-foreground: #3730A3;
+
+    --destructive:       #DC2626;
+    --destructive-foreground: #FFFFFF;
+
+    --radius:            12px;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+  }
+}

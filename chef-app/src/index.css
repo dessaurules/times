@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+.blink {
+  animation: blink 1.6s step-start infinite;
+}
+
 @layer base {
   :root {
     /* ── Schicht & Plan Amber-Theme ──────────────────── */

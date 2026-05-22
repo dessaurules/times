@@ -239,7 +239,7 @@ PocketBase läuft im Vordergrund. Neues Terminal für die nächsten Schritte öf
 - [ ] **Step 3: Admin-Account anlegen**
 
 Browser öffnen: `http://127.0.0.1:8091/_/`
-Admin-E-Mail: `admin@schichtplan.de`
+Admin-E-Mail: `admin@example.com`
 Admin-Passwort: `Admin1234!` (danach ändern)
 
 - [ ] **Step 4: Schema-Setup-Script schreiben**
@@ -248,7 +248,7 @@ Admin-Passwort: `Admin1234!` (danach ändern)
 ```javascript
 // Requires Node 18+ (native fetch). Run: node scripts/setup-pb.mjs
 const BASE = 'http://127.0.0.1:8091'
-const EMAIL = process.argv[2] ?? 'admin@schichtplan.de'
+const EMAIL = process.argv[2] ?? 'admin@example.com'
 const PASS  = process.argv[3] ?? 'Admin1234!'
 
 // ── Auth ───────────────────────────────────────────────
@@ -522,10 +522,10 @@ Erwartete Ausgabe:
 - [ ] **Step 6: Test-Nutzer (GF) anlegen**
 
 PocketBase Admin UI → `http://127.0.0.1:8091/_/` → Collections → users → „New record":
-- email: `gf@schichtplan.de`
+- email: `admin@example.com`
 - password: `Test1234!`
 - role: `gf`
-- name: `Ronny Beckmann`
+- name: `Admin`
 
 - [ ] **Step 7: Commit**
 
@@ -805,7 +805,7 @@ vi.mock('../../lib/pb', () => ({
     },
     collection: vi.fn().mockReturnValue({
       authWithPassword: vi.fn().mockResolvedValue({
-        record: { id: '1', email: 'gf@test.de', name: 'Test GF', role: 'gf' },
+        record: { id: '1', email: 'admin@example.com', name: 'Test GF', role: 'gf' },
       }),
     }),
   },
@@ -823,19 +823,19 @@ describe('useAuthStore', () => {
   })
 
   it('setzt user nach login', async () => {
-    await useAuthStore.getState().login('gf@test.de', 'Test1234!')
+    await useAuthStore.getState().login('admin@example.com', 'Test1234!')
     expect(useAuthStore.getState().user).not.toBeNull()
     expect(useAuthStore.getState().user?.role).toBe('gf')
   })
 
   it('isGF gibt true zurück wenn role = gf', async () => {
-    await useAuthStore.getState().login('gf@test.de', 'Test1234!')
+    await useAuthStore.getState().login('admin@example.com', 'Test1234!')
     expect(useAuthStore.getState().isGF()).toBe(true)
     expect(useAuthStore.getState().isSL()).toBe(false)
   })
 
   it('logout löscht user', async () => {
-    await useAuthStore.getState().login('gf@test.de', 'Test1234!')
+    await useAuthStore.getState().login('admin@example.com', 'Test1234!')
     useAuthStore.getState().logout()
     expect(useAuthStore.getState().user).toBeNull()
   })
@@ -1145,16 +1145,16 @@ describe('Login', () => {
   it('ruft login mit eingegebenen Daten auf', async () => {
     mockLogin.mockResolvedValueOnce(undefined)
     renderLogin()
-    fireEvent.change(screen.getByLabelText(/E-Mail/i), { target: { value: 'gf@test.de' } })
+    fireEvent.change(screen.getByLabelText(/E-Mail/i), { target: { value: 'admin@example.com' } })
     fireEvent.change(screen.getByLabelText(/Passwort/i), { target: { value: 'Test1234!' } })
     fireEvent.click(screen.getByRole('button', { name: /Anmelden/i }))
-    await waitFor(() => expect(mockLogin).toHaveBeenCalledWith('gf@test.de', 'Test1234!'))
+    await waitFor(() => expect(mockLogin).toHaveBeenCalledWith('admin@example.com', 'Test1234!'))
   })
 
   it('zeigt Fehlermeldung bei falschem Login', async () => {
     mockLogin.mockRejectedValueOnce(new Error('Invalid credentials'))
     renderLogin()
-    fireEvent.change(screen.getByLabelText(/E-Mail/i), { target: { value: 'x@x.de' } })
+    fireEvent.change(screen.getByLabelText(/E-Mail/i), { target: { value: 'wrong@example.com' } })
     fireEvent.change(screen.getByLabelText(/Passwort/i), { target: { value: 'wrong' } })
     fireEvent.click(screen.getByRole('button', { name: /Anmelden/i }))
     await waitFor(() => expect(screen.getByText(/falsch/i)).toBeInTheDocument())
@@ -1291,7 +1291,7 @@ npm run dev
 
 - Browser → `http://localhost:5173/login`
 - Falsches Passwort eingeben → Fehlermeldung erscheint
-- Richtiges Login (gf@schichtplan.de / Test1234!) → Weiterleitung zu `/` (Stub-Seite)
+- Richtiges Login (admin@example.com / Test1234!) → Weiterleitung zu `/` (Stub-Seite)
 
 - [ ] **Step 6: Commit**
 

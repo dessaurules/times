@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schicht & Plan – Chef-App Prototyp</title>
+<style>
+  :root {
+    --primary:       #BA7517;
+    --primary-light: rgba(186,117,23,0.12);
+    --primary-hover: #9E6312;
+    --bg:            #FFFFFF;
+    --bg-muted:      #F5F2EE;
+    --card:          #FFFFFF;
+    --border:        #EDE7DC;
+    --text:          #1A1917;
+    --text-muted:    #706D6A;
+    --radius:        8px;
+    --shadow:        0 2px 12px rgba(0,0,0,0.07);
+
+    --c-u-bg:#FAEEDA;  --c-u-text:#633806;
+    --c-ru-bg:#EF9F27; --c-ru-text:#412402;
+    --c-u3-bg:#FAC775; --c-u3-text:#633806;
+    --c-su-bg:#EEEDFE; --c-su-text:#3C3489;
+    --c-k-bg:#FCEBEB;  --c-k-text:#791F1F;
+    --c-kk-bg:#F7C1C1; --c-kk-text:#501313;
+    --c-at-bg:#F1EFE8; --c-at-text:#444441;
+    --c-s-bg:#E6F1FB;  --c-s-text:#0C447C;
+    --c-ua-bg:#E1F5EE; --c-ua-text:#085041;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); display:flex; min-height:100vh; font-size:14px; }
+
+  /* ── Sidebar ─────────────────────────────────────────────── */
+  .sidebar { width:230px; min-height:100vh; background:var(--card); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0; }
+  .logo { display:flex; align-items:center; gap:10px; padding:18px 18px 14px; border-bottom:1px solid var(--border); font-weight:700; font-size:15px; color:var(--primary); }
+  .nav { flex:1; padding:10px 8px; display:flex; flex-direction:column; gap:3px; }
+  .nav-item { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:6px; color:var(--text-muted); cursor:pointer; border:none; background:none; width:100%; text-align:left; font-size:14px; font-weight:500; transition:background .12s,color .12s; }
+  .nav-item:hover { background:var(--bg-muted); color:var(--text); }
+  .nav-item.active { background:var(--primary-light); color:var(--primary); }
+  .nav-divider { height:1px; background:var(--border); margin:6px 8px; }
+  .sidebar-bottom { padding:12px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:8px; }
+  .user-info { font-size:12px; color:var(--text-muted); padding:0 4px; }
+  .user-name { font-weight:600; color:var(--text); display:block; font-size:13px; }
+  .sidebar-actions { display:flex; align-items:center; gap:8px; }
+  .bell-wrap { position:relative; cursor:pointer; }
+  .bell-badge { position:absolute; top:-4px; right:-4px; background:#ef4444; color:#fff; font-size:10px; font-weight:700; border-radius:999px; min-width:16px; height:16px; display:flex; align-items:center; justify-content:center; padding:0 3px; }
+  .btn-ghost { display:flex; align-items:center; gap:6px; padding:6px 10px; border:none; background:none; cursor:pointer; border-radius:6px; color:var(--text-muted); font-size:13px; font-weight:500; transition:background .12s; }
+  .btn-ghost:hover { background:var(--bg-muted); }
+
+  /* ── Main ────────────────────────────────────────────────── */
+  .main { flex:1; background:var(--bg); overflow:auto; }
+  .page { padding:24px 20px; }
+  #page-abwesenheiten { padding:20px 16px; }
+  .page.hidden { display:none; }
+  .page-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+  .page-title { font-size:22px; font-weight:700; }
+
+  /* ── Buttons ─────────────────────────────────────────────── */
+  .btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:6px; font-size:14px; font-weight:500; cursor:pointer; border:none; transition:background .12s; }
+  .btn-primary { background:var(--primary); color:#fff; }
+  .btn-primary:hover { background:var(--primary-hover); }
+  .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+  .btn-outline:hover { background:var(--bg-muted); }
+  .btn-icon { padding:7px; border-radius:6px; }
+  .btn-sm { padding:5px 10px; font-size:13px; }
+  .btn-danger { background:#fef2f2; border:1px solid #fecaca; color:#dc2626; }
+  .btn-success { background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; }
+
+  /* ── Cards ───────────────────────────────────────────────── */
+  .card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; }
+  .card-title { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:14px; }
+
+  /* ── Dashboard ───────────────────────────────────────────── */
+  .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:20px; }
+  .stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; }
+  .stat-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:8px; }
+  .stat-value { font-size:28px; font-weight:700; color:var(--text); }
+  .stat-value.amber { color:var(--primary); }
+  .stat-value.red { color:#dc2626; }
+  .stat-value.green { color:#16a34a; }
+  .stat-sub { font-size:12px; color:var(--text-muted); margin-top:4px; }
+
+  .dash-grid2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+
+  .approval-row { display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .approval-row:last-child { border-bottom:none; }
+  .approval-name { font-weight:600; min-width:130px; }
+  .approval-detail { color:var(--text-muted); flex:1; }
+  .approval-type { font-size:11px; font-weight:700; padding:3px 7px; border-radius:4px; white-space:nowrap; }
+  .badge-pending { background:var(--primary-light); color:var(--primary); font-size:11px; font-weight:600; padding:3px 8px; border-radius:999px; white-space:nowrap; }
+  .btn-approve { background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a; padding:4px 10px; border-radius:5px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid #86efac; }
+  .btn-reject { background:#fef2f2; border:1px solid #fecaca; color:#dc2626; padding:4px 10px; border-radius:5px; font-size:12px; font-weight:600; cursor:pointer; }
+
+  .absent-chip { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; padding:4px 9px; border-radius:999px; margin:3px; }
+
+  /* ── Abwesenheits-Kalender (Excel-Stil) ─────────────────── */
+  .month-nav { display:flex; align-items:center; gap:8px; }
+  .month-label { font-size:14px; font-weight:500; min-width:140px; text-align:center; }
+
+  .cal-wrapper { overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius); background:var(--card); }
+  .cal-table { border-collapse:collapse; width:100%; table-layout:fixed; }
+
+  /* Kopfzeilen */
+  .cal-table thead tr:first-child th { background:var(--bg-muted); font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); padding:5px 1px; text-align:center; border-bottom:1px solid var(--border); white-space:nowrap; overflow:hidden; }
+  .cal-table thead tr:first-child th.name-col { text-align:left; padding-left:10px; width:108px; }
+  .cal-table thead tr:first-child th.day-col { font-size:9px; }
+  .cal-table thead tr:first-child th.summary-col { width:30px; font-size:9px; }
+
+  /* Abteilungs-Trenner */
+  .dept-row td { padding:4px 10px; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; background:var(--bg-muted); color:var(--text-muted); border-bottom:1px solid var(--border); }
+  .dept-dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; }
+
+  /* Mitarbeiter-Zeilen */
+  .emp-row td { border-bottom:1px solid var(--border); font-size:11px; overflow:visible; height:30px; }
+  .emp-row:last-child td { border-bottom:none; }
+  .emp-row.row-alt td { background:#F7F4F0; }
+  .emp-name-td { padding:4px 4px 4px 10px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:108px; }
+  .emp-day-td { padding:2px 1px; text-align:center; overflow:visible; }
+  .emp-summary-td { padding:4px 2px; text-align:center; font-size:10px; color:var(--text-muted); white-space:nowrap; width:30px; }
+
+  .day-cell { width:100%; height:22px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; margin:auto; border:none; cursor:default; }
+  .day-cell.blocked { background:rgba(228,216,198,0.4); }
+  .emp-row.row-alt .day-cell.blocked { background:rgba(210,196,178,0.5); }
+  /* Emil Kowalski – Easing Tokens */
+  :root {
+    --ease-out:    cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .day-cell.editable {
+    cursor: pointer;
+    transition: transform 160ms var(--ease-out),
+                box-shadow 160ms var(--ease-out),
+                background 200ms var(--ease-out),
+                color 200ms var(--ease-out);
+  }
+  /* Hover: dezentes Aufleuchten ohne Rahmen */
+  .day-cell.editable:hover {
+    background: var(--primary-light);
+    transform: scale(1.08);
+    z-index: 1;
+  }
+  /* Click-Press */
+  .day-cell.editable:active {
+    transform: scale(0.94);
+    transition-duration: 80ms;
+  }
+  /* Ausgewählt: Amber-Hintergrund statt Rahmen */
+  .day-cell.selected {
+    background: rgba(186,117,23,0.18) !important;
+    box-shadow: 0 2px 8px rgba(186,117,23,.15);
+    transform: scale(1.1);
+    z-index: 2;
+    outline: none;
+  }
+  /* Editing */
+  .day-cell.editing {
+    background: var(--bg) !important;
+    box-shadow: 0 0 0 2px var(--primary), 0 4px 12px rgba(186,117,23,.18) !important;
+    transform: scale(1.1) !important;
+    z-index: 2;
+    padding: 0;
+  }
+  /* Drag-Quelle */
+  .day-cell.drag-source {
+    transform: scale(1.15) !important;
+    box-shadow: 0 6px 20px rgba(186,117,23,.35) !important;
+    z-index: 10;
+    cursor: grabbing;
+    transition: transform 120ms var(--ease-spring),
+                box-shadow 120ms var(--ease-out);
+  }
+  /* Drag-Over */
+  .day-cell.drag-over {
+    background: rgba(186,117,23,0.22) !important;
+    box-shadow: 0 0 0 2px var(--primary) !important;
+    opacity: 1 !important;
+    animation: pulse-cell 400ms var(--ease-out) forwards;
+  }
+  @keyframes pulse-cell {
+    0%   { transform: scale(1.0); }
+    40%  { transform: scale(1.18); }
+    100% { transform: scale(1.08); }
+  }
+  /* Fill-Animation: Zelle springt ein */
+  @keyframes cell-pop {
+    0%   { transform: scale(0.7);  opacity: .5; }
+    60%  { transform: scale(1.15); opacity: 1;  }
+    100% { transform: scale(1.0);  opacity: 1;  }
+  }
+  .day-cell.just-filled {
+    animation: cell-pop 280ms var(--ease-spring) forwards;
+  }
+  /* Löschen-Animation */
+  @keyframes cell-clear {
+    0%   { transform: scale(1.0); opacity: 1; }
+    40%  { transform: scale(0.7); opacity: .4; }
+    100% { transform: scale(1.0); opacity: 1; }
+  }
+  .day-cell.just-cleared {
+    animation: cell-clear 200ms var(--ease-out) forwards;
+  }
+  .day-cell input.cell-input {
+    width:100%; height:100%; border:none; background:transparent; text-align:center;
+    font-size:10px; font-weight:700; color:var(--primary); outline:none;
+    text-transform:uppercase; padding:0; cursor:text;
+  }
+  .day-cell input.cell-input {
+    width:100%; height:100%; border:none; background:transparent; text-align:center;
+    font-size:10px; font-weight:700; color:var(--primary); outline:none;
+    text-transform:uppercase; padding:0; cursor:text;
+  }
+
+  /* ── Mitarbeiterliste ────────────────────────────────────── */
+  .filter-bar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+  .search-input { padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:14px; width:220px; outline:none; }
+  .search-input:focus { border-color:var(--primary); }
+  select.filter-select { padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:14px; background:var(--bg); outline:none; cursor:pointer; }
+  select.filter-select:focus { border-color:var(--primary); }
+
+  table.data-table { width:100%; border-collapse:collapse; }
+  table.data-table th { padding:10px 14px; background:var(--bg-muted); text-align:left; font-size:12px; font-weight:600; color:var(--text-muted); white-space:nowrap; }
+  table.data-table td { padding:12px 14px; font-size:14px; border-top:1px solid var(--border); }
+  table.data-table tr:hover td { background:var(--bg-muted); cursor:pointer; }
+
+  .contract-badge { font-size:11px; font-weight:600; padding:3px 8px; border-radius:999px; white-space:nowrap; }
+  .badge-vz { background:#EEF2FF; color:#3730a3; }
+  .badge-tz { background:#F0FDF4; color:#166534; }
+  .badge-mj { background:#FFF7ED; color:#c2410c; }
+  .badge-az { background:#FDF4FF; color:#7e22ce; }
+  .active-dot { width:8px; height:8px; border-radius:50%; background:#22c55e; display:inline-block; }
+
+  /* ── Dienstplan ──────────────────────────────────────────── */
+  .plan-header { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .plan-status-draft { font-size:12px; font-weight:600; padding:4px 10px; border-radius:999px; background:#FFF7ED; color:#c2410c; border:1px solid #fdba74; }
+  .plan-status-pub { font-size:12px; font-weight:600; padding:4px 10px; border-radius:999px; background:#F0FDF4; color:#16a34a; border:1px solid #86efac; }
+
+  .shift-grid { overflow-x:auto; border:1px solid var(--border); border-radius:var(--radius); margin-top:16px; }
+  .shift-table { border-collapse:collapse; min-width:max-content; width:100%; }
+  .shift-table th { padding:8px 12px; background:var(--bg-muted); font-size:11px; font-weight:600; color:var(--text-muted); white-space:nowrap; border-bottom:1px solid var(--border); text-align:left; }
+  .shift-table td { padding:8px 12px; border-top:1px solid var(--border); font-size:13px; vertical-align:top; min-width:110px; }
+  .shift-table td.name-td { font-weight:500; white-space:nowrap; min-width:130px; }
+  .shift-chip { display:inline-block; font-size:11px; font-weight:600; padding:3px 8px; border-radius:4px; background:var(--primary-light); color:var(--primary); margin:1px; white-space:nowrap; cursor:pointer; }
+  .shift-chip:hover { background:rgba(186,117,23,.22); }
+  .shift-open { font-size:11px; color:var(--text-muted); font-style:italic; }
+  .arbzg-warn { font-size:10px; color:#dc2626; font-weight:600; }
+
+  /* ── Berichte ────────────────────────────────────────────── */
+  .report-table th { padding:9px 12px; background:var(--bg-muted); font-size:11px; font-weight:600; color:var(--text-muted); white-space:nowrap; border-bottom:1px solid var(--border); text-align:center; }
+  .report-table th:first-child { text-align:left; }
+  .report-table td { padding:8px 12px; border-top:1px solid var(--border); font-size:12px; text-align:center; }
+  .report-table td:first-child { text-align:left; font-weight:500; white-space:nowrap; }
+  .report-table tfoot td { background:var(--bg-muted); font-weight:700; border-top:2px solid var(--border); }
+  .dept-header-row td { background:#f8f5f0; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--text-muted); padding:5px 12px; }
+
+  /* ── Einstellungen ───────────────────────────────────────── */
+  .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .settings-section { font-weight:600; font-size:13px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.08em; margin-bottom:12px; margin-top:4px; }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .form-group { margin-bottom:14px; }
+  .form-label { font-size:13px; font-weight:500; display:block; margin-bottom:5px; }
+  .form-input,.form-select { width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:14px; background:var(--bg); outline:none; }
+  .form-input:focus,.form-select:focus { border-color:var(--primary); }
+  .health-ok { display:flex; align-items:center; gap:8px; font-size:13px; color:#16a34a; font-weight:500; }
+  .checklist-item { display:flex; align-items:center; gap:8px; font-size:13px; padding:7px 0; border-bottom:1px solid var(--border); }
+  .check-icon { color:#22c55e; flex-shrink:0; }
+  .warn-icon { color:#f59e0b; flex-shrink:0; }
+
+  /* ── Utils ───────────────────────────────────────────────── */
+  .hidden { display:none !important; }
+  .text-muted { color:var(--text-muted); }
+  .text-primary { color:var(--primary); }
+  .fw-bold { font-weight:700; }
+  .mt-16 { margin-top:16px; }
+  .week-nav { display:flex; align-items:center; gap:8px; }
+  .week-label { font-size:14px; font-weight:500; min-width:165px; text-align:center; }
+  .overlay { position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; z-index:50; }
+  .modal { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); width:95vw; max-width:480px; padding:24px; box-shadow:0 8px 40px rgba(0,0,0,.15); }
+  .modal-title { font-size:16px; font-weight:700; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; }
+  .dialog-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:20px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<aside class="sidebar">
+  <div class="logo">
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    Schicht & Plan
+  </div>
+  <nav class="nav">
+    <button class="nav-item active" onclick="show('dashboard',this)">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="show('abwesenheiten',this)">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>
+      Abwesenheiten
+    </button>
+    <button class="nav-item" onclick="show('dienstplan',this)">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Dienstplan
+    </button>
+    <button class="nav-item" onclick="show('mitarbeiter',this)">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Mitarbeiter
+    </button>
+    <button class="nav-item" onclick="show('zeiterfassung',this)">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Zeiterfassung
+    </button>
+    <button class="nav-item" onclick="show('berichte',this)">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Berichte
+    </button>
+    <div class="nav-divider"></div>
+    <button class="nav-item" onclick="show('einstellungen',this)">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Einstellungen
+    </button>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-info">
+      <span class="user-name">Ronny Beckmann</span>
+      Admin · Service
+    </div>
+    <div class="sidebar-actions">
+      <div class="bell-wrap">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#706D6A" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="bell-badge">3</span>
+      </div>
+      <button class="btn-ghost">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Abmelden
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<main class="main">
+
+<!-- ── DASHBOARD ──────────────────────────────────────────── -->
+<div id="page-dashboard" class="page">
+  <div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+    <span style="font-size:13px;color:var(--text-muted)">Dienstag, 20.05.2026</span>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">Mitarbeiter heute</div>
+      <div class="stat-value green">12</div>
+      <div class="stat-sub">von 18 aktiven MA</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Abwesend heute</div>
+      <div class="stat-value amber">3</div>
+      <div class="stat-sub">K: 1 · U: 2</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Offene Genehmigungen</div>
+      <div class="stat-value red">4</div>
+      <div class="stat-sub">Warten auf Freigabe</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Resturlaub-Verfall</div>
+      <div class="stat-value amber">2</div>
+      <div class="stat-sub">Verfallen bis 31.03.</div>
+    </div>
+  </div>
+
+  <div class="dash-grid2">
+    <!-- Offene Genehmigungen -->
+    <div class="card">
+      <div class="card-title">Offene Genehmigungen</div>
+      <div class="approval-row">
+        <span class="approval-name">Steffi Hofmann</span>
+        <span class="approval-detail">26.05.–28.05. · 3 T</span>
+        <span class="approval-type" style="background:var(--c-u-bg);color:var(--c-u-text)">U</span>
+        <button class="btn-approve" onclick="approveRow(this)">✓</button>
+        <button class="btn-reject" onclick="rejectRow(this)">✕</button>
+      </div>
+      <div class="approval-row">
+        <span class="approval-name">Ramazan Korkmaz</span>
+        <span class="approval-detail">01.06.–05.06. · 5 T</span>
+        <span class="approval-type" style="background:var(--c-u-bg);color:var(--c-u-text)">U</span>
+        <button class="btn-approve" onclick="approveRow(this)">✓</button>
+        <button class="btn-reject" onclick="rejectRow(this)">✕</button>
+      </div>
+      <div class="approval-row">
+        <span class="approval-name">Marie Boege</span>
+        <span class="approval-detail">10.06.–11.06. · 2 T</span>
+        <span class="approval-type" style="background:var(--c-su-bg);color:var(--c-su-text)">SU</span>
+        <button class="btn-approve" onclick="approveRow(this)">✓</button>
+        <button class="btn-reject" onclick="rejectRow(this)">✕</button>
+      </div>
+      <div class="approval-row">
+        <span class="approval-name">Franzi Roth</span>
+        <span class="approval-detail">15.06.–19.06. · 5 T</span>
+        <span class="approval-type" style="background:var(--c-ru-bg);color:var(--c-ru-text)">RU</span>
+        <button class="btn-approve" onclick="approveRow(this)">✓</button>
+        <button class="btn-reject" onclick="rejectRow(this)">✕</button>
+      </div>
+    </div>
+
+    <!-- Heute abwesend -->
+    <div class="card">
+      <div class="card-title">Heute abwesend – 20.05.2026</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">
+        <span class="absent-chip" style="background:var(--c-k-bg);color:var(--c-k-text)">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Sandy Bienert · K
+        </span>
+        <span class="absent-chip" style="background:var(--c-u-bg);color:var(--c-u-text)">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Emma Hefele · U
+        </span>
+        <span class="absent-chip" style="background:var(--c-at-bg);color:var(--c-at-text)">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Ronny Beckmann · AT
+        </span>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--border);margin-bottom:14px">
+      <div class="card-title" style="margin-bottom:10px">⚠ Resturlaub-Verfall bis 31.03.2027</div>
+      <div style="font-size:13px;line-height:2">
+        <div style="display:flex;justify-content:space-between"><span>Ramazan Korkmaz</span><span style="color:var(--primary);font-weight:600">5 Tage RU</span></div>
+        <div style="display:flex;justify-content:space-between"><span>Elke Meyer</span><span style="color:var(--primary);font-weight:600">3 Tage RU</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ABWESENHEITEN ──────────────────────────────────────── -->
+<div id="page-abwesenheiten" class="page hidden">
+  <div class="page-header">
+    <h1 class="page-title">Abwesenheiten</h1>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div class="month-nav">
+        <button class="btn btn-outline btn-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span class="month-label">Mai 2026</span>
+        <button class="btn btn-outline btn-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+      <select class="filter-select" style="font-size:13px;padding:7px 10px">
+        <option>Alle Abteilungen</option>
+        <option>Service</option>
+        <option>Küche</option>
+        <option>Rezeption</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="openAbwesenheitDialog()">+ Eintrag</button>
+    </div>
+  </div>
+
+  <div class="cal-wrapper">
+    <table class="cal-table" id="abs-cal-table">
+      <!-- wird per JS gerendert -->
+    </table>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+    <span style="font-size:12px;color:var(--text-muted);font-weight:600;align-self:center">Legende:</span>
+    <span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="background:var(--c-u-bg);color:var(--c-u-text);font-weight:700;padding:2px 6px;border-radius:3px">U</span>Urlaub</span>
+    <span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="background:var(--c-ru-bg);color:var(--c-ru-text);font-weight:700;padding:2px 6px;border-radius:3px">RU</span>Resturlaub</span>
+    <span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="background:var(--c-k-bg);color:var(--c-k-text);font-weight:700;padding:2px 6px;border-radius:3px">K</span>Krank</span>
+    <span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="background:var(--c-kk-bg);color:var(--c-kk-text);font-weight:700;padding:2px 6px;border-radius:3px">KK</span>Kind Krank</span>
+    <span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="background:var(--c-at-bg);color:var(--c-at-text);font-weight:700;padding:2px 6px;border-radius:3px">AT</span>Arzt/Behörde</span>
+    <span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="background:var(--c-s-bg);color:var(--c-s-text);font-weight:700;padding:2px 6px;border-radius:3px">S</span>Schule</span>
+    <span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="background:var(--c-ua-bg);color:var(--c-ua-text);font-weight:700;padding:2px 6px;border-radius:3px">ÜA</span>Überstd.-Ausgl.</span>
+    <span style="display:flex;align-items:center;gap:4px;font-size:11px"><span style="background:var(--bg-muted);padding:2px 6px;border-radius:3px;border:1px solid var(--border)">██</span>WE/Feiertag</span>
+  </div>
+</div>
+
+<!-- ── DIENSTPLAN ─────────────────────────────────────────── -->
+<div id="page-dienstplan" class="page hidden">
+  <div class="page-header">
+    <div class="plan-header">
+      <h1 class="page-title">Dienstplan</h1>
+      <span class="plan-status-draft" id="plan-status-badge">Entwurf</span>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <div class="week-nav">
+        <button class="btn btn-outline btn-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span class="week-label">KW 21 / Mai 2026</span>
+        <button class="btn btn-outline btn-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+      <button class="btn btn-outline btn-sm">Vorlage laden</button>
+      <button class="btn btn-primary btn-sm" onclick="publishPlan()">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Veröffentlichen
+      </button>
+    </div>
+  </div>
+
+  <div class="shift-grid">
+    <table class="shift-table">
+      <thead>
+        <tr>
+          <th style="min-width:130px">Mitarbeiter</th>
+          <th>Mo 18.05.</th><th>Di 19.05.</th><th>Mi 20.05.</th>
+          <th>Do 21.05.</th><th>Fr 22.05.</th>
+          <th style="background:#f3e8d4">Sa 23.05.</th>
+          <th style="background:#f3e8d4">So 24.05.</th>
+          <th style="text-align:right">Summe</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="9" style="background:#f8f5f0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);padding:5px 12px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#BA7517;margin-right:6px"></span>Service</td></tr>
+        <tr>
+          <td class="name-td">Ronny Beckmann</td>
+          <td><span class="shift-chip">08:00–16:00</span></td>
+          <td><span class="shift-chip">08:00–16:30</span></td>
+          <td><span class="shift-chip">10:00–18:00</span></td>
+          <td></td><td></td>
+          <td><span class="shift-chip">09:00–15:00</span></td>
+          <td></td>
+          <td style="text-align:right;color:var(--primary);font-weight:600">30:00 h</td>
+        </tr>
+        <tr>
+          <td class="name-td">Steffi Hofmann</td>
+          <td></td>
+          <td><span class="shift-chip">10:00–18:00</span></td>
+          <td><span class="shift-chip">10:00–18:00</span></td>
+          <td><span class="shift-chip">10:00–18:00</span></td>
+          <td><span class="shift-chip">10:00–18:00</span></td>
+          <td></td><td></td>
+          <td style="text-align:right;color:var(--primary);font-weight:600">32:00 h</td>
+        </tr>
+        <tr>
+          <td class="name-td">Franzi Roth</td>
+          <td><span class="shift-chip">12:00–20:00</span></td>
+          <td><span class="shift-chip">12:00–20:00</span></td>
+          <td></td>
+          <td><span class="shift-chip">12:00–20:00</span></td>
+          <td><span class="shift-chip">12:00–20:00</span></td>
+          <td><span class="shift-chip">12:00–18:00</span></td>
+          <td></td>
+          <td style="text-align:right;color:var(--primary);font-weight:600">38:00 h</td>
+        </tr>
+        <tr><td colspan="9" style="background:#f8f5f0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);padding:5px 12px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#e87a1a;margin-right:6px"></span>Küche</td></tr>
+        <tr>
+          <td class="name-td">Gerrit Franz</td>
+          <td><span class="shift-chip">07:00–15:00</span></td>
+          <td><span class="shift-chip">07:00–15:00</span></td>
+          <td><span class="shift-chip">07:00–15:00</span></td>
+          <td><span class="shift-chip">07:00–15:00</span></td>
+          <td><span class="shift-chip">07:00–15:00</span></td>
+          <td></td><td></td>
+          <td style="text-align:right;color:var(--primary);font-weight:600">40:00 h</td>
+        </tr>
+        <tr>
+          <td class="name-td">Sandra Müller</td>
+          <td></td><td></td>
+          <td><span class="shift-chip">11:00–19:00</span></td>
+          <td><span class="shift-chip">11:00–19:00</span></td>
+          <td><span class="shift-chip">11:00–19:00</span></td>
+          <td><span class="shift-chip">11:00–19:00</span></td>
+          <td><span class="arbzg-warn">⚠ 9:42 h</span></td>
+          <td style="text-align:right;color:var(--primary);font-weight:600">39:42 h</td>
+        </tr>
+        <tr>
+          <td class="name-td" style="color:var(--text-muted);font-style:italic">Offene Schicht</td>
+          <td></td><td></td><td></td><td></td><td></td>
+          <td><span class="shift-open">⊕ Offen</span></td>
+          <td><span class="shift-open">⊕ Offen</span></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:12px;color:var(--text-muted);margin-top:10px">⚠ Sandra Müller: Sonntag überschreitet 9h – Pausenpflicht 45 min beachten (§4 ArbZG)</p>
+</div>
+
+<!-- ── MITARBEITER ────────────────────────────────────────── -->
+<div id="page-mitarbeiter" class="page hidden">
+  <div class="page-header">
+    <h1 class="page-title">Mitarbeiter</h1>
+    <button class="btn btn-primary">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Mitarbeiter anlegen
+    </button>
+  </div>
+  <div class="filter-bar">
+    <input type="text" class="search-input" placeholder="🔍  Name suchen…">
+    <select class="filter-select">
+      <option>Alle Abteilungen</option><option>Service</option><option>Küche</option><option>Rezeption</option>
+    </select>
+    <select class="filter-select">
+      <option>Alle Vertragsarten</option><option>Vollzeit</option><option>Teilzeit</option><option>Minijob</option><option>Azubi</option>
+    </select>
+  </div>
+  <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+    <table class="data-table">
+      <thead>
+        <tr><th>Name</th><th>Abteilung</th><th>Vertrag</th><th>Std./W.</th><th>Urlaub 2026</th><th>Eintr.</th><th></th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="active-dot"></span> <strong style="margin-left:6px">Ronny Beckmann</strong></td><td style="color:var(--text-muted)">Service</td><td><span class="contract-badge badge-vz">Vollzeit</span></td><td>40 h</td><td>24 T</td><td style="color:var(--text-muted)">01.01.2023</td><td><button class="btn btn-outline btn-sm">Details</button></td></tr>
+        <tr><td><span class="active-dot"></span> <strong style="margin-left:6px">Steffi Hofmann</strong></td><td style="color:var(--text-muted)">Service</td><td><span class="contract-badge badge-tz">Teilzeit</span></td><td>30 h</td><td>20 T</td><td style="color:var(--text-muted)">15.03.2021</td><td><button class="btn btn-outline btn-sm">Details</button></td></tr>
+        <tr><td><span class="active-dot"></span> <strong style="margin-left:6px">Ramazan Korkmaz</strong></td><td style="color:var(--text-muted)">Service</td><td><span class="contract-badge badge-vz">Vollzeit</span></td><td>40 h</td><td>24 T</td><td style="color:var(--text-muted)">01.06.2020</td><td><button class="btn btn-outline btn-sm">Details</button></td></tr>
+        <tr><td><span class="active-dot"></span> <strong style="margin-left:6px">Sandy Bienert</strong></td><td style="color:var(--text-muted)">Service</td><td><span class="contract-badge badge-mj">Minijob</span></td><td>10 h</td><td>–</td><td style="color:var(--text-muted)">01.09.2022</td><td><button class="btn btn-outline btn-sm">Details</button></td></tr>
+        <tr><td><span class="active-dot"></span> <strong style="margin-left:6px">Gerrit Franz</strong></td><td style="color:var(--text-muted)">Küche</td><td><span class="contract-badge badge-vz">Vollzeit</span></td><td>40 h</td><td>24 T</td><td style="color:var(--text-muted)">01.02.2019</td><td><button class="btn btn-outline btn-sm">Details</button></td></tr>
+        <tr><td><span class="active-dot"></span> <strong style="margin-left:6px">Marie Boege</strong></td><td style="color:var(--text-muted)">Küche</td><td><span class="contract-badge badge-tz">Teilzeit</span></td><td>25 h</td><td>17 T</td><td style="color:var(--text-muted)">15.07.2020</td><td><button class="btn btn-outline btn-sm">Details</button></td></tr>
+        <tr><td><span class="active-dot"></span> <strong style="margin-left:6px">Franzi Roth</strong></td><td style="color:var(--text-muted)">Rezeption</td><td><span class="contract-badge badge-vz">Vollzeit</span></td><td>40 h</td><td>24 T</td><td style="color:var(--text-muted)">01.01.2022</td><td><button class="btn btn-outline btn-sm">Details</button></td></tr>
+        <tr><td><span class="active-dot"></span> <strong style="margin-left:6px">Emma Hefele</strong></td><td style="color:var(--text-muted)">Rezeption</td><td><span class="contract-badge badge-az">Azubi</span></td><td>40 h</td><td>10 T</td><td style="color:var(--text-muted)">01.08.2025</td><td><button class="btn btn-outline btn-sm">Details</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── ZEITERFASSUNG ──────────────────────────────────────── -->
+<div id="page-zeiterfassung" class="page hidden">
+  <div class="page-header">
+    <h1 class="page-title">Zeiterfassung</h1>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <select class="filter-select">
+        <option>Alle Mitarbeiter</option><option>Ronny Beckmann</option><option>Steffi Hofmann</option>
+      </select>
+      <div class="week-nav">
+        <button class="btn btn-outline btn-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span class="week-label">KW 21 / Mai 2026</span>
+        <button class="btn btn-outline btn-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+    </div>
+  </div>
+  <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+    <table class="data-table">
+      <thead><tr><th>Mitarbeiter</th><th>Tag</th><th>Kommt</th><th>Geht</th><th>Pause</th><th style="text-align:right">Ist</th><th style="text-align:right">Soll</th><th style="text-align:right">Diff</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><strong>Ronny Beckmann</strong></td><td>Mo 18.05.</td><td>08:00</td><td>16:30</td><td>30 min</td><td style="text-align:right;font-weight:500">8:00 h</td><td style="text-align:right;color:var(--text-muted)">8:00 h</td><td style="text-align:right;color:#16a34a;font-weight:600">±0</td><td><button class="btn btn-outline btn-sm">✏</button></td></tr>
+        <tr><td><strong>Ronny Beckmann</strong></td><td>Di 19.05.</td><td>07:45</td><td>16:15</td><td>30 min</td><td style="text-align:right;font-weight:500">8:00 h</td><td style="text-align:right;color:var(--text-muted)">8:00 h</td><td style="text-align:right;color:#16a34a;font-weight:600">±0</td><td><button class="btn btn-outline btn-sm">✏</button></td></tr>
+        <tr style="background:rgba(186,117,23,.04)"><td><strong>Ronny Beckmann</strong></td><td>Mi 20.05. <span style="font-size:10px;color:var(--primary);font-weight:700">HEUTE</span></td><td>10:00</td><td style="color:var(--primary)">läuft…</td><td>–</td><td style="text-align:right;color:var(--primary);font-weight:500">3:12 h</td><td style="text-align:right;color:var(--text-muted)">8:00 h</td><td style="text-align:right;color:#dc2626;font-weight:600">−4:48</td><td><button class="btn btn-outline btn-sm">✏</button></td></tr>
+        <tr><td><strong>Steffi Hofmann</strong></td><td>Mo 18.05.</td><td>09:00</td><td>17:00</td><td>30 min</td><td style="text-align:right;font-weight:500">7:30 h</td><td style="text-align:right;color:var(--text-muted)">7:30 h</td><td style="text-align:right;color:#16a34a;font-weight:600">±0</td><td><button class="btn btn-outline btn-sm">✏</button></td></tr>
+        <tr><td><strong>Sandy Bienert</strong> <span style="font-size:10px;background:#fff7ed;color:#c2410c;font-weight:600;padding:2px 5px;border-radius:3px;margin-left:4px">§17 MiLoG</span></td><td>Mo 18.05.</td><td>10:00</td><td>14:00</td><td>–</td><td style="text-align:right;font-weight:500">4:00 h</td><td style="text-align:right;color:var(--text-muted)">4:00 h</td><td style="text-align:right;color:#16a34a;font-weight:600">±0</td><td><button class="btn btn-outline btn-sm">✏</button></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── BERICHTE ───────────────────────────────────────────── -->
+<div id="page-berichte" class="page hidden">
+  <div class="page-header">
+    <h1 class="page-title">Berichte</h1>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="month-nav">
+        <button class="btn btn-outline btn-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span class="month-label">Mai 2026</span>
+        <button class="btn btn-outline btn-icon"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+      <button class="btn btn-outline btn-sm">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        PDF
+      </button>
+      <button class="btn btn-outline btn-sm">CSV</button>
+    </div>
+  </div>
+  <div style="border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;overflow-x:auto">
+    <table class="data-table report-table" style="min-width:700px">
+      <thead>
+        <tr>
+          <th>Mitarbeiter</th>
+          <th>Arb.tage</th><th>U</th><th>RU</th><th>K</th><th>KK</th><th>AT</th><th>S</th><th>ÜA</th><th>Ist-Std.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="dept-header-row"><td colspan="10">● Service</td></tr>
+        <tr><td>Ronny Beckmann</td><td>20</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td>159:12 h</td></tr>
+        <tr><td>Steffi Hofmann</td><td>18</td><td>0</td><td>0</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>135:00 h</td></tr>
+        <tr><td>Ramazan Korkmaz</td><td>21</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>168:00 h</td></tr>
+        <tr><td>Sandy Bienert</td><td>12</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>48:00 h</td></tr>
+        <tr class="dept-header-row"><td colspan="10">● Küche</td></tr>
+        <tr><td>Gerrit Franz</td><td>21</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>168:00 h</td></tr>
+        <tr><td>Marie Boege</td><td>20</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>140:00 h</td></tr>
+        <tr class="dept-header-row"><td colspan="10">● Rezeption</td></tr>
+        <tr><td>Franzi Roth</td><td>21</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>168:00 h</td></tr>
+        <tr><td>Emma Hefele</td><td>19</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>136:00 h</td></tr>
+      </tbody>
+      <tfoot>
+        <tr><td>Gesamt</td><td>152</td><td>3</td><td>0</td><td>2</td><td>0</td><td>1</td><td>0</td><td>0</td><td>1.122:12 h</td></tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+
+<!-- ── EINSTELLUNGEN ──────────────────────────────────────── -->
+<div id="page-einstellungen" class="page hidden">
+  <div class="page-header"><h1 class="page-title">Einstellungen</h1></div>
+  <div class="settings-grid">
+    <div>
+      <div class="settings-section">Firmenprofil</div>
+      <div class="card">
+        <div class="form-group form-row">
+          <div><label class="form-label">Firmenname</label><input type="text" class="form-input" value="Hotel & Restaurant Beckmann"></div>
+          <div><label class="form-label">Rechtsform</label><select class="form-select"><option>GmbH</option><option>e.K.</option><option>GbR</option></select></div>
+        </div>
+        <div class="form-group form-row">
+          <div><label class="form-label">Straße</label><input type="text" class="form-input" value="Musterstraße 12"></div>
+          <div><label class="form-label">PLZ / Ort</label><input type="text" class="form-input" value="06844 Dessau-Roßlau"></div>
+        </div>
+        <div class="form-group form-row">
+          <div><label class="form-label">Bundesland</label><select class="form-select"><option>Sachsen-Anhalt (ST)</option></select></div>
+          <div><label class="form-label">Tarifvertrag</label><input type="text" class="form-input" value="DEHOGA Sachsen-Anhalt"></div>
+        </div>
+        <button class="btn btn-primary btn-sm">Speichern</button>
+      </div>
+
+      <div class="settings-section" style="margin-top:20px">Abteilungen</div>
+      <div class="card">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="width:14px;height:14px;border-radius:50%;background:#BA7517;display:inline-block;flex-shrink:0"></span>
+            <span style="font-weight:500;flex:1">Service</span>
+            <button class="btn btn-outline btn-sm">✏</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span style="width:14px;height:14px;border-radius:50%;background:#e87a1a;display:inline-block;flex-shrink:0"></span>
+            <span style="font-weight:500;flex:1">Küche</span>
+            <button class="btn btn-outline btn-sm">✏</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0">
+            <span style="width:14px;height:14px;border-radius:50%;background:#0c447c;display:inline-block;flex-shrink:0"></span>
+            <span style="font-weight:500;flex:1">Rezeption</span>
+            <button class="btn btn-outline btn-sm">✏</button>
+          </div>
+        </div>
+        <button class="btn btn-outline btn-sm" style="margin-top:12px">+ Abteilung</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="settings-section">System</div>
+      <div class="card">
+        <div class="form-group">
+          <label class="form-label">Standard-Arbeitstage/Woche</label>
+          <select class="form-select"><option>5 Tage</option><option>6 Tage</option></select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;justify-content:space-between">
+          <label class="form-label" style="margin:0">Mitarbeiter-Anträge erlauben</label>
+          <input type="checkbox" checked style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer">
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;justify-content:space-between">
+          <label class="form-label" style="margin:0">Schichttausch aktiv</label>
+          <input type="checkbox" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer">
+        </div>
+      </div>
+
+      <div class="settings-section" style="margin-top:20px">PocketBase-Status</div>
+      <div class="card">
+        <div class="health-ok">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          Verbunden · http://localhost:8090
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:6px">Version v0.22.4 · 18 Collections</div>
+      </div>
+
+      <div class="settings-section" style="margin-top:20px">Datenschutz (DSGVO)</div>
+      <div class="card">
+        <div class="checklist-item"><span class="check-icon">✓</span>Datenspeicherung auf eigenem VPS</div>
+        <div class="checklist-item"><span class="check-icon">✓</span>Keine Weitergabe an Dritte</div>
+        <div class="checklist-item"><span class="check-icon">✓</span>Aufbewahrungsfristen BEG IV 2025</div>
+        <div class="checklist-item"><span class="warn-icon">⚠</span>Datenschutzerklärung für MA ausstehend</div>
+        <div class="checklist-item"><span class="check-icon">✓</span>Löschkonzept implementiert</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ── Navigation ──────────────────────────────────────────────
+function show(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'))
+  document.getElementById('page-' + id).classList.remove('hidden')
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+  btn.classList.add('active')
+  if(id === 'abwesenheiten') renderCalendar()
+}
+
+// ── Abwesenheits-Kalender ────────────────────────────────────
+const COLORS = {
+  U:  { bg:'#FAEEDA', text:'#633806' },
+  RU: { bg:'#EF9F27', text:'#412402' },
+  U3: { bg:'#FAC775', text:'#633806' },
+  SU: { bg:'#EEEDFE', text:'#3C3489' },
+  K:  { bg:'#FCEBEB', text:'#791F1F' },
+  KK: { bg:'#F7C1C1', text:'#501313' },
+  AT: { bg:'#F1EFE8', text:'#444441' },
+  S:  { bg:'#E6F1FB', text:'#0C447C' },
+  'ÜA':{ bg:'#E1F5EE', text:'#085041' },
+}
+
+const FEIERTAGE = new Set(['2026-01-01','2026-04-03','2026-04-06','2026-05-01','2026-05-14','2026-05-25','2026-10-03','2026-10-31'])
+
+// Beispiel-Abwesenheitsdaten (MA → Datum → Kürzel)
+const ABS = {
+  'Ronny Beckmann':    { '2026-05-15':'AT' },
+  'Steffi Hofmann':    { '2026-05-04':'K','2026-05-05':'K' },
+  'Ramazan Korkmaz':   { '2026-05-26':'U','2026-05-27':'U','2026-05-28':'U' },
+  'Sandy Bienert':     {},
+  'Marie Boege':       { '2026-05-07':'U' },
+  'Emma Hefele':       { '2026-05-21':'U','2026-05-22':'U' },
+  'Franzi Roth':       { '2026-05-11':'RU','2026-05-12':'RU','2026-05-13':'RU' },
+  'Hari Krishna':      {},
+  'Gabi Münzer':       { '2026-05-19':'KK','2026-05-20':'KK' },
+  'Gerrit Franz':      {},
+  'Sandra Müller':     { '2026-05-04':'K' },
+}
+
+const ABTEILUNGEN = [
+  { name:'Service', color:'#BA7517', employees:['Ronny Beckmann','Steffi Hofmann','Ramazan Korkmaz','Sandy Bienert','Marie Boege','Emma Hefele','Franzi Roth','Hari Krishna','Gabi Münzer'] },
+  { name:'Küche',   color:'#e87a1a', employees:['Gerrit Franz','Sandra Müller'] },
+]
+
+const SUMMARY_LABELS = ['AT','Urlaub','Krank']
+
+function renderCalendar() {
+  const year = 2026, month = 4 // Mai = index 4
+  const days = new Date(year, month+1, 0).getDate()
+  const DAY_SHORT = ['So','Mo','Di','Mi','Do','Fr','Sa']
+
+  // Spaltenlabel (Tagesnummern + Wochentage)
+  let thead = `<thead><tr>
+    <th class="name-col">Mitarbeiter</th>`
+  for(let d=1; d<=days; d++){
+    const dt = new Date(year,month,d)
+    const isSa = dt.getDay()===6, isSo = dt.getDay()===0
+    const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    const isFt = FEIERTAGE.has(iso)
+    const style = (isSa||isSo||isFt) ? 'style="background:#f3e8d4"' : ''
+    thead += `<th class="day-col" ${style} title="${DAY_SHORT[dt.getDay()]}">${String(d).padStart(2,'0')}<br><span style="font-size:7px;opacity:.75">${DAY_SHORT[dt.getDay()]}</span></th>`
+  }
+  thead += `<th class="summary-col">AT</th><th class="summary-col">U/RU</th><th class="summary-col">K</th></tr></thead>`
+
+  let tbody = '<tbody>'
+  let empIdx = 0
+  for(const dept of ABTEILUNGEN) {
+    tbody += `<tr class="dept-row"><td colspan="${days+4}"><span class="dept-dot" style="background:${dept.color}"></span>${dept.name}</td></tr>`
+    for(const emp of dept.employees) {
+      const empAbs = ABS[emp] || {}
+      const altClass = (empIdx % 2 === 1) ? ' row-alt' : ''
+      empIdx++
+      let row = `<tr class="emp-row${altClass}"><td class="emp-name-td">${emp}</td>`
+      let cntAT=0, cntU=0, cntK=0
+      for(let d=1; d<=days; d++){
+        const dt = new Date(year,month,d)
+        const iso = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+        const isBlocked = dt.getDay()===0||dt.getDay()===6||FEIERTAGE.has(iso)
+        const abs = empAbs[iso]
+        if(abs) {
+          if(abs==='AT') cntAT++
+          else if(['U','RU','U3','SU'].includes(abs)) cntU++
+          else if(['K','KK'].includes(abs)) cntK++
+        }
+        const bg = abs ? (COLORS[abs]?.bg||'#eee') : ''
+        const color = abs ? (COLORS[abs]?.text||'#333') : ''
+        const styleAttr = (bg || color) ? `style="${bg?`background:${bg};`:''}${color?`color:${color};`:''}"` : ''
+        const blockedAttr = isBlocked ? 'data-blocked="1"' : ''
+        const absAttr = abs ? `data-abs="${abs}"` : 'data-abs=""'
+        const editableClass = isBlocked ? 'blocked' : 'editable'
+        row += `<td class="emp-day-td"><div class="day-cell ${editableClass}" ${blockedAttr} ${absAttr} ${styleAttr}>${abs||''}</div></td>`
+      }
+      row += `<td class="emp-summary-td">${cntAT||'–'}</td><td class="emp-summary-td" style="color:var(--c-u-text)">${cntU||'–'}</td><td class="emp-summary-td" style="color:var(--c-k-text)">${cntK||'–'}</td></tr>`
+      tbody += row
+    }
+  }
+  tbody += '</tbody>'
+
+  document.getElementById('abs-cal-table').innerHTML = thead + tbody
+  addCalHint()
+}
+
+// ── Dashboard: Genehmigungen ────────────────────────────────
+function approveRow(btn) {
+  const row = btn.closest('.approval-row')
+  row.style.opacity = '.4'
+  row.style.pointerEvents = 'none'
+  btn.textContent = '✓ Genehmigt'
+  btn.style.background = '#f0fdf4'
+  btn.style.color = '#16a34a'
+}
+function rejectRow(btn) {
+  const row = btn.closest('.approval-row')
+  row.style.opacity = '.4'
+  row.style.pointerEvents = 'none'
+}
+
+// ── Dienstplan: Veröffentlichen ─────────────────────────────
+function publishPlan() {
+  const badge = document.getElementById('plan-status-badge')
+  badge.textContent = '✓ Veröffentlicht'
+  badge.className = 'plan-status-pub'
+}
+
+// ── Abwesenheit-Dialog (Platzhalter) ────────────────────────
+function openAbwesenheitDialog() {
+  alert('Dialog: Abwesenheit für Mitarbeiter eintragen\n(Im fertigen System: Mitarbeiter wählen → Kürzel → Datum)')
+}
+
+// ── Direkte Zell-Eingabe ─────────────────────────────────────
+const VALID = new Set(['U','RU','U3','SU','K','KK','AT','S','ÜA'])
+let activeCell   = null
+let selectedCell = null
+
+function selectCell(cell) {
+  if (selectedCell) selectedCell.classList.remove('selected')
+  selectedCell = cell
+  if (cell) cell.classList.add('selected')
+}
+
+// Alle editierbaren Zellen derselben Zeile
+function getRowCells(cell) {
+  return [...cell.closest('tr').querySelectorAll('.day-cell.editable')]
+}
+
+// Gleiche Spalte, Zeile ±dir (überspringt Abteilungs-Trennzeilen)
+function getCellVertical(cell, dir) {
+  const allRows = [...cell.closest('tbody').querySelectorAll('tr.emp-row')]
+  const currentRow = cell.closest('tr')
+  const currentIdx = allRows.indexOf(currentRow)
+  const allTds = [...currentRow.querySelectorAll('td')]
+  const colIdx = allTds.indexOf(cell.closest('td'))
+
+  const targetRow = allRows[currentIdx + dir]
+  if (!targetRow) return null
+  const targetTd = targetRow.querySelectorAll('td')[colIdx]
+  return targetTd ? targetTd.querySelector('.day-cell.editable') : null
+}
+
+// Globale Tastatur-Navigation (nur wenn kein Input aktiv)
+document.addEventListener('keydown', function(e) {
+  if (activeCell) return          // Input übernimmt selbst
+  if (!selectedCell) return
+
+  switch (e.key) {
+    case 'ArrowRight': {
+      e.preventDefault()
+      const cells = getRowCells(selectedCell)
+      const i = cells.indexOf(selectedCell)
+      if (i < cells.length - 1) selectCell(cells[i + 1])
+      break
+    }
+    case 'ArrowLeft': {
+      e.preventDefault()
+      const cells = getRowCells(selectedCell)
+      const i = cells.indexOf(selectedCell)
+      if (i > 0) selectCell(cells[i - 1])
+      break
+    }
+    case 'ArrowDown': {
+      e.preventDefault()
+      const next = getCellVertical(selectedCell, 1)
+      if (next) selectCell(next)
+      break
+    }
+    case 'ArrowUp': {
+      e.preventDefault()
+      const prev = getCellVertical(selectedCell, -1)
+      if (prev) selectCell(prev)
+      break
+    }
+    case 'Delete':
+    case 'Backspace': {
+      e.preventDefault()
+      clearCell(selectedCell)
+      break
+    }
+    case 'Enter': {
+      e.preventDefault()
+      openCell(selectedCell)
+      activeCell = selectedCell
+      break
+    }
+    case 'Escape': {
+      selectCell(null)
+      break
+    }
+    default: {
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault()
+        openCell(selectedCell, e.key.toUpperCase())
+        activeCell = selectedCell
+      }
+    }
+  }
+})
+
+// ── Drag-to-Fill ─────────────────────────────────────────────
+let dragState = null   // { kuerzel, sourceRow, cells[] }
+
+document.addEventListener('mousedown', function(e) {
+  const cell = e.target.closest('.day-cell.editable')
+  if (!cell || cell.dataset.blocked === '1') return
+  const abs = cell.dataset.abs
+  if (!abs) return   // nur auf befüllten Zellen starten
+
+  e.preventDefault()  // verhindert Text-Selektion beim Ziehen
+  dragState = { kuerzel: abs, sourceRow: cell.closest('tr'), cells: [cell] }
+  cell.classList.add('drag-source')
+  document.body.style.userSelect = 'none'
+  document.body.style.cursor = 'grabbing'
+})
+
+document.addEventListener('mouseover', function(e) {
+  if (!dragState) return
+  const cell = e.target.closest('.day-cell.editable')
+  if (!cell || cell.dataset.blocked === '1') return
+  if (cell.closest('tr') !== dragState.sourceRow) return  // nur in gleicher Zeile
+  if (dragState.cells.includes(cell)) return
+
+  dragState.cells.push(cell)
+  cell.classList.add('drag-over')
+})
+
+let wasDragging = false
+
+document.addEventListener('mouseup', function() {
+  if (!dragState) return
+
+  wasDragging = dragState.cells.length > 1
+
+  const cells = [...dragState.cells]
+  const kuerzel = dragState.kuerzel
+  dragState = null
+  document.body.style.userSelect = ''
+  document.body.style.cursor = ''
+
+  // Gestaffeltes Befüllen: 40ms Abstand je Zelle (Emil: 30–80ms stagger)
+  cells.forEach((cell, i) => {
+    cell.classList.remove('drag-source', 'drag-over')
+    setTimeout(() => applyAbsence(cell, kuerzel), i * 40)
+  })
+
+  setTimeout(() => { wasDragging = false }, 50)
+})
+
+document.addEventListener('click', function(e) {
+  if (wasDragging) return
+  const cell = e.target.closest('.day-cell.editable')
+
+  // Klick außerhalb: aktive Zelle committen + Selektion aufheben
+  if (!cell) {
+    if (activeCell) { commitCell(activeCell); activeCell = null }
+    selectCell(null)
+    return
+  }
+
+  // Aktive Edit-Zelle committen bevor wir weiterspringen
+  if (activeCell && activeCell !== cell) { commitCell(activeCell); activeCell = null }
+
+  // Einfachklick → nur Fokus setzen (wie Excel)
+  selectCell(cell)
+})
+
+document.addEventListener('dblclick', function(e) {
+  const cell = e.target.closest('.day-cell.editable')
+  if (!cell) return
+  if (activeCell && activeCell !== cell) commitCell(activeCell)
+  openCell(cell)
+  activeCell = cell
+})
+
+function openCell(cell, prefill = null) {
+  if (cell.dataset.blocked === '1') return
+  cell.classList.remove('selected')
+  cell.classList.add('editing')
+  const current = prefill !== null ? prefill : (cell.dataset.abs || '')
+  cell.innerHTML = `<input class="cell-input" maxlength="3" value="${current}" autocomplete="off" spellcheck="false">`
+  const input = cell.querySelector('input')
+  input.focus()
+  if (prefill !== null) {
+    input.selectionStart = input.selectionEnd = input.value.length
+  } else {
+    input.select()
+  }
+
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { commitCell(cell); activeCell = null }
+    if (e.key === 'Escape') { cancelCell(cell); activeCell = null }
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (input.value === '') { clearCell(cell); activeCell = null }
+    }
+    e.stopPropagation()
+  })
+
+  input.addEventListener('input', function() {
+    // Live-Vorschau: Zell-Hintergrund wenn gültiges Kürzel
+    const v = input.value.toUpperCase()
+    if (VALID.has(v)) {
+      input.style.color = COLORS[v]?.text || 'var(--primary)'
+    } else {
+      input.style.color = 'var(--primary)'
+    }
+  })
+}
+
+function commitCell(cell) {
+  const input = cell.querySelector('input')
+  if (!input) return
+  const v = input.value.toUpperCase().trim()
+  cell.classList.remove('editing')
+  if (VALID.has(v)) {
+    applyAbsence(cell, v)
+  } else if (v === '') {
+    clearCell(cell)
+  } else {
+    cell.innerHTML = `<span style="color:#dc2626;font-size:9px;font-weight:700">?</span>`
+    setTimeout(() => restoreCell(cell, cell.dataset.abs || ''), 800)
+  }
+  selectCell(cell)
+}
+
+function cancelCell(cell) {
+  cell.classList.remove('editing')
+  restoreCell(cell, cell.dataset.abs || '')
+  selectCell(cell)
+}
+
+function applyAbsence(cell, kuerzel) {
+  cell.dataset.abs = kuerzel
+  const c = COLORS[kuerzel]
+  cell.style.background = c.bg
+  cell.style.color = c.text
+  cell.style.opacity = '1'
+  cell.innerHTML = kuerzel
+  // Pop-Animation
+  cell.classList.remove('just-filled', 'just-cleared')
+  void cell.offsetWidth  // reflow – Animation neu starten
+  cell.classList.add('just-filled')
+  cell.addEventListener('animationend', () => cell.classList.remove('just-filled'), { once: true })
+  updateSummary(cell)
+}
+
+function clearCell(cell) {
+  cell.dataset.abs = ''
+  cell.style.background = ''
+  cell.style.color = ''
+  cell.style.opacity = '1'
+  cell.innerHTML = ''
+  // Clear-Animation
+  cell.classList.remove('just-filled', 'just-cleared')
+  void cell.offsetWidth
+  cell.classList.add('just-cleared')
+  cell.addEventListener('animationend', () => cell.classList.remove('just-cleared'), { once: true })
+  updateSummary(cell)
+}
+
+function restoreCell(cell, abs) {
+  if (abs) {
+    applyAbsence(cell, abs)
+  } else {
+    clearCell(cell)
+  }
+}
+
+function updateSummary(cell) {
+  // Summenspalten der Zeile neu berechnen
+  const row = cell.closest('tr')
+  if (!row) return
+  let cntAT=0, cntU=0, cntK=0
+  row.querySelectorAll('.day-cell[data-abs]').forEach(c => {
+    const a = c.dataset.abs
+    if (a === 'AT') cntAT++
+    else if (['U','RU','U3','SU'].includes(a)) cntU++
+    else if (['K','KK'].includes(a)) cntK++
+  })
+  const tds = row.querySelectorAll('.emp-summary-td')
+  if (tds[0]) tds[0].textContent = cntAT || '–'
+  if (tds[1]) tds[1].textContent = cntU  || '–'
+  if (tds[2]) tds[2].textContent = cntK  || '–'
+}
+
+// Hinweis-Overlay nach dem Rendern einfügen
+function addCalHint() {
+  const wrapper = document.querySelector('.cal-wrapper')
+  if (!wrapper || document.getElementById('cal-hint')) return
+  const hint = document.createElement('p')
+  hint.id = 'cal-hint'
+  hint.style.cssText = 'font-size:12px;color:var(--text-muted);margin-top:8px'
+  hint.textContent = '💡 Klick wählt Zelle · Pfeiltasten navigieren · Buchstabe tippt direkt · Enter öffnet / speichert · Entf löscht · ESC bricht ab · Doppelklick öffnet Edit'
+  wrapper.parentNode.insertBefore(hint, wrapper.nextSibling)
+}
+</script>
+</body>
+</html>

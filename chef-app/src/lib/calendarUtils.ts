@@ -30,6 +30,7 @@ export function buildCalendarDays(year: number, month: number, holidayDates: Set
 export function buildAbsenceMap(absences: Absence[]): Map<string, Absence> {
   const map = new Map<string, Absence>()
   for (const abs of absences) {
+    if (abs.status === 'rejected') continue   // abgelehnte nicht im Kalender
     let cur = parseISO(abs.date_from)
     const end = parseISO(abs.date_to)
     while (!isAfter(cur, end)) {

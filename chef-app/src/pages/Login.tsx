@@ -10,9 +10,9 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState<string | null>(null)
   const navigate = useNavigate()
-  const { login, isLoading, user } = useAuthStore(s => ({
-    login: s.login, isLoading: s.isLoading, user: s.user,
-  }))
+  const login = useAuthStore(s => s.login)
+  const isLoading = useAuthStore(s => s.isLoading)
+  const user = useAuthStore(s => s.user)
 
   if (user && (user.role === 'gf' || user.role === 'sl')) {
     navigate('/', { replace: true })

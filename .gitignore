@@ -2,3 +2,7 @@ pocketbase
 pb_data/
 .env
 *.local
+.DS_Store
+node_modules/
+dist/
+*.tsbuildinfo

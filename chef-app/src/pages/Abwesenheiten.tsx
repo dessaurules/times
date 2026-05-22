@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { format, addMonths, subMonths, startOfMonth, endOfMonth } from 'date-fns'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, parseISO } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { pb } from '../lib/pb'
@@ -10,6 +10,7 @@ import { VACATION_TYPES, ABSENCE_COLORS } from '@shared/types'
 import KalenderTable from '../components/Abwesenheiten/KalenderTable'
 import ApprovalPopover from '../components/Abwesenheiten/ApprovalPopover'
 import { useAuthStore } from '../stores/auth'
+import { notifyEmployee } from '../lib/notifications'
 
 const VALID_TYPES: AbsenceType[] = ['U', 'RU', 'U3', 'SU', 'K', 'KK', 'AT', 'S', 'ÜA']
 
@@ -29,9 +30,11 @@ export default function Abwesenheiten() {
   const [activeCell, setActiveCell] = useState<{ empId: string; date: string } | null>(null)
   const [inputValue, setInputValue] = useState('')
   const [dragRange,  setDragRange]  = useState<{ empId: string; start: string; end: string } | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
   const [popover,    setPopover]    = useState<{ absence: Absence; rect: DOMRect } | null>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef       = useRef<HTMLInputElement>(null)
+  const confirmTimer   = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const didDragRef     = useRef(false)
+  const dragRef        = useRef<{ empId: string; start: string; end: string; kuerzel: AbsenceType } | null>(null)
 
   useEffect(() => {
     Promise.all([
@@ -61,19 +64,52 @@ export default function Abwesenheiten() {
 
   useEffect(() => {
     if (activeCell) inputRef.current?.focus()
-    else setInputValue('')
+    else {
+      setInputValue('')
+      if (confirmTimer.current) clearTimeout(confirmTimer.current)
+    }
   }, [activeCell])
 
   const holidayDates = getHolidayDates(year, federalState)
   const calendarDays = buildCalendarDays(year, month, holidayDates)
   const absenceMap   = buildAbsenceMap(absences)
 
+  const monthWorkingDays = useMemo(
+    () => calendarDays.filter(d => !d.isWeekend && !d.isHoliday).length,
+    [calendarDays]
+  )
+
+  const summaries = useMemo(() => {
+    const currentDates = new Set(calendarDays.map(d => d.date))
+    const raw = new Map<string, { vacation: number; sick: number }>()
+    for (const emp of employees) raw.set(emp.id, { vacation: 0, sick: 0 })
+    for (const [key, abs] of absenceMap) {
+      if (abs.status !== 'approved') continue
+      const lastUnderscore = key.lastIndexOf('_')
+      const empId = key.slice(0, lastUnderscore)
+      const date  = key.slice(lastUnderscore + 1)
+      if (!currentDates.has(date)) continue
+      const s = raw.get(empId)
+      if (!s) continue
+      if (VACATION_TYPES.includes(abs.type)) s.vacation++
+      else if (abs.type === 'K' || abs.type === 'KK') s.sick++
+    }
+    const map = new Map<string, { at: number; vacation: number; sick: number }>()
+    for (const [empId, s] of raw) {
+      map.set(empId, {
+        at: Math.max(0, monthWorkingDays - s.vacation - s.sick),
+        vacation: s.vacation,
+        sick: s.sick,
+      })
+    }
+    return map
+  }, [absenceMap, employees, calendarDays, monthWorkingDays])
+
   const createAbsence = useCallback(async (empId: string, dateFrom: string, dateTo: string, type: AbsenceType) => {
-    const status = VACATION_TYPES.includes(type) ? 'pending' : 'approved'
     const rec = await pb.collection('absences').create<Absence>({
       employee: empId, date_from: dateFrom, date_to: dateTo,
-      type, status, created_by: user!.id,
-    })
+      type, status: 'approved', created_by: user!.id,
+    }, { requestKey: null })
     setAbsences(prev => [...prev, rec])
   }, [user])
 
@@ -82,84 +118,189 @@ export default function Abwesenheiten() {
     setAbsences(prev => prev.filter(a => a.id !== id))
   }
 
+  function absDateLabel(abs: Absence) {
+    return abs.date_from === abs.date_to
+      ? format(parseISO(abs.date_from), 'dd.MM.yyyy', { locale: de })
+      : `${format(parseISO(abs.date_from), 'dd.MM.', { locale: de })} – ${format(parseISO(abs.date_to), 'dd.MM.yyyy', { locale: de })}`
+  }
+
   async function handleApprove(absenceId: string) {
     const rec = await pb.collection('absences').update<Absence>(absenceId, {
       status: 'approved', approved_by: user!.id, approved_at: new Date().toISOString(),
     })
     setAbsences(prev => prev.map(a => a.id === absenceId ? rec : a))
     setPopover(null)
+    const absence = absences.find(a => a.id === absenceId)
+    if (absence) {
+      notifyEmployee(
+        absence.employee,
+        'absence_approved',
+        'Antrag genehmigt',
+        `Dein ${absence.type}-Antrag (${absDateLabel(absence)}) wurde genehmigt.`,
+        absence.id,
+      )
+    }
   }
 
   async function handleReject(absenceId: string) {
     const rec = await pb.collection('absences').update<Absence>(absenceId, { status: 'rejected' })
     setAbsences(prev => prev.map(a => a.id === absenceId ? rec : a))
+    const absence = absences.find(a => a.id === absenceId)
+    if (absence) {
+      notifyEmployee(
+        absence.employee,
+        'absence_rejected',
+        'Antrag abgelehnt',
+        `Dein ${absence.type}-Antrag (${absDateLabel(absence)}) wurde leider abgelehnt.`,
+        absence.id,
+      )
+    }
     setPopover(null)
   }
 
+  type NavDir = 'right' | 'down' | null
+
+  function nextWorkCell(empId: string, date: string, dir: 'right' | 'down') {
+    const empIdx = employees.findIndex(e => e.id === empId)
+    const dayIdx = calendarDays.findIndex(d => d.date === date)
+    if (dir === 'right') {
+      for (let i = dayIdx + 1; i < calendarDays.length; i++) {
+        if (!calendarDays[i].isWeekend && !calendarDays[i].isHoliday)
+          return { empId, date: calendarDays[i].date }
+      }
+      return null
+    }
+    const newIdx = Math.min(empIdx + 1, employees.length - 1)
+    if (newIdx === empIdx) return null
+    return { empId: employees[newIdx].id, date }
+  }
+
+  function executeConfirm(
+    type: AbsenceType,
+    snapCell: { empId: string; date: string } | null,
+    snapDrag: { empId: string; start: string; end: string } | null,
+    direction: NavDir = 'right',
+  ) {
+    if (snapDrag && snapDrag.start !== snapDrag.end) {
+      const daysToFill = calendarDays.filter(d =>
+        d.date >= snapDrag.start &&
+        d.date <= snapDrag.end &&
+        !d.isWeekend &&
+        !d.isHoliday &&
+        !absenceMap.has(`${snapDrag.empId}_${d.date}`)
+      )
+      for (const day of daysToFill) {
+        createAbsence(snapDrag.empId, day.date, day.date, type)
+      }
+      setDragRange(null)
+    } else if (snapCell) {
+      const existing = absenceMap.get(`${snapCell.empId}_${snapCell.date}`)
+      if (existing) deleteAbsenceById(existing.id)
+      createAbsence(snapCell.empId, snapCell.date, snapCell.date, type)
+    }
+    if (direction && snapCell) {
+      setActiveCell(nextWorkCell(snapCell.empId, snapCell.date, direction))
+    } else {
+      setActiveCell(null)
+    }
+    setInputValue('')
+    if (confirmTimer.current) clearTimeout(confirmTimer.current)
+  }
+
   function handleCellClick(empId: string, date: string, absence: Absence | undefined) {
-    if (isDragging) return
+    // Ignore click if it was the end of a drag
+    if (didDragRef.current) return
     if (absence && absence.status === 'pending' && canApprove) {
       const cellEl = document.querySelector(`[data-cell="${empId}_${date}"]`)
       if (cellEl) setPopover({ absence, rect: cellEl.getBoundingClientRect() })
       return
     }
     setActiveCell({ empId, date })
+    setDragRange(null)
   }
 
-  function handleCellMouseDown(empId: string, date: string) {
-    setIsDragging(false)
+  function handleCellMouseDown(empId: string, date: string, kuerzel: AbsenceType) {
+    didDragRef.current = false
+    setActiveCell(null)
+    const drag = { empId, start: date, end: date, kuerzel }
+    dragRef.current = drag
     setDragRange({ empId, start: date, end: date })
   }
 
   function handleCellMouseEnter(empId: string, date: string) {
-    if (!dragRange || dragRange.empId !== empId) return
-    setIsDragging(true)
-    const [s, e] = dragRange.start <= date ? [dragRange.start, date] : [date, dragRange.start]
+    if (!dragRef.current || dragRef.current.empId !== empId) return
+    if (date !== dragRef.current.start) didDragRef.current = true
+    const [s, e] = dragRef.current.start <= date
+      ? [dragRef.current.start, date]
+      : [date, dragRef.current.start]
+    const drag = { empId, start: s, end: e, kuerzel: dragRef.current.kuerzel }
+    dragRef.current = drag
     setDragRange({ empId, start: s, end: e })
   }
 
-  const handleMouseUp = useCallback(() => {
-    if (isDragging && dragRange && inputValue) {
-      const type = inputValue.toUpperCase() as AbsenceType
-      if (VALID_TYPES.includes(type)) {
-        createAbsence(dragRange.empId, dragRange.start, dragRange.end, type)
-      }
+  function handleMouseUp() {
+    if (didDragRef.current && dragRef.current) {
+      if (confirmTimer.current) clearTimeout(confirmTimer.current)
+      executeConfirm(dragRef.current.kuerzel, null, dragRef.current, null)
     }
-    setDragRange(null)
-    setIsDragging(false)
-  }, [isDragging, dragRange, inputValue, createAbsence])
+    dragRef.current = null
+    setTimeout(() => { didDragRef.current = false }, 0)
+  }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (!activeCell) return
-    e.preventDefault()
+    if (!activeCell && !dragRange) return
 
     if (e.key === 'Escape') {
+      e.preventDefault()
       setActiveCell(null)
+      setDragRange(null)
+      dragRef.current = null
+      setInputValue('')
+      if (confirmTimer.current) clearTimeout(confirmTimer.current)
       return
     }
 
     if (e.key === 'Backspace') {
-      setInputValue(prev => prev.slice(0, -1))
+      e.preventDefault()
+      if (inputValue === '') {
+        if (activeCell) {
+          const existing = absenceMap.get(`${activeCell.empId}_${activeCell.date}`)
+          if (existing) deleteAbsenceById(existing.id)
+        }
+        if (confirmTimer.current) clearTimeout(confirmTimer.current)
+      } else {
+        setInputValue(prev => prev.slice(0, -1))
+        if (confirmTimer.current) clearTimeout(confirmTimer.current)
+      }
       return
     }
 
     if (e.key === 'Delete') {
-      const existing = absenceMap.get(`${activeCell.empId}_${activeCell.date}`)
-      if (existing) deleteAbsenceById(existing.id)
-      setActiveCell(null)
+      e.preventDefault()
+      if (activeCell) {
+        const existing = absenceMap.get(`${activeCell.empId}_${activeCell.date}`)
+        if (existing) deleteAbsenceById(existing.id)
+      }
+      setInputValue('')
       return
     }
 
     if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault()
       const type = inputValue.toUpperCase() as AbsenceType
       if (inputValue && VALID_TYPES.includes(type)) {
-        createAbsence(activeCell.empId, activeCell.date, activeCell.date, type)
+        executeConfirm(type, activeCell, dragRange, e.key === 'Enter' ? 'down' : 'right')
+      } else {
+        setActiveCell(null)
+        setDragRange(null)
+        setInputValue('')
       }
-      setActiveCell(null)
       return
     }
 
-    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    if (activeCell && (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      e.preventDefault()
+      setDragRange(null)
       const empIdx = employees.findIndex(emp => emp.id === activeCell.empId)
       const dayIdx = calendarDays.findIndex(d => d.date === activeCell.date)
       let newEmpIdx = empIdx
@@ -174,8 +315,23 @@ export default function Abwesenheiten() {
     }
 
     if (e.key.length === 1) {
+      e.preventDefault()
       const next = (inputValue + e.key).toUpperCase()
-      if (VALID_TYPES.some(t => t.startsWith(next))) setInputValue(next)
+      if (!VALID_TYPES.some(t => t.startsWith(next))) return
+      setInputValue(next)
+      if (confirmTimer.current) clearTimeout(confirmTimer.current)
+      const isExact   = VALID_TYPES.includes(next as AbsenceType)
+      const hasLonger = VALID_TYPES.some(t => t !== next && t.startsWith(next))
+      if (isExact) {
+        const snapCell = activeCell
+        const snapDrag = dragRange
+        // Unambiguous (RU, AT, KK, U3, ÜA): confirm after short delay for visual feedback
+        // Ambiguous (U→U3, K→KK, S→SU): confirm after 600ms if no more input
+        const delay = hasLonger ? 600 : 150
+        confirmTimer.current = setTimeout(() => {
+          executeConfirm(next as AbsenceType, snapCell, snapDrag)
+        }, delay)
+      }
     }
   }
 
@@ -216,6 +372,10 @@ export default function Abwesenheiten() {
         </div>
       </div>
 
+      <p className="text-sm text-[#706D6A] mb-3">
+        <span className="font-semibold text-[#1A1917]">{monthWorkingDays}</span> Arbeitstage
+      </p>
+
       <div className="flex flex-wrap gap-2 mb-3">
         {(['U','RU','K','KK','AT','S','ÜA'] as AbsenceType[]).map(type => (
           <span
@@ -227,7 +387,7 @@ export default function Abwesenheiten() {
           </span>
         ))}
         <span className="text-[10px] text-[#706D6A] ml-1 self-center">
-          Kürzel eingeben · Pfeiltasten navigieren · Drag zum Ausfüllen · Delete löschen
+          Kürzel eingeben · ← → ↑ ↓ navigieren · ⌫ löschen · Drag zum Kopieren
         </span>
       </div>
 
@@ -239,6 +399,7 @@ export default function Abwesenheiten() {
             employees={employees}
             absenceMap={absenceMap}
             calendarDays={calendarDays}
+            summaries={summaries}
             activeCell={activeCell}
             inputValue={inputValue}
             dragRange={dragRange}
