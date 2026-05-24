@@ -51,39 +51,45 @@ function useGridLayout() {
   const [layout, setLayout] = useState<LayoutItem[]>(() => {
     try {
       const saved = localStorage.getItem(LS_KEY)
-      if (saved) return JSON.parse(saved) as LayoutItem[]
+      if (saved) {
+        const parsed = JSON.parse(saved) as LayoutItem[]
+        // Nur bekannte Widget-IDs behalten
+        const valid = parsed.filter(l => (WIDGET_IDS as readonly string[]).includes(l.i))
+        // Fehlende Default-Widgets ans Ende anhängen
+        const missing = DEFAULT_LAYOUT.filter(d => !valid.some(v => v.i === d.i))
+        return [...valid, ...missing]
+      }
     } catch {}
     return DEFAULT_LAYOUT
   })
 
-  const [visible, setVisible] = useState<WidgetId[]>(() =>
-    (JSON.parse(localStorage.getItem(LS_KEY) ?? 'null') as LayoutItem[] | null)
-      ?.map(l => l.i as WidgetId).filter(id => (WIDGET_IDS as readonly string[]).includes(id))
-    ?? DEFAULT_LAYOUT.map(l => l.i as WidgetId)
-  )
+  // Direkt aus layout abgeleitet – kein separater State
+  const visible = layout.map(l => l.i as WidgetId).filter(id => (WIDGET_IDS as readonly string[]).includes(id))
+  const hidden = WIDGET_IDS.filter(id => !visible.includes(id))
 
-  function saveLayout(next: Layout) {
-    const mutable = [...next] as LayoutItem[]
-    setLayout(mutable)
-    localStorage.setItem(LS_KEY, JSON.stringify(mutable))
+  function saveLayout(next: LayoutItem[] | Layout) {
+    const arr = Array.isArray(next) ? next : [...next]
+    setLayout(arr as LayoutItem[])
+    localStorage.setItem(LS_KEY, JSON.stringify(arr))
   }
 
   function removeWidget(id: WidgetId) {
-    const next = layout.filter(l => l.i !== id)
-    setLayout(next)
-    localStorage.setItem(LS_KEY, JSON.stringify(next))
-    setVisible(v => v.filter(x => x !== id))
+    setLayout(prev => {
+      const next = prev.filter(l => l.i !== id)
+      localStorage.setItem(LS_KEY, JSON.stringify(next))
+      return next
+    })
   }
 
   function addWidget(id: WidgetId) {
-    const stub: LayoutItem = { i: id, x: 0, y: Infinity, w: 2, h: 2 }
-    const next = [...layout, stub]
-    setLayout(next)
-    localStorage.setItem(LS_KEY, JSON.stringify(next))
-    setVisible(v => [...v, id])
+    setLayout(prev => {
+      const stub: LayoutItem = { i: id, x: 0, y: Infinity, w: 2, h: 2 }
+      const next = [...prev, stub]
+      localStorage.setItem(LS_KEY, JSON.stringify(next))
+      return next
+    })
   }
 
-  const hidden = WIDGET_IDS.filter(id => !visible.includes(id))
   return { layout, visible, hidden, saveLayout, removeWidget, addWidget }
 }
 
