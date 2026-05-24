@@ -43,7 +43,7 @@ export default function Abwesenheiten() {
         sort: 'last_name,first_name', filter: 'active = true', requestKey: 'abs-employees',
       }),
     ]).then(([settings, emps]) => {
-      const fs = (settings as { key: string; value: string }[]).find(s => s.key === 'federal_state')?.value ?? 'ST'
+      const fs = (settings as unknown as { key: string; value: string }[]).find(s => s.key === 'federal_state')?.value ?? 'ST'
       setFederal(fs)
       setEmployees(emps)
     }).catch(console.error)
