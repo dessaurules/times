@@ -10,6 +10,9 @@ import type { Employee, Absence, TimeEntry } from '@shared/types'
 import { ABSENCE_COLORS } from '@shared/types'
 import { cn } from '@/lib/utils'
 import { notifyEmployee } from '../lib/notifications'
+import { GlassCard } from '@/components/ui/glass-card'
+
+const glassUI = import.meta.env.VITE_GLASS_UI === 'true'
 
 const RGL = WidthProvider(GridLayout)
 
@@ -116,6 +119,11 @@ function fmtMins(mins: number) {
   const h = Math.floor(Math.abs(mins) / 60)
   const m = Math.abs(mins) % 60
   return `${h}:${String(m).padStart(2, '0')} h`
+}
+
+function maybeGlass(node: React.ReactNode): React.ReactNode {
+  if (!glassUI) return node
+  return <GlassCard className="h-full w-full overflow-hidden">{node}</GlassCard>
 }
 
 // ── Dashboard ──────────────────────────────────────────────────────────────
@@ -574,24 +582,24 @@ export default function Dashboard() {
   function renderWidget(id: WidgetId) {
     switch (id) {
       case 'stat-eingestempelt':
-        return <StatCard label="Eingestempelt heute" value={presentToday}            sub={`von ${data.activeTotal} aktiven MA`}     color="green"  />
+        return maybeGlass(<StatCard label="Eingestempelt heute" value={presentToday}            sub={`von ${data.activeTotal} aktiven MA`}     color="green"  />)
       case 'stat-abwesend':
-        return <StatCard label="Abwesend heute"       value={data.absentToday.length} sub={absentSub}                                color={data.absentToday.length > 0 ? 'amber' : 'default'} />
+        return maybeGlass(<StatCard label="Abwesend heute"       value={data.absentToday.length} sub={absentSub}                                color={data.absentToday.length > 0 ? 'amber' : 'default'} />)
       case 'stat-genehmigungen':
-        return <StatCard label="Offene Genehmigungen" value={data.pending.length}     sub="Warten auf Freigabe"                      color={data.pending.length > 0 ? 'red' : 'default'} />
+        return maybeGlass(<StatCard label="Offene Genehmigungen" value={data.pending.length}     sub="Warten auf Freigabe"                      color={data.pending.length > 0 ? 'red' : 'default'} />)
       case 'stat-resturlaub':
-        return <StatCard label="Resturlaub-Verfall"   value={data.carryOverCount}     sub={`Resturlaub ${year}`}                     color={data.carryOverCount > 0 ? 'amber' : 'default'} />
-      case 'antraege':      return renderAntraege()
-      case 'abwesend':      return renderAbwesend()
-      case 'arbeitszeiten': return renderArbeitszeiten()
+        return maybeGlass(<StatCard label="Resturlaub-Verfall"   value={data.carryOverCount}     sub={`Resturlaub ${year}`}                     color={data.carryOverCount > 0 ? 'amber' : 'default'} />)
+      case 'antraege':      return maybeGlass(renderAntraege())
+      case 'abwesend':      return maybeGlass(renderAbwesend())
+      case 'arbeitszeiten': return maybeGlass(renderArbeitszeiten())
       case 'stat-ueberstunden':
-        return <StatCard label="Überstunden diese Woche" value={0} sub="Demnächst verfügbar" color="default" />
+        return maybeGlass(<StatCard label="Überstunden diese Woche" value={0} sub="Demnächst verfügbar" color="default" />)
       case 'stat-krankmeldungen':
-        return <StatCard label="Krankmeldungen" value={data.absentToday.filter(a => a.type === 'K' || a.type === 'KK').length} sub="Aktuelle K/KK-Einträge" color={data.absentToday.some(a => a.type === 'K' || a.type === 'KK') ? 'red' : 'default'} />
+        return maybeGlass(<StatCard label="Krankmeldungen" value={data.absentToday.filter(a => a.type === 'K' || a.type === 'KK').length} sub="Aktuelle K/KK-Einträge" color={data.absentToday.some(a => a.type === 'K' || a.type === 'KK') ? 'red' : 'default'} />)
       case 'geburtstage':
-        return <WidgetStub label="Geburtstage im Monat" />
+        return maybeGlass(<WidgetStub label="Geburtstage im Monat" />)
       case 'dokumente-ablauf':
-        return <WidgetStub label="Ablaufende Verträge" />
+        return maybeGlass(<WidgetStub label="Ablaufende Verträge" />)
     }
   }
 
