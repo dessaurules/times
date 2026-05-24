@@ -43,9 +43,14 @@ export function GlassCardHeader({ className, children, ...props }: React.HTMLAtt
 }
 
 export function GlassCardTitle({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  const glass = useContext(GlassCtx)
   return (
     <div
-      className={cn('text-[11px] font-semibold uppercase tracking-wider text-[#706D6A]', className)}
+      className={cn(
+        'text-[11px] font-semibold uppercase tracking-wider',
+        glass ? 'text-white/70' : 'text-[#706D6A]',
+        className
+      )}
       {...props}
     >
       {children}
@@ -54,8 +59,9 @@ export function GlassCardTitle({ className, children, ...props }: React.HTMLAttr
 }
 
 export function GlassCardDescription({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  const glass = useContext(GlassCtx)
   return (
-    <div className={cn('text-xs text-[#706D6A]', className)} {...props}>
+    <div className={cn('text-xs', glass ? 'text-white/60' : 'text-[#706D6A]', className)} {...props}>
       {children}
     </div>
   )

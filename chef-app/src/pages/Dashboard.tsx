@@ -10,7 +10,7 @@ import type { Employee, Absence, TimeEntry } from '@shared/types'
 import { ABSENCE_COLORS } from '@shared/types'
 import { cn } from '@/lib/utils'
 import { notifyEmployee } from '../lib/notifications'
-import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent } from '@/components/ui/glass-card'
+import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardDescription, GlassCardContent } from '@/components/ui/glass-card'
 
 const glassUI = import.meta.env.VITE_GLASS_UI === 'true'
 
@@ -608,22 +608,27 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1917]">Dashboard</h1>
-          <p className="text-sm text-[#706D6A] capitalize">
+          <h1 className={cn('text-2xl font-bold', glassUI ? 'text-white' : 'text-[#1A1917]')}>Dashboard</h1>
+          <p className={cn('text-sm capitalize', glassUI ? 'text-white/60' : 'text-[#706D6A]')}>
             {format(new Date(), 'EEEE, dd. MMMM yyyy', { locale: de })}
           </p>
         </div>
         {editMode ? (
           <button
             onClick={() => setEditMode(false)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#BA7517] text-white text-sm font-medium hover:bg-[#9E6312] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 backdrop-blur-sm text-white text-sm font-medium hover:bg-white/30 transition-colors border border-white/30"
           >
             Fertig
           </button>
         ) : (
           <button
             onClick={() => setEditMode(true)}
-            className="p-2 rounded-lg border border-[#EDE7DC] text-[#706D6A] hover:bg-[#F5F2EE] hover:text-[#1A1917] transition-colors"
+            className={cn(
+              'p-2 rounded-lg transition-colors',
+              glassUI
+                ? 'border border-white/30 text-white/70 hover:bg-white/20 hover:text-white'
+                : 'border border-[#EDE7DC] text-[#706D6A] hover:bg-[#F5F2EE] hover:text-[#1A1917]'
+            )}
             title="Layout anpassen"
           >
             <SlidersHorizontal size={16} />
@@ -696,7 +701,7 @@ function StatCard({ label, value, sub, color, glass }: {
       <GlassCardContent>
         <GlassCardTitle className="mb-2">{label}</GlassCardTitle>
         <div className={`text-3xl font-bold my-2 ${cls}`}>{value}</div>
-        <div className="text-xs text-[#706D6A]">{sub}</div>
+        <GlassCardDescription>{sub}</GlassCardDescription>
       </GlassCardContent>
     </GlassCard>
   )
@@ -706,7 +711,7 @@ function WidgetStub({ label, glass }: { label: string; glass: boolean }) {
   return (
     <GlassCard glass={glass} className="h-full">
       <GlassCardContent className="flex items-center justify-center h-full">
-        <span className="text-sm text-[#B0A898]">{label} – demnächst verfügbar</span>
+        <GlassCardDescription>{label} – demnächst verfügbar</GlassCardDescription>
       </GlassCardContent>
     </GlassCard>
   )
