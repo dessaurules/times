@@ -10,7 +10,7 @@ import type { Employee, Absence, TimeEntry } from '@shared/types'
 import { ABSENCE_COLORS } from '@shared/types'
 import { cn } from '@/lib/utils'
 import { notifyEmployee } from '../lib/notifications'
-import { GlassCard } from '@/components/ui/glass-card'
+import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardContent } from '@/components/ui/glass-card'
 
 const glassUI = import.meta.env.VITE_GLASS_UI === 'true'
 
@@ -119,11 +119,6 @@ function fmtMins(mins: number) {
   const h = Math.floor(Math.abs(mins) / 60)
   const m = Math.abs(mins) % 60
   return `${h}:${String(m).padStart(2, '0')} h`
-}
-
-function maybeGlass(node: React.ReactNode): React.ReactNode {
-  if (!glassUI) return node
-  return <GlassCard className="h-full w-full overflow-hidden">{node}</GlassCard>
 }
 
 // ── Dashboard ──────────────────────────────────────────────────────────────
@@ -315,32 +310,34 @@ export default function Dashboard() {
   // ── Widget-Render-Funktionen ───────────────────────────────────────────────
   function renderAntraege() {
     return (
-      <div className="h-full bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
-        <div className="flex border-b border-[#EDE7DC]">
-          <button
-            onClick={() => setAntragTab('pending')}
-            className={cn(
-              'flex-1 py-3 text-[11px] font-semibold uppercase tracking-wider transition-colors',
-              antragTab === 'pending'
-                ? 'text-[#BA7517] border-b-2 border-[#BA7517] bg-[#FFF9F0]'
-                : 'text-[#706D6A] hover:bg-[#FAF7F2]'
-            )}
-          >
-            Ausstehend{data.pending.length > 0 ? ` (${data.pending.length})` : ''}
-          </button>
-          <button
-            onClick={() => setAntragTab('verlauf')}
-            className={cn(
-              'flex-1 py-3 text-[11px] font-semibold uppercase tracking-wider transition-colors',
-              antragTab === 'verlauf'
-                ? 'text-[#BA7517] border-b-2 border-[#BA7517] bg-[#FFF9F0]'
-                : 'text-[#706D6A] hover:bg-[#FAF7F2]'
-            )}
-          >
-            Verlauf
-          </button>
-        </div>
-        <div className="p-5">
+      <GlassCard glass={glassUI} className="h-full">
+        <GlassCardHeader className="p-0 border-b-0">
+          <div className="flex w-full">
+            <button
+              onClick={() => setAntragTab('pending')}
+              className={cn(
+                'flex-1 py-3 text-[11px] font-semibold uppercase tracking-wider transition-colors',
+                antragTab === 'pending'
+                  ? 'text-[#BA7517] border-b-2 border-[#BA7517] bg-[#FFF9F0]'
+                  : 'text-[#706D6A] hover:bg-[#FAF7F2]'
+              )}
+            >
+              Ausstehend{data.pending.length > 0 ? ` (${data.pending.length})` : ''}
+            </button>
+            <button
+              onClick={() => setAntragTab('verlauf')}
+              className={cn(
+                'flex-1 py-3 text-[11px] font-semibold uppercase tracking-wider transition-colors',
+                antragTab === 'verlauf'
+                  ? 'text-[#BA7517] border-b-2 border-[#BA7517] bg-[#FFF9F0]'
+                  : 'text-[#706D6A] hover:bg-[#FAF7F2]'
+              )}
+            >
+              Verlauf
+            </button>
+          </div>
+        </GlassCardHeader>
+        <GlassCardContent>
           {antragTab === 'pending' ? (
             <>
               {data.pending.length === 0 ? (
@@ -436,45 +433,45 @@ export default function Dashboard() {
               )}
             </>
           )}
-        </div>
-      </div>
+        </GlassCardContent>
+      </GlassCard>
     )
   }
 
   function renderAbwesend() {
     return (
-      <div className="h-full bg-white border border-[#EDE7DC] rounded-lg p-5">
-        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[#706D6A] mb-4">
-          Heute abwesend · {format(new Date(), 'dd.MM.yyyy')}
-        </h2>
-        {data.absentToday.length === 0 ? (
-          <p className="text-sm text-[#706D6A]">Alle Mitarbeiter anwesend.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {data.absentToday.map(abs => {
-              const emp    = abs.expand?.employee
-              const colors = ABSENCE_COLORS[abs.type]
-              return (
-                <span key={abs.id}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-                  style={{ backgroundColor: colors.bg, color: colors.text }}>
-                  {emp ? `${emp.first_name} ${emp.last_name}` : '—'} · {abs.type}
-                </span>
-              )
-            })}
-          </div>
-        )}
-      </div>
+      <GlassCard glass={glassUI} className="h-full">
+        <GlassCardHeader>
+          <GlassCardTitle>Heute abwesend · {format(new Date(), 'dd.MM.yyyy')}</GlassCardTitle>
+        </GlassCardHeader>
+        <GlassCardContent>
+          {data.absentToday.length === 0 ? (
+            <p className="text-sm text-[#706D6A]">Alle Mitarbeiter anwesend.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {data.absentToday.map(abs => {
+                const emp    = abs.expand?.employee
+                const colors = ABSENCE_COLORS[abs.type]
+                return (
+                  <span key={abs.id}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                    style={{ backgroundColor: colors.bg, color: colors.text }}>
+                    {emp ? `${emp.first_name} ${emp.last_name}` : '—'} · {abs.type}
+                  </span>
+                )
+              })}
+            </div>
+          )}
+        </GlassCardContent>
+      </GlassCard>
     )
   }
 
   function renderArbeitszeiten() {
     return (
-      <div className="h-full bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
-        <div className="px-5 py-3 border-b border-[#EDE7DC] bg-[#FAF7F2] flex items-center justify-between">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-[#706D6A]">
-            Arbeitszeiten heute · {format(new Date(), 'dd.MM.yyyy')}
-          </div>
+      <GlassCard glass={glassUI} className="h-full">
+        <GlassCardHeader>
+          <GlassCardTitle>Arbeitszeiten heute · {format(new Date(), 'dd.MM.yyyy')}</GlassCardTitle>
           <div className="flex items-center gap-3">
             <div className="flex items-baseline gap-1">
               <span className="text-base font-bold text-[#1A1917]">{stempel.filter(r => r.isActive).length}</span>
@@ -491,7 +488,7 @@ export default function Dashboard() {
               <Plus size={15} />
             </button>
           </div>
-        </div>
+        </GlassCardHeader>
 
         {showClockInForm && (
           <div className="px-5 py-3 border-b border-[#EDE7DC] bg-white flex items-center gap-2">
@@ -521,59 +518,61 @@ export default function Dashboard() {
           </div>
         )}
 
-        {stempel.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-[#706D6A]">Heute noch keine Buchungen.</p>
-        ) : (
-          <div className="divide-y divide-[#F5F0EA]">
-            {stempel.map((row, i) => {
-              const prevWasActive = i > 0 && stempel[i - 1].isActive
-              const showSeparator = !row.isActive && prevWasActive
-              return (
-                <div key={row.employee.id}>
-                  {showSeparator && (
-                    <div className="px-5 py-1.5 bg-[#FAF7F2]">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#B0A898]">
-                        Ausgestempelt
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-3 px-5 py-2.5">
-                    <span className={cn(
-                      'w-2 h-2 rounded-full shrink-0',
-                      row.isActive ? 'bg-green-500' : 'bg-[#D1D5DB]'
-                    )} />
-                    <span className="text-sm font-semibold text-[#1A1917] flex-1">
-                      {row.employee.last_name}, {row.employee.first_name}
-                    </span>
-                    <span className="text-xs text-[#706D6A]">{row.sinceLabel}</span>
-                    {row.isActive ? (
-                      <span className="text-xs font-bold tabular-nums w-16 text-right text-green-700">
-                        {Math.floor(row.totalMins / 60)}
-                        <span className="blink">:</span>
-                        {String(row.totalMins % 60).padStart(2, '0')} h
-                      </span>
-                    ) : (
-                      <span className="text-xs font-bold tabular-nums w-16 text-right text-[#706D6A]">
-                        {fmtMins(row.totalMins)}
-                      </span>
+        <GlassCardContent className="p-0">
+          {stempel.length === 0 ? (
+            <p className="px-5 py-4 text-sm text-[#706D6A]">Heute noch keine Buchungen.</p>
+          ) : (
+            <div className="divide-y divide-[#F5F0EA]">
+              {stempel.map((row, i) => {
+                const prevWasActive = i > 0 && stempel[i - 1].isActive
+                const showSeparator = !row.isActive && prevWasActive
+                return (
+                  <div key={row.employee.id}>
+                    {showSeparator && (
+                      <div className="px-5 py-1.5 bg-[#FAF7F2]">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#B0A898]">
+                          Ausgestempelt
+                        </span>
+                      </div>
                     )}
-                    <button
-                      onClick={() => row.isActive && row.openEntryId ? handleClockOut(row.openEntryId) : undefined}
-                      className={cn(
-                        'flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#EDE7DC] text-[#706D6A] hover:bg-[#EDE7DC] transition-colors shrink-0',
-                        (!row.isActive || !row.openEntryId) && 'invisible pointer-events-none'
+                    <div className="flex items-center gap-3 px-5 py-2.5">
+                      <span className={cn(
+                        'w-2 h-2 rounded-full shrink-0',
+                        row.isActive ? 'bg-green-500' : 'bg-[#D1D5DB]'
+                      )} />
+                      <span className="text-sm font-semibold text-[#1A1917] flex-1">
+                        {row.employee.last_name}, {row.employee.first_name}
+                      </span>
+                      <span className="text-xs text-[#706D6A]">{row.sinceLabel}</span>
+                      {row.isActive ? (
+                        <span className="text-xs font-bold tabular-nums w-16 text-right text-green-700">
+                          {Math.floor(row.totalMins / 60)}
+                          <span className="blink">:</span>
+                          {String(row.totalMins % 60).padStart(2, '0')} h
+                        </span>
+                      ) : (
+                        <span className="text-xs font-bold tabular-nums w-16 text-right text-[#706D6A]">
+                          {fmtMins(row.totalMins)}
+                        </span>
                       )}
-                      title="Ausstempeln"
-                    >
-                      <LogOut size={11} /> Ausstempeln
-                    </button>
+                      <button
+                        onClick={() => row.isActive && row.openEntryId ? handleClockOut(row.openEntryId) : undefined}
+                        className={cn(
+                          'flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#EDE7DC] text-[#706D6A] hover:bg-[#EDE7DC] transition-colors shrink-0',
+                          (!row.isActive || !row.openEntryId) && 'invisible pointer-events-none'
+                        )}
+                        title="Ausstempeln"
+                      >
+                        <LogOut size={11} /> Ausstempeln
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
+                )
+              })}
+            </div>
+          )}
+        </GlassCardContent>
+      </GlassCard>
     )
   }
 
@@ -582,24 +581,24 @@ export default function Dashboard() {
   function renderWidget(id: WidgetId) {
     switch (id) {
       case 'stat-eingestempelt':
-        return maybeGlass(<StatCard label="Eingestempelt heute" value={presentToday}            sub={`von ${data.activeTotal} aktiven MA`}     color="green"  />)
+        return <StatCard label="Eingestempelt heute" value={presentToday}            sub={`von ${data.activeTotal} aktiven MA`}     color="green"  glass={glassUI} />
       case 'stat-abwesend':
-        return maybeGlass(<StatCard label="Abwesend heute"       value={data.absentToday.length} sub={absentSub}                                color={data.absentToday.length > 0 ? 'amber' : 'default'} />)
+        return <StatCard label="Abwesend heute"       value={data.absentToday.length} sub={absentSub}                                color={data.absentToday.length > 0 ? 'amber' : 'default'} glass={glassUI} />
       case 'stat-genehmigungen':
-        return maybeGlass(<StatCard label="Offene Genehmigungen" value={data.pending.length}     sub="Warten auf Freigabe"                      color={data.pending.length > 0 ? 'red' : 'default'} />)
+        return <StatCard label="Offene Genehmigungen" value={data.pending.length}     sub="Warten auf Freigabe"                      color={data.pending.length > 0 ? 'red' : 'default'} glass={glassUI} />
       case 'stat-resturlaub':
-        return maybeGlass(<StatCard label="Resturlaub-Verfall"   value={data.carryOverCount}     sub={`Resturlaub ${year}`}                     color={data.carryOverCount > 0 ? 'amber' : 'default'} />)
-      case 'antraege':      return maybeGlass(renderAntraege())
-      case 'abwesend':      return maybeGlass(renderAbwesend())
-      case 'arbeitszeiten': return maybeGlass(renderArbeitszeiten())
+        return <StatCard label="Resturlaub-Verfall"   value={data.carryOverCount}     sub={`Resturlaub ${year}`}                     color={data.carryOverCount > 0 ? 'amber' : 'default'} glass={glassUI} />
+      case 'antraege':      return renderAntraege()
+      case 'abwesend':      return renderAbwesend()
+      case 'arbeitszeiten': return renderArbeitszeiten()
       case 'stat-ueberstunden':
-        return maybeGlass(<StatCard label="Überstunden diese Woche" value={0} sub="Demnächst verfügbar" color="default" />)
+        return <StatCard label="Überstunden diese Woche" value={0} sub="Demnächst verfügbar" color="default" glass={glassUI} />
       case 'stat-krankmeldungen':
-        return maybeGlass(<StatCard label="Krankmeldungen" value={data.absentToday.filter(a => a.type === 'K' || a.type === 'KK').length} sub="Aktuelle K/KK-Einträge" color={data.absentToday.some(a => a.type === 'K' || a.type === 'KK') ? 'red' : 'default'} />)
+        return <StatCard label="Krankmeldungen" value={data.absentToday.filter(a => a.type === 'K' || a.type === 'KK').length} sub="Aktuelle K/KK-Einträge" color={data.absentToday.some(a => a.type === 'K' || a.type === 'KK') ? 'red' : 'default'} glass={glassUI} />
       case 'geburtstage':
-        return maybeGlass(<WidgetStub label="Geburtstage im Monat" />)
+        return <WidgetStub label="Geburtstage im Monat" glass={glassUI} />
       case 'dokumente-ablauf':
-        return maybeGlass(<WidgetStub label="Ablaufende Verträge" />)
+        return <WidgetStub label="Ablaufende Verträge" glass={glassUI} />
     }
   }
 
@@ -688,23 +687,27 @@ function calcDays(from: string, to: string): number {
   return Math.round((parseISO(to).getTime() - parseISO(from).getTime()) / 86_400_000) + 1
 }
 
-function StatCard({ label, value, sub, color }: {
-  label: string; value: number; sub: string; color: 'green' | 'amber' | 'red' | 'default'
+function StatCard({ label, value, sub, color, glass }: {
+  label: string; value: number; sub: string; color: 'green' | 'amber' | 'red' | 'default'; glass: boolean
 }) {
   const cls = { green: 'text-green-600', amber: 'text-[#BA7517]', red: 'text-red-600', default: 'text-[#1A1917]' }[color]
   return (
-    <div className="h-full bg-white border border-[#EDE7DC] rounded-lg p-5">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#706D6A] mb-2">{label}</div>
-      <div className={`text-3xl font-bold mb-1 ${cls}`}>{value}</div>
-      <div className="text-xs text-[#706D6A]">{sub}</div>
-    </div>
+    <GlassCard glass={glass} className="h-full">
+      <GlassCardContent>
+        <GlassCardTitle className="mb-2">{label}</GlassCardTitle>
+        <div className={`text-3xl font-bold my-2 ${cls}`}>{value}</div>
+        <div className="text-xs text-[#706D6A]">{sub}</div>
+      </GlassCardContent>
+    </GlassCard>
   )
 }
 
-function WidgetStub({ label }: { label: string }) {
+function WidgetStub({ label, glass }: { label: string; glass: boolean }) {
   return (
-    <div className="h-full bg-white border border-[#EDE7DC] rounded-lg p-5 flex items-center justify-center">
-      <span className="text-sm text-[#B0A898]">{label} – demnächst verfügbar</span>
-    </div>
+    <GlassCard glass={glass} className="h-full">
+      <GlassCardContent className="flex items-center justify-center h-full">
+        <span className="text-sm text-[#B0A898]">{label} – demnächst verfügbar</span>
+      </GlassCardContent>
+    </GlassCard>
   )
 }
