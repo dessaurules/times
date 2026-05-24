@@ -10,6 +10,28 @@
   animation: blink 1.6s step-start infinite;
 }
 
+@keyframes cell-pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
+@keyframes cell-clear {
+  0%   { opacity: 1; }
+  40%  { opacity: 0.25; }
+  100% { opacity: 1; }
+}
+
+@keyframes pulse-cell {
+  0%   { box-shadow: 0 0 0 0 rgba(186, 117, 23, 0.5); }
+  70%  { box-shadow: 0 0 0 5px rgba(186, 117, 23, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(186, 117, 23, 0); }
+}
+
+.just-filled  { animation: cell-pop   280ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.just-cleared { animation: cell-clear 200ms ease-out forwards; }
+.drag-over-anim { animation: pulse-cell 400ms ease-out infinite; }
+
 @layer base {
   :root {
     /* ── Schicht & Plan Amber-Theme ──────────────────── */

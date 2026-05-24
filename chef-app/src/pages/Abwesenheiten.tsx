@@ -31,10 +31,22 @@ export default function Abwesenheiten() {
   const [inputValue, setInputValue] = useState('')
   const [dragRange,  setDragRange]  = useState<{ empId: string; start: string; end: string } | null>(null)
   const [popover,    setPopover]    = useState<{ absence: Absence; rect: DOMRect } | null>(null)
+  const [animatingCells, setAnimatingCells] = useState<Map<string, 'filled' | 'cleared'>>(new Map())
   const inputRef       = useRef<HTMLInputElement>(null)
   const confirmTimer   = useRef<ReturnType<typeof setTimeout> | null>(null)
   const didDragRef     = useRef(false)
   const dragRef        = useRef<{ empId: string; start: string; end: string; kuerzel: AbsenceType } | null>(null)
+
+  function triggerCellAnim(key: string, type: 'filled' | 'cleared') {
+    setAnimatingCells(prev => new Map(prev).set(key, type))
+    setTimeout(() => {
+      setAnimatingCells(prev => {
+        const next = new Map(prev)
+        next.delete(key)
+        return next
+      })
+    }, 350)
+  }
 
   useEffect(() => {
     Promise.all([
@@ -111,11 +123,16 @@ export default function Abwesenheiten() {
       type, status: 'approved', created_by: user!.id,
     }, { requestKey: null })
     setAbsences(prev => [...prev, rec])
+    triggerCellAnim(`${empId}_${dateFrom}`, 'filled')
   }, [user])
 
   async function deleteAbsenceById(id: string) {
+    const target = absences.find(a => a.id === id)
     await pb.collection('absences').delete(id)
     setAbsences(prev => prev.filter(a => a.id !== id))
+    if (target) {
+      triggerCellAnim(`${target.employee}_${target.date_from}`, 'cleared')
+    }
   }
 
   function absDateLabel(abs: Absence) {
@@ -406,6 +423,7 @@ export default function Abwesenheiten() {
             onCellClick={handleCellClick}
             onCellMouseDown={handleCellMouseDown}
             onCellMouseEnter={handleCellMouseEnter}
+            animatingCells={animatingCells}
           />
         )}
       </div>

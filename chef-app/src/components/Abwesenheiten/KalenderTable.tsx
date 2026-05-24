@@ -14,12 +14,14 @@ export interface KalenderTableProps {
   onCellClick: (empId: string, date: string, absence: Absence | undefined) => void
   onCellMouseDown: (empId: string, date: string, kuerzel: AbsenceType) => void
   onCellMouseEnter: (empId: string, date: string) => void
+  animatingCells?: Map<string, 'filled' | 'cleared'>
 }
 
 export default function KalenderTable({
   employees, absenceMap, calendarDays, summaries,
   activeCell, inputValue, dragRange,
   onCellClick, onCellMouseDown, onCellMouseEnter,
+  animatingCells = new Map(),
 }: KalenderTableProps) {
 
   return (
@@ -63,6 +65,7 @@ export default function KalenderTable({
                   const inDrag = dragRange?.empId === emp.id &&
                     day.date >= dragRange.start && day.date <= dragRange.end
                   const colors = absence ? ABSENCE_COLORS[absence.type] : null
+                  const animState = animatingCells.get(key)
 
                   return (
                     <td
@@ -74,7 +77,9 @@ export default function KalenderTable({
                         !isBlocked && !absence && 'group-hover:bg-[#FDFCFB] hover:bg-[#F5F2EE] cursor-pointer',
                         !isBlocked && absence && 'cursor-grab',
                         isActive && 'z-20',
-                        inDrag && !isBlocked && 'bg-amber-100',
+                        inDrag && !isBlocked && 'bg-amber-100 drag-over-anim',
+                        animState === 'filled'  && 'just-filled',
+                        animState === 'cleared' && 'just-cleared',
                       )}
                       style={{
                         ...(absence && colors ? { backgroundColor: colors.bg } : {}),
