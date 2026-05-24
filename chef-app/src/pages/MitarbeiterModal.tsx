@@ -74,6 +74,11 @@ export default function MitarbeiterModal({ employeeId, onClose }: Props) {
   const [dashLoading, setDashLoading]   = useState(false)
 
   useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
+  useEffect(() => {
     pb.collection('departments')
       .getFullList<Department>({ sort: 'sort_order,name' })
       .then(setDepts)
@@ -207,6 +212,7 @@ export default function MitarbeiterModal({ employeeId, onClose }: Props) {
         onClose()
       } else {
         await pb.collection('employees').update(id!, data)
+        onClose()
       }
     } catch (err: unknown) {
       const pbErr = err as { status?: number; response?: { data?: Record<string, { message: string }> }; message?: string }
@@ -228,6 +234,7 @@ export default function MitarbeiterModal({ employeeId, onClose }: Props) {
       onClose()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Fehler beim Löschen')
+      setConfirmDel(false)
     }
   }
 
