@@ -1,16 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { format, parseISO, differenceInMinutes } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Check, XCircle, Plus, X, LogOut, GripVertical, SlidersHorizontal } from 'lucide-react'
-import {
-  DndContext, DragOverlay, closestCenter,
-  type DragEndEvent, type DragStartEvent,
-  useSensor, useSensors, PointerSensor,
-} from '@dnd-kit/core'
-import {
-  SortableContext, verticalListSortingStrategy, rectSortingStrategy, useSortable, arrayMove,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { Check, XCircle, Plus, X, LogOut, SlidersHorizontal } from 'lucide-react'
+import GridLayout, { WidthProvider } from 'react-grid-layout/legacy'
+import type { Layout, LayoutItem } from 'react-grid-layout/legacy'
 import { pb } from '../lib/pb'
 import { useAuthStore } from '../stores/auth'
 import type { Employee, Absence, TimeEntry } from '@shared/types'
@@ -18,105 +11,80 @@ import { ABSENCE_COLORS } from '@shared/types'
 import { cn } from '@/lib/utils'
 import { notifyEmployee } from '../lib/notifications'
 
+const RGL = WidthProvider(GridLayout)
+
 // ── Widget-Definitionen ────────────────────────────────────────────────────
 const WIDGET_IDS = [
-  'stat-eingestempelt',
-  'stat-abwesend',
-  'stat-genehmigungen',
-  'stat-resturlaub',
-  'antraege',
-  'abwesend',
-  'arbeitszeiten',
+  'stat-eingestempelt', 'stat-abwesend', 'stat-genehmigungen', 'stat-resturlaub',
+  'antraege', 'abwesend', 'arbeitszeiten',
+  'stat-ueberstunden', 'stat-krankmeldungen', 'geburtstage', 'dokumente-ablauf',
 ] as const
 type WidgetId = typeof WIDGET_IDS[number]
 
 const WIDGET_META: Record<WidgetId, { label: string }> = {
-  'stat-eingestempelt': { label: 'Eingestempelt heute' },
-  'stat-abwesend':      { label: 'Abwesend heute' },
-  'stat-genehmigungen': { label: 'Offene Genehmigungen' },
-  'stat-resturlaub':    { label: 'Resturlaub-Verfall' },
-  antraege:             { label: 'Anträge' },
-  abwesend:             { label: 'Heute abwesend' },
-  arbeitszeiten:        { label: 'Arbeitszeiten heute' },
+  'stat-eingestempelt':  { label: 'Eingestempelt heute' },
+  'stat-abwesend':       { label: 'Abwesend heute' },
+  'stat-genehmigungen':  { label: 'Offene Genehmigungen' },
+  'stat-resturlaub':     { label: 'Resturlaub-Verfall' },
+  'antraege':            { label: 'Anträge' },
+  'abwesend':            { label: 'Heute abwesend' },
+  'arbeitszeiten':       { label: 'Arbeitszeiten heute' },
+  'stat-ueberstunden':   { label: 'Überstunden diese Woche' },
+  'stat-krankmeldungen': { label: 'Krankmeldungen' },
+  'geburtstage':         { label: 'Geburtstage im Monat' },
+  'dokumente-ablauf':    { label: 'Ablaufende Verträge' },
 }
 
-const STAT_IDS:  readonly WidgetId[] = ['stat-eingestempelt', 'stat-abwesend', 'stat-genehmigungen', 'stat-resturlaub']
-const PANEL_IDS: readonly WidgetId[] = ['antraege', 'abwesend', 'arbeitszeiten']
+const DEFAULT_LAYOUT: LayoutItem[] = [
+  { i: 'stat-eingestempelt',  x: 0, y: 0, w: 1, h: 1 },
+  { i: 'stat-abwesend',       x: 1, y: 0, w: 1, h: 1 },
+  { i: 'stat-genehmigungen',  x: 2, y: 0, w: 1, h: 1 },
+  { i: 'stat-resturlaub',     x: 3, y: 0, w: 1, h: 1 },
+  { i: 'antraege',            x: 0, y: 1, w: 2, h: 3 },
+  { i: 'abwesend',            x: 2, y: 1, w: 2, h: 2 },
+  { i: 'arbeitszeiten',       x: 0, y: 4, w: 4, h: 3 },
+]
 
-const LS_KEY = 'chef-dashboard-widgets'
+const LS_KEY = 'chef-dashboard-layout-v2'
 
-function useDashboardWidgets() {
-  const [order, setOrder] = useState<WidgetId[]>(() => {
+function useGridLayout() {
+  const [layout, setLayout] = useState<LayoutItem[]>(() => {
     try {
       const saved = localStorage.getItem(LS_KEY)
-      if (saved) {
-        const parsed: string[] = JSON.parse(saved)
-        const valid = parsed.filter((id): id is WidgetId => WIDGET_IDS.includes(id as WidgetId))
-        // fehlende Widgets ans Ende anhängen
-        const missing = WIDGET_IDS.filter(id => !valid.includes(id))
-        return [...valid, ...missing]
-      }
+      if (saved) return JSON.parse(saved) as LayoutItem[]
     } catch {}
-    return [...WIDGET_IDS]
+    return DEFAULT_LAYOUT
   })
 
-  function save(next: WidgetId[]) {
-    setOrder(next)
-    localStorage.setItem(LS_KEY, JSON.stringify(next))
-  }
-
-  const hidden = WIDGET_IDS.filter(id => !order.includes(id))
-
-  return {
-    order,
-    hidden,
-    reorder: (ids: WidgetId[]) => save(ids),
-    remove:  (id: WidgetId)    => save(order.filter(x => x !== id)),
-    add:     (id: WidgetId)    => save([...order, id]),
-  }
-}
-
-// ── SortableWidget-Wrapper ─────────────────────────────────────────────────
-function SortableWidget({
-  id, editMode, onRemove, children,
-}: {
-  id: WidgetId; editMode: boolean; onRemove: () => void; children: React.ReactNode
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
-  return (
-    <div
-      ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.4 : 1,
-      }}
-    >
-      {editMode && (
-        <div className="flex items-center gap-2 px-3 py-1.5 mb-1 bg-[rgba(186,117,23,0.08)] rounded-t-xl border border-b-0 border-[#EDE7DC]">
-          <button
-            className="cursor-grab active:cursor-grabbing touch-none text-[#BA7517] hover:text-[#9E6312] transition-colors"
-            {...listeners}
-            {...attributes}
-            title="Verschieben"
-          >
-            <GripVertical size={14} />
-          </button>
-          <span className="text-xs font-medium text-[#BA7517] flex-1 select-none">
-            {WIDGET_META[id].label}
-          </span>
-          <button
-            onClick={onRemove}
-            className="text-[#706D6A] hover:text-red-500 transition-colors"
-            title="Widget entfernen"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
-      {children}
-    </div>
+  const [visible, setVisible] = useState<WidgetId[]>(() =>
+    (JSON.parse(localStorage.getItem(LS_KEY) ?? 'null') as LayoutItem[] | null)
+      ?.map(l => l.i as WidgetId).filter(id => (WIDGET_IDS as readonly string[]).includes(id))
+    ?? DEFAULT_LAYOUT.map(l => l.i as WidgetId)
   )
+
+  function saveLayout(next: Layout) {
+    const mutable = [...next] as LayoutItem[]
+    setLayout(mutable)
+    localStorage.setItem(LS_KEY, JSON.stringify(mutable))
+  }
+
+  function removeWidget(id: WidgetId) {
+    const next = layout.filter(l => l.i !== id)
+    setLayout(next)
+    localStorage.setItem(LS_KEY, JSON.stringify(next))
+    setVisible(v => v.filter(x => x !== id))
+  }
+
+  function addWidget(id: WidgetId) {
+    const stub: LayoutItem = { i: id, x: 0, y: Infinity, w: 2, h: 2 }
+    const next = [...layout, stub]
+    setLayout(next)
+    localStorage.setItem(LS_KEY, JSON.stringify(next))
+    setVisible(v => [...v, id])
+  }
+
+  const hidden = WIDGET_IDS.filter(id => !visible.includes(id))
+  return { layout, visible, hidden, saveLayout, removeWidget, addWidget }
 }
 
 // ── Hilfstypen ─────────────────────────────────────────────────────────────
@@ -150,9 +118,8 @@ export default function Dashboard() {
   const canApprove = user?.role === 'gf'
   const today      = format(new Date(), 'yyyy-MM-dd')
 
-  const { order, hidden, reorder, remove, add } = useDashboardWidgets()
+  const { layout, visible, hidden, saveLayout, removeWidget, addWidget } = useGridLayout()
   const [editMode,  setEditMode]  = useState(false)
-  const [activeId,  setActiveId]  = useState<WidgetId | null>(null)
 
   const [data,    setData]    = useState<DashData>({ activeTotal: 0, absentToday: [], pending: [], carryOverCount: 0 })
   const [loading, setLoading] = useState(true)
@@ -319,32 +286,7 @@ export default function Dashboard() {
     }
   }
 
-  // ── dnd-kit ───────────────────────────────────────────────────────────────
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
-
-  function handleDragStart(e: DragStartEvent) {
-    setActiveId(e.active.id as WidgetId)
-  }
-
-  function handleDragEnd(e: DragEndEvent) {
-    const { active, over } = e
-    if (!over || active.id === over.id) { setActiveId(null); return }
-    const activeId = active.id as WidgetId
-    const overId   = over.id   as WidgetId
-    // Kein Drag zwischen den zwei Zonen erlaubt
-    if (STAT_IDS.includes(activeId) !== STAT_IDS.includes(overId)) { setActiveId(null); return }
-    const oldIdx = order.indexOf(activeId)
-    const newIdx = order.indexOf(overId)
-    reorder(arrayMove(order, oldIdx, newIdx))
-    setActiveId(null)
-  }
-
   // ── Abgeleitete Werte ─────────────────────────────────────────────────────
-  const visibleStats  = order.filter(id => STAT_IDS.includes(id))
-  const visiblePanels = order.filter(id => PANEL_IDS.includes(id))
-  const hiddenStats   = STAT_IDS.filter(id => !order.includes(id))
-  const hiddenPanels  = PANEL_IDS.filter(id => !order.includes(id))
-
   const presentToday    = stempel.length
   const absentBreakdown = data.absentToday.reduce((acc, a) => {
     acc[a.type] = (acc[a.type] || 0) + 1; return acc
@@ -359,7 +301,7 @@ export default function Dashboard() {
   // ── Widget-Render-Funktionen ───────────────────────────────────────────────
   function renderAntraege() {
     return (
-      <div className="bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
+      <div className="h-full bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
         <div className="flex border-b border-[#EDE7DC]">
           <button
             onClick={() => setAntragTab('pending')}
@@ -487,7 +429,7 @@ export default function Dashboard() {
 
   function renderAbwesend() {
     return (
-      <div className="bg-white border border-[#EDE7DC] rounded-lg p-5">
+      <div className="h-full bg-white border border-[#EDE7DC] rounded-lg p-5">
         <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[#706D6A] mb-4">
           Heute abwesend · {format(new Date(), 'dd.MM.yyyy')}
         </h2>
@@ -514,7 +456,7 @@ export default function Dashboard() {
 
   function renderArbeitszeiten() {
     return (
-      <div className="bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
+      <div className="h-full bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
         <div className="px-5 py-3 border-b border-[#EDE7DC] bg-[#FAF7F2] flex items-center justify-between">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-[#706D6A]">
             Arbeitszeiten heute · {format(new Date(), 'dd.MM.yyyy')}
@@ -633,9 +575,17 @@ export default function Dashboard() {
         return <StatCard label="Offene Genehmigungen" value={data.pending.length}     sub="Warten auf Freigabe"                      color={data.pending.length > 0 ? 'red' : 'default'} />
       case 'stat-resturlaub':
         return <StatCard label="Resturlaub-Verfall"   value={data.carryOverCount}     sub={`Resturlaub ${year}`}                     color={data.carryOverCount > 0 ? 'amber' : 'default'} />
-      case 'antraege':     return renderAntraege()
-      case 'abwesend':     return renderAbwesend()
+      case 'antraege':      return renderAntraege()
+      case 'abwesend':      return renderAbwesend()
       case 'arbeitszeiten': return renderArbeitszeiten()
+      case 'stat-ueberstunden':
+        return <StatCard label="Überstunden diese Woche" value={0} sub="Demnächst verfügbar" color="default" />
+      case 'stat-krankmeldungen':
+        return <StatCard label="Krankmeldungen" value={data.absentToday.filter(a => a.type === 'K' || a.type === 'KK').length} sub="Aktuelle K/KK-Einträge" color={data.absentToday.some(a => a.type === 'K' || a.type === 'KK') ? 'red' : 'default'} />
+      case 'geburtstage':
+        return <WidgetStub label="Geburtstage im Monat" />
+      case 'dokumente-ablauf':
+        return <WidgetStub label="Ablaufende Verträge" />
     }
   }
 
@@ -672,60 +622,40 @@ export default function Dashboard() {
         <p className="text-sm text-[#706D6A]">Lade…</p>
       ) : (
         <>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
+          <RGL
+            layout={layout}
+            cols={4}
+            rowHeight={160}
+            isDraggable={editMode}
+            isResizable={editMode}
+            onLayoutChange={saveLayout}
+            margin={[16, 16]}
+            containerPadding={[0, 0]}
+            draggableCancel=".widget-no-drag"
           >
-            <div className="space-y-4">
-              {/* Zone 1: StatCard-Grid */}
-              {visibleStats.length > 0 && (
-                <SortableContext items={visibleStats} strategy={rectSortingStrategy}>
-                  <div className="grid grid-cols-4 gap-4">
-                    {visibleStats.map(id => (
-                      <SortableWidget key={id} id={id} editMode={editMode} onRemove={() => remove(id)}>
-                        {renderWidget(id)}
-                      </SortableWidget>
-                    ))}
-                  </div>
-                </SortableContext>
-              )}
+            {visible.map(id => (
+              <div key={id} className="relative">
+                {editMode && (
+                  <button
+                    onClick={() => removeWidget(id)}
+                    className="widget-no-drag absolute top-2 right-2 z-10 w-5 h-5 flex items-center justify-center rounded-full bg-black/20 hover:bg-red-500 text-white transition-colors"
+                    title="Widget entfernen"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+                {renderWidget(id)}
+              </div>
+            ))}
+          </RGL>
 
-              {/* Zone 2: Panel-Liste */}
-              {visiblePanels.length > 0 && (
-                <SortableContext items={visiblePanels} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-4">
-                    {visiblePanels.map(id => (
-                      <SortableWidget key={id} id={id} editMode={editMode} onRemove={() => remove(id)}>
-                        {renderWidget(id)}
-                      </SortableWidget>
-                    ))}
-                  </div>
-                </SortableContext>
-              )}
-            </div>
-
-            <DragOverlay>
-              {activeId && (
-                <div className={cn(
-                  'opacity-90 shadow-2xl rounded-xl rotate-1',
-                  STAT_IDS.includes(activeId) ? 'w-56' : ''
-                )}>
-                  {renderWidget(activeId)}
-                </div>
-              )}
-            </DragOverlay>
-          </DndContext>
-
-          {/* Versteckte Widgets — nur im Edit-Mode */}
-          {editMode && (hiddenStats.length > 0 || hiddenPanels.length > 0) && (
+          {editMode && hidden.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2 p-4 border border-dashed border-[#EDE7DC] rounded-xl bg-[#FAF7F2]">
               <p className="text-xs text-[#706D6A] w-full mb-1 font-medium">Widget hinzufügen:</p>
-              {[...hiddenStats, ...hiddenPanels].map(id => (
+              {hidden.map(id => (
                 <button
                   key={id}
-                  onClick={() => add(id)}
+                  onClick={() => addWidget(id)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#EDE7DC] text-sm text-[#706D6A] hover:border-[#BA7517] hover:text-[#BA7517] transition-colors"
                 >
                   <Plus size={13} /> {WIDGET_META[id].label}
@@ -749,10 +679,18 @@ function StatCard({ label, value, sub, color }: {
 }) {
   const cls = { green: 'text-green-600', amber: 'text-[#BA7517]', red: 'text-red-600', default: 'text-[#1A1917]' }[color]
   return (
-    <div className="bg-white border border-[#EDE7DC] rounded-lg p-5">
+    <div className="h-full bg-white border border-[#EDE7DC] rounded-lg p-5">
       <div className="text-[11px] font-semibold uppercase tracking-wider text-[#706D6A] mb-2">{label}</div>
       <div className={`text-3xl font-bold mb-1 ${cls}`}>{value}</div>
       <div className="text-xs text-[#706D6A]">{sub}</div>
+    </div>
+  )
+}
+
+function WidgetStub({ label }: { label: string }) {
+  return (
+    <div className="h-full bg-white border border-[#EDE7DC] rounded-lg p-5 flex items-center justify-center">
+      <span className="text-sm text-[#B0A898]">{label} – demnächst verfügbar</span>
     </div>
   )
 }
