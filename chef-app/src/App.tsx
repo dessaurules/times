@@ -5,7 +5,6 @@ import AppLayout           from './components/Layout/AppLayout'
 import Login               from './pages/Login'
 import Dashboard           from './pages/Dashboard'
 import Mitarbeiterliste    from './pages/Mitarbeiterliste'
-import MitarbeiterDetail   from './pages/MitarbeiterDetail'
 import Einstellungen       from './pages/Einstellungen'
 import Abwesenheiten      from './pages/Abwesenheiten'
 import Zeiterfassung     from './pages/Zeiterfassung'
@@ -25,8 +24,6 @@ export default function App() {
             {/* Nur GF */}
             <Route element={<GFRoute />}>
               <Route path="/mitarbeiter"      element={<Mitarbeiterliste />} />
-              <Route path="/mitarbeiter/neu"  element={<MitarbeiterDetail />} />
-              <Route path="/mitarbeiter/:id"  element={<MitarbeiterDetail />} />
               <Route path="/einstellungen"    element={<Einstellungen />} />
             </Route>
           </Route>

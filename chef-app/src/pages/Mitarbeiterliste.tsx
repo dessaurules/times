@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Search, Plus } from 'lucide-react'
 import { pb } from '../lib/pb'
 import type { Employee, Department, ContractType } from '@shared/types'
@@ -10,11 +9,12 @@ import { Badge }     from '../components/ui/badge'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '../components/ui/table'
+import MitarbeiterModal from './MitarbeiterModal'
 
 type EmployeeRow = Employee & { expand?: { department?: Department } }
 
 export default function Mitarbeiterliste() {
-  const navigate = useNavigate()
+  const [selectedId, setSelectedId] = useState<string | 'new' | null>(null)
   const [rows, setRows]           = useState<EmployeeRow[]>([])
   const [total, setTotal]         = useState(0)
   const [loading, setLoading]     = useState(true)
@@ -67,7 +67,7 @@ export default function Mitarbeiterliste() {
           <h1 className="text-2xl font-bold text-[#1A1917] mb-1">Mitarbeiter</h1>
           <p className="text-sm text-[#706D6A]">{total} {total === 1 ? 'Eintrag' : 'Einträge'}</p>
         </div>
-        <Button onClick={() => navigate('/mitarbeiter/neu')}>
+        <Button onClick={() => setSelectedId('new')}>
           <Plus size={16} /> Neuer Mitarbeiter
         </Button>
       </div>
@@ -129,7 +129,7 @@ export default function Mitarbeiterliste() {
                 {hasFilter ? 'Keine Treffer' : 'Noch keine Mitarbeiter angelegt'}
               </TableCell></TableRow>
             ) : rows.map(emp => (
-              <TableRow key={emp.id} onClick={() => navigate(`/mitarbeiter/${emp.id}`)} className="cursor-pointer">
+              <TableRow key={emp.id} onClick={() => setSelectedId(emp.id)} className="cursor-pointer">
                 <TableCell>
                   <div className="font-medium text-[#1A1917]">{emp.last_name}, {emp.first_name}</div>
                 </TableCell>
@@ -157,6 +157,11 @@ export default function Mitarbeiterliste() {
           </div>
         </div>
       )}
+
+      <MitarbeiterModal
+        employeeId={selectedId}
+        onClose={() => setSelectedId(null)}
+      />
     </div>
   )
 }

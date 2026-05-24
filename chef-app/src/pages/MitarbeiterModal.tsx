@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Trash2, Save, Upload, Download, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { Trash2, Save, Upload, Download, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { format, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { pb } from '../lib/pb'
@@ -12,6 +11,11 @@ import { Label }  from '../components/ui/label'
 import { cn } from '@/lib/utils'
 
 // ── Typen & Konstanten ────────────────────────────────────────────────────────
+
+interface Props {
+  employeeId: string | 'new' | null
+  onClose: () => void
+}
 
 type Tab = 'stammdaten' | 'urlaubskonto' | 'dokumente'
 
@@ -51,10 +55,9 @@ function toDateInput(v: string | undefined): string {
 
 // ── Hauptkomponente ───────────────────────────────────────────────────────────
 
-export default function MitarbeiterDetail() {
-  const { id }   = useParams()
-  const navigate = useNavigate()
-  const isNew    = !id
+export default function MitarbeiterModal({ employeeId, onClose }: Props) {
+  const id    = employeeId === 'new' ? undefined : (employeeId ?? undefined)
+  const isNew = employeeId === 'new'
 
   const [tab, setTab]               = useState<Tab>('stammdaten')
   const [form, setForm]             = useState<FormData>(EMPTY)
@@ -201,7 +204,7 @@ export default function MitarbeiterDetail() {
           )
         }
 
-        navigate(`/mitarbeiter/${rec.id}`, { replace: true })
+        onClose()
       } else {
         await pb.collection('employees').update(id!, data)
       }
@@ -222,183 +225,198 @@ export default function MitarbeiterDetail() {
     if (!id) return
     try {
       await pb.collection('employees').delete(id)
-      navigate('/mitarbeiter', { replace: true })
+      onClose()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Fehler beim Löschen')
     }
   }
 
-  if (loading) return <p className="text-sm text-[#706D6A]">Lade…</p>
-
-  const title = isNew ? 'Neuer Mitarbeiter' : `${form.last_name}, ${form.first_name}`
+  if (!employeeId) return null
 
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/mitarbeiter')}>
-          <ArrowLeft size={16} />
-        </Button>
-        <div>
-          <h1 className="text-xl font-bold text-[#1A1917]">{title}</h1>
-          <p className="text-xs text-[#706D6A]">{isNew ? 'Neuen Mitarbeiter anlegen' : 'Mitarbeiter bearbeiten'}</p>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm"
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="relative bg-white rounded-2xl w-[90vw] max-w-[860px] max-h-[90vh] overflow-y-auto shadow-2xl">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 p-1.5 rounded-lg text-[#706D6A] hover:bg-[#EDE7DC] transition-colors"
+        >
+          <X size={18} />
+        </button>
+
+        <div className="p-6">
+          {loading ? (
+            <p className="text-sm text-[#706D6A]">Lade…</p>
+          ) : (
+            <>
+              <div className="mb-3 pr-8">
+                <h1 className="text-xl font-bold text-[#1A1917]">
+                  {isNew ? 'Neuer Mitarbeiter' : `${form.last_name}, ${form.first_name}`}
+                </h1>
+                <p className="text-xs text-[#706D6A]">{isNew ? 'Neuen Mitarbeiter anlegen' : 'Mitarbeiter bearbeiten'}</p>
+              </div>
+
+              {/* Mini-Dashboard — nur für bestehende MA */}
+              {!isNew && (
+                <MiniDashboard
+                  form={form}
+                  data={dashData}
+                  loading={dashLoading}
+                  viewMonth={viewMonth}
+                  onPrevMonth={() => setViewMonth(m => subMonths(m, 1))}
+                  onNextMonth={() => setViewMonth(m => addMonths(m, 1))}
+                />
+              )}
+
+              {/* Tab-Leiste — nur für bestehende MA */}
+              {!isNew && (
+                <div className="flex border-b border-[#EDE7DC] mb-4">
+                  {TABS.map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => setTab(t.id)}
+                      className={cn(
+                        'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
+                        tab === t.id
+                          ? 'border-[#BA7517] text-[#BA7517]'
+                          : 'border-transparent text-[#706D6A] hover:text-[#1A1917]',
+                      )}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {error && (
+                <div className="mb-3 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md whitespace-pre-line">{error}</div>
+              )}
+              {userWarn && (
+                <div className="mb-3 p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md">{userWarn}</div>
+              )}
+
+              {/* ── Stammdaten ─────────────────────────────────────────────────────── */}
+              {(isNew || tab === 'stammdaten') && (
+                <form onSubmit={handleSave} className="flex flex-col gap-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Card title="Persönliche Daten">
+                      <div className="grid grid-cols-2 gap-3">
+                        <F label="Vorname *"><Input value={form.first_name} onChange={e => upd('first_name', e.target.value)} required /></F>
+                        <F label="Nachname *"><Input value={form.last_name}  onChange={e => upd('last_name',  e.target.value)} required /></F>
+                        <F label="E-Mail *"><Input type="email" value={form.email} onChange={e => upd('email', e.target.value)} required /></F>
+                        <F label="Telefon"><Input value={form.phone} onChange={e => upd('phone', e.target.value)} /></F>
+                        <F label="Geburtsdatum" className="col-span-2">
+                          <Input type="date" value={form.birthday} onChange={e => upd('birthday', e.target.value)} className="max-w-[180px]" />
+                        </F>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 mt-3">
+                        <F label="Straße & Nr." className="col-span-2">
+                          <Input value={form.street} onChange={e => upd('street', e.target.value)} />
+                        </F>
+                        <F label="PLZ"><Input value={form.zip} onChange={e => upd('zip', e.target.value)} /></F>
+                        <F label="Stadt" className="col-span-2">
+                          <Input value={form.city} onChange={e => upd('city', e.target.value)} />
+                        </F>
+                      </div>
+                    </Card>
+
+                    <div className="flex flex-col gap-3">
+                      <Card title="Tätigkeit">
+                        <div className="grid grid-cols-2 gap-3">
+                          <F label="Abteilung">
+                            <NativeSelect value={form.department} onChange={e => upd('department', e.target.value)}>
+                              <option value="">— keine —</option>
+                              {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                            </NativeSelect>
+                          </F>
+                          <F label="Position"><Input value={form.position} onChange={e => upd('position', e.target.value)} /></F>
+                          <F label="Vertragstyp *">
+                            <NativeSelect value={form.contract_type} onChange={e => upd('contract_type', e.target.value as ContractType)} required>
+                              {(Object.entries(CONTRACT_LABELS) as [ContractType, string][]).map(([k, v]) => (
+                                <option key={k} value={k}>{v}</option>
+                              ))}
+                            </NativeSelect>
+                          </F>
+                          <F label="Stunden/Woche *">
+                            <Input type="number" min={1} max={168} step={0.5} value={form.weekly_hours}
+                              onChange={e => upd('weekly_hours', parseFloat(e.target.value))} required />
+                          </F>
+                        </div>
+                      </Card>
+
+                      <Card title="Beschäftigung">
+                        <div className="grid grid-cols-2 gap-3">
+                          <F label="Eintrittsdatum *">
+                            <Input type="date" value={form.start_date} onChange={e => upd('start_date', e.target.value)} required />
+                          </F>
+                          <F label="Austrittsdatum">
+                            <Input type="date" value={form.end_date} onChange={e => upd('end_date', e.target.value)} />
+                          </F>
+                          <F label="Urlaubstage/Jahr *">
+                            <Input type="number" min={0} max={365} value={form.vacation_days}
+                              onChange={e => upd('vacation_days', parseInt(e.target.value))} required />
+                          </F>
+                          <F label="Status">
+                            <div className="flex items-center gap-2 h-9">
+                              <input
+                                type="checkbox"
+                                id="active"
+                                checked={form.active}
+                                onChange={e => upd('active', e.target.checked)}
+                                className="h-4 w-4 rounded border-[#EDE7DC] accent-[#BA7517]"
+                              />
+                              <Label htmlFor="active" className="font-normal cursor-pointer">Aktiv</Label>
+                            </div>
+                          </F>
+                        </div>
+                      </Card>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between py-1">
+                    <div>
+                      {!isNew && !confirmDel && (
+                        <Button type="button" variant="ghost"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => setConfirmDel(true)}
+                        >
+                          <Trash2 size={15} /> Löschen
+                        </Button>
+                      )}
+                      {confirmDel && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-red-600">Wirklich löschen?</span>
+                          <Button type="button" variant="destructive" size="sm" onClick={handleDelete}>Ja</Button>
+                          <Button type="button" variant="outline"     size="sm" onClick={() => setConfirmDel(false)}>Nein</Button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" onClick={onClose}>Abbrechen</Button>
+                      <Button type="submit" disabled={saving}>
+                        <Save size={15} />
+                        {saving ? 'Speichere…' : 'Speichern'}
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              )}
+
+              {/* ── Urlaubskonto ──────────────────────────────────────────────────── */}
+              {!isNew && tab === 'urlaubskonto' && (
+                <UrlaubskontoTab employeeId={id!} defaultEntitlement={form.vacation_days} />
+              )}
+
+              {/* ── Dokumente ─────────────────────────────────────────────────────── */}
+              {!isNew && tab === 'dokumente' && (
+                <DokumenteTab employeeId={id!} />
+              )}
+            </>
+          )}
         </div>
       </div>
-
-      {/* Mini-Dashboard — nur für bestehende MA */}
-      {!isNew && (
-        <MiniDashboard
-          form={form}
-          data={dashData}
-          loading={dashLoading}
-          viewMonth={viewMonth}
-          onPrevMonth={() => setViewMonth(m => subMonths(m, 1))}
-          onNextMonth={() => setViewMonth(m => addMonths(m, 1))}
-        />
-      )}
-
-      {/* Tab-Leiste — nur für bestehende MA */}
-      {!isNew && (
-        <div className="flex border-b border-[#EDE7DC] mb-4">
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={cn(
-                'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
-                tab === t.id
-                  ? 'border-[#BA7517] text-[#BA7517]'
-                  : 'border-transparent text-[#706D6A] hover:text-[#1A1917]',
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-3 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md whitespace-pre-line">{error}</div>
-      )}
-      {userWarn && (
-        <div className="mb-3 p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md">{userWarn}</div>
-      )}
-
-      {/* ── Stammdaten ─────────────────────────────────────────────────────── */}
-      {(isNew || tab === 'stammdaten') && (
-        <form onSubmit={handleSave} className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-3">
-            <Card title="Persönliche Daten">
-              <div className="grid grid-cols-2 gap-3">
-                <F label="Vorname *"><Input value={form.first_name} onChange={e => upd('first_name', e.target.value)} required /></F>
-                <F label="Nachname *"><Input value={form.last_name}  onChange={e => upd('last_name',  e.target.value)} required /></F>
-                <F label="E-Mail *"><Input type="email" value={form.email} onChange={e => upd('email', e.target.value)} required /></F>
-                <F label="Telefon"><Input value={form.phone} onChange={e => upd('phone', e.target.value)} /></F>
-                <F label="Geburtsdatum" className="col-span-2">
-                  <Input type="date" value={form.birthday} onChange={e => upd('birthday', e.target.value)} className="max-w-[180px]" />
-                </F>
-              </div>
-              <div className="grid grid-cols-3 gap-3 mt-3">
-                <F label="Straße & Nr." className="col-span-2">
-                  <Input value={form.street} onChange={e => upd('street', e.target.value)} />
-                </F>
-                <F label="PLZ"><Input value={form.zip} onChange={e => upd('zip', e.target.value)} /></F>
-                <F label="Stadt" className="col-span-2">
-                  <Input value={form.city} onChange={e => upd('city', e.target.value)} />
-                </F>
-              </div>
-            </Card>
-
-            <div className="flex flex-col gap-3">
-              <Card title="Tätigkeit">
-                <div className="grid grid-cols-2 gap-3">
-                  <F label="Abteilung">
-                    <NativeSelect value={form.department} onChange={e => upd('department', e.target.value)}>
-                      <option value="">— keine —</option>
-                      {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </NativeSelect>
-                  </F>
-                  <F label="Position"><Input value={form.position} onChange={e => upd('position', e.target.value)} /></F>
-                  <F label="Vertragstyp *">
-                    <NativeSelect value={form.contract_type} onChange={e => upd('contract_type', e.target.value as ContractType)} required>
-                      {(Object.entries(CONTRACT_LABELS) as [ContractType, string][]).map(([k, v]) => (
-                        <option key={k} value={k}>{v}</option>
-                      ))}
-                    </NativeSelect>
-                  </F>
-                  <F label="Stunden/Woche *">
-                    <Input type="number" min={1} max={168} step={0.5} value={form.weekly_hours}
-                      onChange={e => upd('weekly_hours', parseFloat(e.target.value))} required />
-                  </F>
-                </div>
-              </Card>
-
-              <Card title="Beschäftigung">
-                <div className="grid grid-cols-2 gap-3">
-                  <F label="Eintrittsdatum *">
-                    <Input type="date" value={form.start_date} onChange={e => upd('start_date', e.target.value)} required />
-                  </F>
-                  <F label="Austrittsdatum">
-                    <Input type="date" value={form.end_date} onChange={e => upd('end_date', e.target.value)} />
-                  </F>
-                  <F label="Urlaubstage/Jahr *">
-                    <Input type="number" min={0} max={365} value={form.vacation_days}
-                      onChange={e => upd('vacation_days', parseInt(e.target.value))} required />
-                  </F>
-                  <F label="Status">
-                    <div className="flex items-center gap-2 h-9">
-                      <input
-                        type="checkbox"
-                        id="active"
-                        checked={form.active}
-                        onChange={e => upd('active', e.target.checked)}
-                        className="h-4 w-4 rounded border-[#EDE7DC] accent-[#BA7517]"
-                      />
-                      <Label htmlFor="active" className="font-normal cursor-pointer">Aktiv</Label>
-                    </div>
-                  </F>
-                </div>
-              </Card>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between py-1">
-            <div>
-              {!isNew && !confirmDel && (
-                <Button type="button" variant="ghost"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => setConfirmDel(true)}
-                >
-                  <Trash2 size={15} /> Löschen
-                </Button>
-              )}
-              {confirmDel && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-red-600">Wirklich löschen?</span>
-                  <Button type="button" variant="destructive" size="sm" onClick={handleDelete}>Ja</Button>
-                  <Button type="button" variant="outline"     size="sm" onClick={() => setConfirmDel(false)}>Nein</Button>
-                </div>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={() => navigate('/mitarbeiter')}>Abbrechen</Button>
-              <Button type="submit" disabled={saving}>
-                <Save size={15} />
-                {saving ? 'Speichere…' : 'Speichern'}
-              </Button>
-            </div>
-          </div>
-        </form>
-      )}
-
-      {/* ── Urlaubskonto ──────────────────────────────────────────────────── */}
-      {!isNew && tab === 'urlaubskonto' && (
-        <UrlaubskontoTab employeeId={id!} defaultEntitlement={form.vacation_days} />
-      )}
-
-      {/* ── Dokumente ─────────────────────────────────────────────────────── */}
-      {!isNew && tab === 'dokumente' && (
-        <DokumenteTab employeeId={id!} />
-      )}
     </div>
   )
 }
