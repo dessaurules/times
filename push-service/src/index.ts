@@ -1,5 +1,9 @@
 import express from 'express'
+import cron from 'node-cron'
 import { sendPushToEmployee } from './sender.js'
+import { checkEinstempel } from './jobs/einstempel.js'
+import { checkAusstempel } from './jobs/ausstempel.js'
+import { sendMorgenErinnerung } from './jobs/morgen.js'
 
 const app = express()
 app.use(express.json())
@@ -34,4 +38,13 @@ app.post('/send-push', async (req, res) => {
 const PORT = Number(process.env.PORT ?? 3456)
 app.listen(PORT, () => console.log(`Push-Service läuft auf Port ${PORT}`))
 
-// Cron-Jobs werden in Task 8 hier ergänzt
+cron.schedule('*/5 * * * *', () => {
+  checkEinstempel().catch(console.error)
+  checkAusstempel().catch(console.error)
+})
+
+cron.schedule('0 18 * * *', () => {
+  sendMorgenErinnerung().catch(console.error)
+}, { timezone: 'Europe/Berlin' })
+
+console.log('Cron-Jobs registriert: */5 Min (Stempel) + 18:00 Uhr (Morgen)')
