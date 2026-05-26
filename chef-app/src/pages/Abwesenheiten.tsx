@@ -352,7 +352,7 @@ export default function Abwesenheiten() {
     }
   }
 
-  if (loading && employees.length === 0) return <p className="text-sm text-[#706D6A]">Lade…</p>
+  if (loading && employees.length === 0) return <p className="text-sm text-[#6B7280]">Lade…</p>
 
   return (
     <div onMouseUp={handleMouseUp}>
@@ -367,30 +367,30 @@ export default function Abwesenheiten() {
 
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1917]">Abwesenheiten</h1>
-          <p className="text-sm text-[#706D6A]">Monatsübersicht</p>
+          <h1 className="text-2xl font-bold text-[#111827]">Abwesenheiten</h1>
+          <p className="text-sm text-[#6B7280]">Monatsübersicht</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCurrentDate(d => subMonths(d, 1))}
-            className="p-1.5 rounded hover:bg-[#EDE7DC] text-[#706D6A]"
+            className="p-1.5 rounded hover:bg-[#E5E7EB] text-[#6B7280]"
           >
             <ChevronLeft size={16} />
           </button>
-          <span className="text-sm font-semibold text-[#1A1917] w-36 text-center">
+          <span className="text-sm font-semibold text-[#111827] w-36 text-center">
             {format(currentDate, 'MMMM yyyy', { locale: de })}
           </span>
           <button
             onClick={() => setCurrentDate(d => addMonths(d, 1))}
-            className="p-1.5 rounded hover:bg-[#EDE7DC] text-[#706D6A]"
+            className="p-1.5 rounded hover:bg-[#E5E7EB] text-[#6B7280]"
           >
             <ChevronRight size={16} />
           </button>
         </div>
       </div>
 
-      <p className="text-sm text-[#706D6A] mb-3">
-        <span className="font-semibold text-[#1A1917]">{monthWorkingDays}</span> Arbeitstage
+      <p className="text-sm text-[#6B7280] mb-3">
+        <span className="font-semibold text-[#111827]">{monthWorkingDays}</span> Arbeitstage
       </p>
 
       <div className="flex flex-wrap gap-2 mb-3">
@@ -403,14 +403,14 @@ export default function Abwesenheiten() {
             {type}
           </span>
         ))}
-        <span className="text-[10px] text-[#706D6A] ml-1 self-center">
+        <span className="text-[10px] text-[#6B7280] ml-1 self-center">
           Kürzel eingeben · ← → ↑ ↓ navigieren · ⌫ löschen · Drag zum Kopieren
         </span>
       </div>
 
-      <div className="bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
+      <div className="bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
         {employees.length === 0 && !loading ? (
-          <p className="text-sm text-[#706D6A] p-6 text-center">Keine aktiven Mitarbeiter vorhanden.</p>
+          <p className="text-sm text-[#6B7280] p-6 text-center">Keine aktiven Mitarbeiter vorhanden.</p>
         ) : (
           <KalenderTable
             employees={employees}
