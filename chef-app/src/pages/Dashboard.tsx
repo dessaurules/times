@@ -10,9 +10,7 @@ import type { Employee, Absence, TimeEntry } from '@shared/types'
 import { ABSENCE_COLORS } from '@shared/types'
 import { cn } from '@/lib/utils'
 import { notifyEmployee } from '../lib/notifications'
-import { GlassCard, GlassCardHeader, GlassCardTitle, GlassCardDescription, GlassCardContent } from '@/components/ui/glass-card'
-
-const glassUI = import.meta.env.VITE_GLASS_UI === 'true'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 
 const RGL = WidthProvider(GridLayout)
 
@@ -56,9 +54,7 @@ function useGridLayout() {
       const saved = localStorage.getItem(LS_KEY)
       if (saved) {
         const parsed = JSON.parse(saved) as LayoutItem[]
-        // Nur bekannte Widget-IDs behalten
         const valid = parsed.filter(l => (WIDGET_IDS as readonly string[]).includes(l.i))
-        // Fehlende Default-Widgets ans Ende anhängen
         const missing = DEFAULT_LAYOUT.filter(d => !valid.some(v => v.i === d.i))
         return [...valid, ...missing]
       }
@@ -66,7 +62,6 @@ function useGridLayout() {
     return DEFAULT_LAYOUT
   })
 
-  // Direkt aus layout abgeleitet – kein separater State
   const visible = layout.map(l => l.i as WidgetId).filter(id => (WIDGET_IDS as readonly string[]).includes(id))
   const hidden = WIDGET_IDS.filter(id => !visible.includes(id))
 
@@ -96,7 +91,6 @@ function useGridLayout() {
   return { layout, visible, hidden, saveLayout, removeWidget, addWidget }
 }
 
-// ── Hilfstypen ─────────────────────────────────────────────────────────────
 type AbsenceExp   = Absence   & { expand?: { employee?: Employee } }
 type TimeEntryExp = TimeEntry & { expand?: { employee?: Employee } }
 
@@ -121,7 +115,6 @@ function fmtMins(mins: number) {
   return `${h}:${String(m).padStart(2, '0')} h`
 }
 
-// ── Dashboard ──────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const user       = useAuthStore(s => s.user)
   const canApprove = user?.role === 'gf'
@@ -295,7 +288,6 @@ export default function Dashboard() {
     }
   }
 
-  // ── Abgeleitete Werte ─────────────────────────────────────────────────────
   const presentToday    = stempel.length
   const absentBreakdown = data.absentToday.reduce((acc, a) => {
     acc[a.type] = (acc[a.type] || 0) + 1; return acc
@@ -307,19 +299,18 @@ export default function Dashboard() {
   ).values()]
   const filteredVerlauf = verlaufFilter ? verlauf.filter(a => a.employee === verlaufFilter) : verlauf
 
-  // ── Widget-Render-Funktionen ───────────────────────────────────────────────
   function renderAntraege() {
     return (
-      <GlassCard glass={glassUI} className="h-full">
-        <GlassCardHeader className="p-0 border-b-0">
+      <Card className="h-full">
+        <CardHeader className="p-0 border-b-0">
           <div className="flex w-full">
             <button
               onClick={() => setAntragTab('pending')}
               className={cn(
                 'flex-1 py-3 text-[11px] font-semibold uppercase tracking-wider transition-colors',
                 antragTab === 'pending'
-                  ? 'text-[#BA7517] border-b-2 border-[#BA7517] bg-[#FFF9F0]'
-                  : 'text-[#706D6A] hover:bg-[#FAF7F2]'
+                  ? 'text-[#4F46E5] border-b-2 border-[#4F46E5] bg-[#EEF2FF]'
+                  : 'text-[#6B7280] hover:bg-[#F9FAFB]'
               )}
             >
               Ausstehend{data.pending.length > 0 ? ` (${data.pending.length})` : ''}
@@ -329,19 +320,19 @@ export default function Dashboard() {
               className={cn(
                 'flex-1 py-3 text-[11px] font-semibold uppercase tracking-wider transition-colors',
                 antragTab === 'verlauf'
-                  ? 'text-[#BA7517] border-b-2 border-[#BA7517] bg-[#FFF9F0]'
-                  : 'text-[#706D6A] hover:bg-[#FAF7F2]'
+                  ? 'text-[#4F46E5] border-b-2 border-[#4F46E5] bg-[#EEF2FF]'
+                  : 'text-[#6B7280] hover:bg-[#F9FAFB]'
               )}
             >
               Verlauf
             </button>
           </div>
-        </GlassCardHeader>
-        <GlassCardContent>
+        </CardHeader>
+        <CardContent>
           {antragTab === 'pending' ? (
             <>
               {data.pending.length === 0 ? (
-                <p className="text-sm text-[#706D6A]">Keine offenen Genehmigungen.</p>
+                <p className="text-sm text-[#6B7280]">Keine offenen Genehmigungen.</p>
               ) : data.pending.map(abs => {
                 const emp    = abs.expand?.employee
                 const colors = ABSENCE_COLORS[abs.type]
@@ -350,11 +341,11 @@ export default function Dashboard() {
                   ? format(parseISO(abs.date_from), 'dd.MM.yyyy', { locale: de })
                   : `${format(parseISO(abs.date_from), 'dd.MM.', { locale: de })}–${format(parseISO(abs.date_to), 'dd.MM.yyyy', { locale: de })}`
                 return (
-                  <div key={abs.id} className="flex items-center gap-2 py-2.5 border-b border-[#EDE7DC] last:border-0 text-sm">
-                    <span className="font-semibold text-[#1A1917] min-w-[130px] truncate">
+                  <div key={abs.id} className="flex items-center gap-2 py-2.5 border-b border-[#E5E7EB] last:border-0 text-sm">
+                    <span className="font-semibold text-[#111827] min-w-[130px] truncate">
                       {emp ? `${emp.last_name}, ${emp.first_name}` : '—'}
                     </span>
-                    <span className="text-[#706D6A] flex-1 text-xs whitespace-nowrap">
+                    <span className="text-[#6B7280] flex-1 text-xs whitespace-nowrap">
                       {dateLabel} · {days} T
                     </span>
                     <span className="text-[11px] font-bold px-2 py-0.5 rounded shrink-0"
@@ -380,7 +371,7 @@ export default function Dashboard() {
           ) : (
             <>
               {verlaufLoading ? (
-                <p className="text-sm text-[#706D6A]">Lade…</p>
+                <p className="text-sm text-[#6B7280]">Lade…</p>
               ) : (
                 <>
                   {verlaufEmployees.length > 1 && (
@@ -388,7 +379,7 @@ export default function Dashboard() {
                       <select
                         value={verlaufFilter}
                         onChange={e => setVerlaufFilter(e.target.value)}
-                        className="text-xs border border-[#EDE7DC] rounded px-2 py-1.5 text-[#706D6A] outline-none focus:border-[#BA7517] bg-white"
+                        className="text-xs border border-[#E5E7EB] rounded px-2 py-1.5 text-[#6B7280] outline-none focus:border-[#4F46E5] bg-white"
                       >
                         <option value="">Alle Mitarbeiter</option>
                         {verlaufEmployees.map(e => (
@@ -398,7 +389,7 @@ export default function Dashboard() {
                     </div>
                   )}
                   {filteredVerlauf.length === 0 ? (
-                    <p className="text-sm text-[#706D6A]">Kein Verlauf vorhanden.</p>
+                    <p className="text-sm text-[#6B7280]">Kein Verlauf vorhanden.</p>
                   ) : (
                     <div>
                       {filteredVerlauf.map(abs => {
@@ -409,11 +400,11 @@ export default function Dashboard() {
                           ? format(parseISO(abs.date_from), 'dd.MM.yyyy', { locale: de })
                           : `${format(parseISO(abs.date_from), 'dd.MM.', { locale: de })}–${format(parseISO(abs.date_to), 'dd.MM.yyyy', { locale: de })}`
                         return (
-                          <div key={abs.id} className="flex items-center gap-2 py-2 border-b border-[#F5F0EA] last:border-0">
-                            <span className="font-medium text-[#1A1917] text-xs min-w-[100px] truncate">
+                          <div key={abs.id} className="flex items-center gap-2 py-2 border-b border-[#F3F4F6] last:border-0">
+                            <span className="font-medium text-[#111827] text-xs min-w-[100px] truncate">
                               {emp ? `${emp.last_name}, ${emp.first_name}` : '—'}
                             </span>
-                            <span className="text-[#706D6A] flex-1 text-xs whitespace-nowrap">{dateLabel}</span>
+                            <span className="text-[#6B7280] flex-1 text-xs whitespace-nowrap">{dateLabel}</span>
                             <span className="text-[11px] font-bold px-1.5 py-0.5 rounded shrink-0"
                               style={{ backgroundColor: colors.bg, color: colors.text }}>
                               {abs.type}
@@ -433,20 +424,20 @@ export default function Dashboard() {
               )}
             </>
           )}
-        </GlassCardContent>
-      </GlassCard>
+        </CardContent>
+      </Card>
     )
   }
 
   function renderAbwesend() {
     return (
-      <GlassCard glass={glassUI} className="h-full">
-        <GlassCardHeader>
-          <GlassCardTitle>Heute abwesend · {format(new Date(), 'dd.MM.yyyy')}</GlassCardTitle>
-        </GlassCardHeader>
-        <GlassCardContent>
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle>Heute abwesend · {format(new Date(), 'dd.MM.yyyy')}</CardTitle>
+        </CardHeader>
+        <CardContent>
           {data.absentToday.length === 0 ? (
-            <p className="text-sm text-[#706D6A]">Alle Mitarbeiter anwesend.</p>
+            <p className="text-sm text-[#6B7280]">Alle Mitarbeiter anwesend.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {data.absentToday.map(abs => {
@@ -462,40 +453,40 @@ export default function Dashboard() {
               })}
             </div>
           )}
-        </GlassCardContent>
-      </GlassCard>
+        </CardContent>
+      </Card>
     )
   }
 
   function renderArbeitszeiten() {
     return (
-      <GlassCard glass={glassUI} className="h-full">
-        <GlassCardHeader>
-          <GlassCardTitle>Arbeitszeiten heute · {format(new Date(), 'dd.MM.yyyy')}</GlassCardTitle>
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle>Arbeitszeiten heute · {format(new Date(), 'dd.MM.yyyy')}</CardTitle>
           <div className="flex items-center gap-3">
             <div className="flex items-baseline gap-1">
-              <span className="text-base font-bold text-[#1A1917]">{stempel.filter(r => r.isActive).length}</span>
-              <span className="text-xs text-[#706D6A]">eingestempelt</span>
+              <span className="text-base font-bold text-[#111827]">{stempel.filter(r => r.isActive).length}</span>
+              <span className="text-xs text-[#6B7280]">eingestempelt</span>
             </div>
             <button
               onClick={() => { setShowClockInForm(v => !v); setClockInEmpId('') }}
               className={cn(
                 'p-1 rounded transition-colors',
-                showClockInForm ? 'bg-[#EDE7DC] text-[#1A1917]' : 'text-[#706D6A] hover:bg-[#EDE7DC]'
+                showClockInForm ? 'bg-[#E5E7EB] text-[#111827]' : 'text-[#6B7280] hover:bg-[#E5E7EB]'
               )}
               title="Mitarbeiter einstempeln"
             >
               <Plus size={15} />
             </button>
           </div>
-        </GlassCardHeader>
+        </CardHeader>
 
         {showClockInForm && (
-          <div className="px-5 py-3 border-b border-[#EDE7DC] bg-white flex items-center gap-2">
+          <div className="px-5 py-3 border-b border-[#E5E7EB] bg-white flex items-center gap-2">
             <select
               value={clockInEmpId}
               onChange={e => setClockInEmpId(e.target.value)}
-              className="flex-1 text-sm border border-[#EDE7DC] rounded px-2 py-1.5 text-[#1A1917] outline-none focus:border-[#BA7517] bg-white"
+              className="flex-1 text-sm border border-[#E5E7EB] rounded px-2 py-1.5 text-[#111827] outline-none focus:border-[#4F46E5] bg-white"
             >
               <option value="">Mitarbeiter wählen…</option>
               {allEmployees.map(e => (
@@ -511,26 +502,26 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setShowClockInForm(false)}
-              className="p-1.5 rounded text-[#706D6A] hover:bg-[#EDE7DC] transition-colors"
+              className="p-1.5 rounded text-[#6B7280] hover:bg-[#E5E7EB] transition-colors"
             >
               <X size={14} />
             </button>
           </div>
         )}
 
-        <GlassCardContent className="p-0">
+        <CardContent className="p-0">
           {stempel.length === 0 ? (
-            <p className="px-5 py-4 text-sm text-[#706D6A]">Heute noch keine Buchungen.</p>
+            <p className="px-5 py-4 text-sm text-[#6B7280]">Heute noch keine Buchungen.</p>
           ) : (
-            <div className="divide-y divide-[#F5F0EA]">
+            <div className="divide-y divide-[#F3F4F6]">
               {stempel.map((row, i) => {
                 const prevWasActive = i > 0 && stempel[i - 1].isActive
                 const showSeparator = !row.isActive && prevWasActive
                 return (
                   <div key={row.employee.id}>
                     {showSeparator && (
-                      <div className="px-5 py-1.5 bg-[#FAF7F2]">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#B0A898]">
+                      <div className="px-5 py-1.5 bg-[#F9FAFB]">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">
                           Ausgestempelt
                         </span>
                       </div>
@@ -540,10 +531,10 @@ export default function Dashboard() {
                         'w-2 h-2 rounded-full shrink-0',
                         row.isActive ? 'bg-green-500' : 'bg-[#D1D5DB]'
                       )} />
-                      <span className="text-sm font-semibold text-[#1A1917] flex-1">
+                      <span className="text-sm font-semibold text-[#111827] flex-1">
                         {row.employee.last_name}, {row.employee.first_name}
                       </span>
-                      <span className="text-xs text-[#706D6A]">{row.sinceLabel}</span>
+                      <span className="text-xs text-[#6B7280]">{row.sinceLabel}</span>
                       {row.isActive ? (
                         <span className="text-xs font-bold tabular-nums w-16 text-right text-green-700">
                           {Math.floor(row.totalMins / 60)}
@@ -551,14 +542,14 @@ export default function Dashboard() {
                           {String(row.totalMins % 60).padStart(2, '0')} h
                         </span>
                       ) : (
-                        <span className="text-xs font-bold tabular-nums w-16 text-right text-[#706D6A]">
+                        <span className="text-xs font-bold tabular-nums w-16 text-right text-[#6B7280]">
                           {fmtMins(row.totalMins)}
                         </span>
                       )}
                       <button
                         onClick={() => row.isActive && row.openEntryId ? handleClockOut(row.openEntryId) : undefined}
                         className={cn(
-                          'flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#EDE7DC] text-[#706D6A] hover:bg-[#EDE7DC] transition-colors shrink-0',
+                          'flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#E5E7EB] text-[#6B7280] hover:bg-[#E5E7EB] transition-colors shrink-0',
                           (!row.isActive || !row.openEntryId) && 'invisible pointer-events-none'
                         )}
                         title="Ausstempeln"
@@ -571,8 +562,8 @@ export default function Dashboard() {
               })}
             </div>
           )}
-        </GlassCardContent>
-      </GlassCard>
+        </CardContent>
+      </Card>
     )
   }
 
@@ -581,54 +572,47 @@ export default function Dashboard() {
   function renderWidget(id: WidgetId) {
     switch (id) {
       case 'stat-eingestempelt':
-        return <StatCard label="Eingestempelt heute" value={presentToday}            sub={`von ${data.activeTotal} aktiven MA`}     color="green"  glass={glassUI} />
+        return <StatCard label="Eingestempelt heute" value={presentToday}            sub={`von ${data.activeTotal} aktiven MA`}     color="green"  />
       case 'stat-abwesend':
-        return <StatCard label="Abwesend heute"       value={data.absentToday.length} sub={absentSub}                                color={data.absentToday.length > 0 ? 'amber' : 'default'} glass={glassUI} />
+        return <StatCard label="Abwesend heute"       value={data.absentToday.length} sub={absentSub}                                color={data.absentToday.length > 0 ? 'amber' : 'default'} />
       case 'stat-genehmigungen':
-        return <StatCard label="Offene Genehmigungen" value={data.pending.length}     sub="Warten auf Freigabe"                      color={data.pending.length > 0 ? 'red' : 'default'} glass={glassUI} />
+        return <StatCard label="Offene Genehmigungen" value={data.pending.length}     sub="Warten auf Freigabe"                      color={data.pending.length > 0 ? 'red' : 'default'} />
       case 'stat-resturlaub':
-        return <StatCard label="Resturlaub-Verfall"   value={data.carryOverCount}     sub={`Resturlaub ${year}`}                     color={data.carryOverCount > 0 ? 'amber' : 'default'} glass={glassUI} />
+        return <StatCard label="Resturlaub-Verfall"   value={data.carryOverCount}     sub={`Resturlaub ${year}`}                     color={data.carryOverCount > 0 ? 'amber' : 'default'} />
       case 'antraege':      return renderAntraege()
       case 'abwesend':      return renderAbwesend()
       case 'arbeitszeiten': return renderArbeitszeiten()
       case 'stat-ueberstunden':
-        return <StatCard label="Überstunden diese Woche" value={0} sub="Demnächst verfügbar" color="default" glass={glassUI} />
+        return <StatCard label="Überstunden diese Woche" value={0} sub="Demnächst verfügbar" color="default" />
       case 'stat-krankmeldungen':
-        return <StatCard label="Krankmeldungen" value={data.absentToday.filter(a => a.type === 'K' || a.type === 'KK').length} sub="Aktuelle K/KK-Einträge" color={data.absentToday.some(a => a.type === 'K' || a.type === 'KK') ? 'red' : 'default'} glass={glassUI} />
+        return <StatCard label="Krankmeldungen" value={data.absentToday.filter(a => a.type === 'K' || a.type === 'KK').length} sub="Aktuelle K/KK-Einträge" color={data.absentToday.some(a => a.type === 'K' || a.type === 'KK') ? 'red' : 'default'} />
       case 'geburtstage':
-        return <WidgetStub label="Geburtstage im Monat" glass={glassUI} />
+        return <WidgetStub label="Geburtstage im Monat" />
       case 'dokumente-ablauf':
-        return <WidgetStub label="Ablaufende Verträge" glass={glassUI} />
+        return <WidgetStub label="Ablaufende Verträge" />
     }
   }
 
-  // ── JSX ───────────────────────────────────────────────────────────────────
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className={cn('text-2xl font-bold', glassUI ? 'text-white' : 'text-[#1A1917]')}>Dashboard</h1>
-          <p className={cn('text-sm capitalize', glassUI ? 'text-white/60' : 'text-[#706D6A]')}>
+          <h1 className="text-2xl font-bold text-[#111827]">Dashboard</h1>
+          <p className="text-sm capitalize text-[#6B7280]">
             {format(new Date(), 'EEEE, dd. MMMM yyyy', { locale: de })}
           </p>
         </div>
         {editMode ? (
           <button
             onClick={() => setEditMode(false)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/20 backdrop-blur-sm text-white text-sm font-medium hover:bg-white/30 transition-colors border border-white/30"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4F46E5] text-white text-sm font-medium hover:bg-[#4338CA] transition-colors"
           >
             Fertig
           </button>
         ) : (
           <button
             onClick={() => setEditMode(true)}
-            className={cn(
-              'p-2 rounded-lg transition-colors',
-              glassUI
-                ? 'border border-white/30 text-white/70 hover:bg-white/20 hover:text-white'
-                : 'border border-[#EDE7DC] text-[#706D6A] hover:bg-[#F5F2EE] hover:text-[#1A1917]'
-            )}
+            className="p-2 rounded-lg transition-colors border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]"
             title="Layout anpassen"
           >
             <SlidersHorizontal size={16} />
@@ -637,7 +621,7 @@ export default function Dashboard() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-[#706D6A]">Lade…</p>
+        <p className="text-sm text-[#6B7280]">Lade…</p>
       ) : (
         <>
           <RGL
@@ -668,13 +652,13 @@ export default function Dashboard() {
           </RGL>
 
           {editMode && hidden.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2 p-4 border border-dashed border-[#EDE7DC] rounded-xl bg-[#FAF7F2]">
-              <p className="text-xs text-[#706D6A] w-full mb-1 font-medium">Widget hinzufügen:</p>
+            <div className="mt-4 flex flex-wrap gap-2 p-4 border border-dashed border-[#E5E7EB] rounded-xl bg-[#F9FAFB]">
+              <p className="text-xs text-[#6B7280] w-full mb-1 font-medium">Widget hinzufügen:</p>
               {hidden.map(id => (
                 <button
                   key={id}
                   onClick={() => addWidget(id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#EDE7DC] text-sm text-[#706D6A] hover:border-[#BA7517] hover:text-[#BA7517] transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E5E7EB] text-sm text-[#6B7280] hover:border-[#4F46E5] hover:text-[#4F46E5] transition-colors"
                 >
                   <Plus size={13} /> {WIDGET_META[id].label}
                 </button>
@@ -687,32 +671,31 @@ export default function Dashboard() {
   )
 }
 
-// ── Hilfsfunktionen ────────────────────────────────────────────────────────
 function calcDays(from: string, to: string): number {
   return Math.round((parseISO(to).getTime() - parseISO(from).getTime()) / 86_400_000) + 1
 }
 
-function StatCard({ label, value, sub, color, glass }: {
-  label: string; value: number; sub: string; color: 'green' | 'amber' | 'red' | 'default'; glass: boolean
+function StatCard({ label, value, sub, color }: {
+  label: string; value: number; sub: string; color: 'green' | 'amber' | 'red' | 'default'
 }) {
-  const cls = { green: 'text-green-600', amber: 'text-[#BA7517]', red: 'text-red-600', default: 'text-[#1A1917]' }[color]
+  const cls = { green: 'text-green-600', amber: 'text-amber-600', red: 'text-red-600', default: 'text-[#111827]' }[color]
   return (
-    <GlassCard glass={glass} className="h-full">
-      <GlassCardContent>
-        <GlassCardTitle className="mb-2">{label}</GlassCardTitle>
+    <Card className="h-full">
+      <CardContent>
+        <CardTitle className="mb-2">{label}</CardTitle>
         <div className={`text-3xl font-bold my-2 ${cls}`}>{value}</div>
-        <GlassCardDescription>{sub}</GlassCardDescription>
-      </GlassCardContent>
-    </GlassCard>
+        <CardDescription>{sub}</CardDescription>
+      </CardContent>
+    </Card>
   )
 }
 
-function WidgetStub({ label, glass }: { label: string; glass: boolean }) {
+function WidgetStub({ label }: { label: string }) {
   return (
-    <GlassCard glass={glass} className="h-full">
-      <GlassCardContent className="flex items-center justify-center h-full">
-        <GlassCardDescription>{label} – demnächst verfügbar</GlassCardDescription>
-      </GlassCardContent>
-    </GlassCard>
+    <Card className="h-full">
+      <CardContent className="flex items-center justify-center h-full">
+        <CardDescription>{label} – demnächst verfügbar</CardDescription>
+      </CardContent>
+    </Card>
   )
 }
