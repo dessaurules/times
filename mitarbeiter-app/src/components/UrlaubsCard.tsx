@@ -75,7 +75,7 @@ export default function UrlaubsCard({ taken, planned, entitlement, monthDeltaMin
             ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
             : 'bg-red-50 text-red-700 border border-red-100'
         )}>
-          {formatHM(monthDeltaMins)} Std. diesen Monat
+          {formatHM(monthDeltaMins)} Std. im Monat
         </div>
       )}
     </div>

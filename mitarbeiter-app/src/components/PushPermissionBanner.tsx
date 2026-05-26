@@ -11,6 +11,7 @@ export default function PushPermissionBanner() {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
+    if (localStorage.getItem('push-banner-dismissed')) return
     if (!('Notification' in window) && !(isIOS && !isInStandaloneMode)) return
     if ('Notification' in window && Notification.permission !== 'default') return
     setShow(true)
@@ -48,7 +49,7 @@ export default function PushPermissionBanner() {
           </>
         )}
       </div>
-      <button onClick={() => setShow(false)} className="text-indigo-300 hover:text-indigo-500">
+      <button onClick={() => { localStorage.setItem('push-banner-dismissed', '1'); setShow(false) }} className="text-indigo-300 hover:text-indigo-500">
         <X size={14} />
       </button>
     </div>

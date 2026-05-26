@@ -9,7 +9,7 @@ onRecordAfterUpdateSuccess((e) => {
 
   try {
     record.set('push_notified', true)
-    $app.dao().saveRecord(record)
+    $app.save(record)
   } catch (err) {
     console.error('[push_dienstplan] saveRecord fehlgeschlagen:', err)
     return
@@ -17,7 +17,7 @@ onRecordAfterUpdateSuccess((e) => {
 
   let entries
   try {
-    entries = $app.dao().findRecordsByFilter(
+    entries = $app.findRecordsByFilter(
       'shift_entries',
       `plan_id = "${record.id}" && employee != ""`,
       '', 500, 0,

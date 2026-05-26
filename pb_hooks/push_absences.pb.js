@@ -10,7 +10,7 @@ onRecordAfterUpdateSuccess((e) => {
 
   try {
     record.set('push_notified', true)
-    $app.dao().saveRecord(record)
+    $app.save(record)
   } catch (err) {
     console.error('[push_absences] saveRecord fehlgeschlagen:', err)
     return
