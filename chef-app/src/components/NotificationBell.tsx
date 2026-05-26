@@ -114,7 +114,7 @@ export default function NotificationBell() {
       <button
         ref={buttonRef}
         onClick={handleToggle}
-        className="relative flex items-center justify-center w-7 h-7 rounded-md hover:bg-[rgba(186,117,23,0.10)] text-[#706D6A] hover:text-[#BA7517] transition-colors"
+        className="relative flex items-center justify-center w-7 h-7 rounded-md hover:bg-[rgba(79,70,229,0.08)] text-[#6B7280] hover:text-[#4F46E5] transition-colors"
         title="Benachrichtigungen"
       >
         <Bell size={16} />
@@ -129,12 +129,12 @@ export default function NotificationBell() {
         <div
           ref={panelRef}
           style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}
-          className="w-80 bg-white rounded-xl border border-[#EDE7DC] shadow-xl overflow-hidden"
+          className="w-80 bg-white rounded-xl border border-[#E5E7EB] shadow-xl overflow-hidden"
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#EDE7DC]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#E5E7EB]">
             <span className="text-sm font-semibold text-[#1A1917]">Benachrichtigungen</span>
             {unreadCount > 0 && (
-              <button onClick={markAllRead} className="text-xs text-[#BA7517] hover:underline">
+              <button onClick={markAllRead} className="text-xs text-[#4F46E5] hover:underline">
                 Alle gelesen
               </button>
             )}
@@ -145,20 +145,20 @@ export default function NotificationBell() {
               Keine Benachrichtigungen
             </div>
           ) : (
-            <ul className="max-h-[320px] overflow-y-auto divide-y divide-[#F5F2EE]">
+            <ul className="max-h-[320px] overflow-y-auto divide-y divide-[#F3F4F6]">
               {items.map(n => (
                 <li
                   key={n.id}
                   onClick={() => handleClick(n)}
                   className={cn(
-                    'px-4 py-3 cursor-pointer hover:bg-[#F5F2EE] transition-colors',
-                    !n.read && 'bg-[rgba(186,117,23,0.05)]',
+                    'px-4 py-3 cursor-pointer hover:bg-[#F3F4F6] transition-colors',
+                    !n.read && 'bg-[rgba(79,70,229,0.05)]',
                   )}
                 >
                   <div className="flex items-start gap-2.5">
                     <span className={cn(
                       'mt-1.5 w-1.5 h-1.5 rounded-full shrink-0',
-                      n.read ? 'bg-transparent' : 'bg-[#BA7517]',
+                      n.read ? 'bg-transparent' : 'bg-[#4F46E5]',
                     )} />
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-medium text-[#1A1917] truncate">{n.title}</div>

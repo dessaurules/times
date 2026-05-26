@@ -6,8 +6,6 @@ import { useAuthStore } from '../../stores/auth'
 import { cn } from '@/lib/utils'
 import NotificationBell from '../NotificationBell'
 
-const glassUI = import.meta.env.VITE_GLASS_UI === 'true'
-
 const NAV = [
   { to: '/',              icon: LayoutDashboard, label: 'Dashboard',     end: true,  gfOnly: false },
   { to: '/mitarbeiter',   icon: Users,           label: 'Mitarbeiter',               gfOnly: true  },
@@ -29,16 +27,8 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className={cn(
-      'w-[220px] shrink-0 flex flex-col h-full',
-      glassUI
-        ? 'bg-white/15 backdrop-blur-xl border-r border-white/20'
-        : 'bg-white border-r border-[#EDE7DC]'
-    )}>
-      <div className={cn(
-        'flex items-center gap-2 px-5 py-[18px] font-bold text-[15px] border-b',
-        glassUI ? 'text-white border-white/20' : 'text-[#BA7517] border-[#EDE7DC]'
-      )}>
+    <aside className="w-[220px] shrink-0 flex flex-col h-full bg-white border-r border-[#E5E7EB]">
+      <div className="flex items-center gap-2 px-5 py-[18px] font-bold text-[15px] border-b border-[#E5E7EB] text-[#4F46E5]">
         <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <circle cx="12" cy="12" r="10"/>
           <polyline points="12 6 12 12 16 14"/>
@@ -58,13 +48,9 @@ export default function Sidebar() {
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
-                glassUI
-                  ? isActive
-                    ? 'bg-white/25 text-white font-medium'
-                    : 'text-white/70 hover:bg-white/15 hover:text-white'
-                  : isActive
-                    ? 'bg-[rgba(186,117,23,0.12)] text-[#BA7517] font-medium'
-                    : 'text-[#706D6A] hover:bg-[#F5F2EE] hover:text-[#1A1917]'
+                isActive
+                  ? 'bg-[rgba(79,70,229,0.10)] text-[#4F46E5] font-medium'
+                  : 'text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]'
               )
             }
           >
@@ -74,19 +60,16 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className={cn('px-3 pt-3 pb-4 border-t', glassUI ? 'border-white/20' : 'border-[#EDE7DC]')}>
+      <div className="px-3 pt-3 pb-4 border-t border-[#E5E7EB]">
         {user && (
           <div className="px-3 py-2 mb-1 text-xs">
-            <div className={cn('font-medium truncate', glassUI ? 'text-white' : 'text-[#1A1917]')}>{user.name}</div>
-            <div className={cn('text-[11px]', glassUI ? 'text-white/60' : 'text-[#706D6A]')}>{user.role === 'gf' ? 'Geschäftsführung' : 'Schichtleitung'}</div>
+            <div className="font-medium truncate text-[#111827]">{user.name}</div>
+            <div className="text-[11px] text-[#6B7280]">{user.role === 'gf' ? 'Geschäftsführung' : 'Schichtleitung'}</div>
           </div>
         )}
         <button
           onClick={handleLogout}
-          className={cn(
-            'flex items-center gap-2.5 w-full px-3 py-2 rounded-md text-sm transition-colors',
-            glassUI ? 'text-white/70 hover:bg-white/15 hover:text-white' : 'text-[#706D6A] hover:bg-[#F5F2EE] hover:text-[#1A1917]'
-          )}
+          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-md text-sm transition-colors text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]"
         >
           <LogOut size={16} />
           <span>Abmelden</span>
