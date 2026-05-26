@@ -132,7 +132,7 @@ export default function NotificationBell() {
           className="w-80 bg-white rounded-xl border border-[#E5E7EB] shadow-xl overflow-hidden"
         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#E5E7EB]">
-            <span className="text-sm font-semibold text-[#1A1917]">Benachrichtigungen</span>
+            <span className="text-sm font-semibold text-[#111827]">Benachrichtigungen</span>
             {unreadCount > 0 && (
               <button onClick={markAllRead} className="text-xs text-[#4F46E5] hover:underline">
                 Alle gelesen
@@ -141,7 +141,7 @@ export default function NotificationBell() {
           </div>
 
           {items.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-[#706D6A]">
+            <div className="px-4 py-8 text-center text-sm text-[#6B7280]">
               Keine Benachrichtigungen
             </div>
           ) : (
@@ -161,8 +161,8 @@ export default function NotificationBell() {
                       n.read ? 'bg-transparent' : 'bg-[#4F46E5]',
                     )} />
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-medium text-[#1A1917] truncate">{n.title}</div>
-                      <div className="text-xs text-[#706D6A] mt-0.5 line-clamp-2">{n.message}</div>
+                      <div className="text-xs font-medium text-[#111827] truncate">{n.title}</div>
+                      <div className="text-xs text-[#6B7280] mt-0.5 line-clamp-2">{n.message}</div>
                       <div className="text-[10px] text-[#9CA3AF] mt-1">
                         {n.created ? format(new Date(n.created), 'dd.MM. HH:mm', { locale: de }) : ''}
                         {' · '}
