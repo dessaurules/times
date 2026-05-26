@@ -8,10 +8,10 @@ export default function ProtectedRoute() {
 
   if (user.role === 'mitarbeiter') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F2EE]">
-        <div className="bg-white border border-[#EDE7DC] rounded-[8px] p-8 max-w-sm text-center shadow-sm">
-          <p className="font-semibold mb-2 text-[#1A1917]">Falscher Zugang</p>
-          <p className="text-sm text-[#706D6A]">
+      <div className="min-h-screen flex items-center justify-center bg-[#F3F4F6]">
+        <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-8 max-w-sm text-center shadow-sm">
+          <p className="font-semibold mb-2 text-[#111827]">Falscher Zugang</p>
+          <p className="text-sm text-[#6B7280]">
             Bitte die <strong>Mitarbeiter-App</strong> nutzen.
           </p>
         </div>
