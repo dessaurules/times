@@ -184,27 +184,27 @@ export default function Berichte() {
     <div>
       {/* ── Kopfzeile ── */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-[#1A1917]">Berichte</h1>
+        <h1 className="text-2xl font-bold text-[#111827]">Berichte</h1>
 
         <div className="flex items-center gap-2">
           {/* Monat / Jahr Toggle */}
-          <div className="flex rounded-md border border-[#EDE7DC] overflow-hidden text-sm">
+          <div className="flex rounded-md border border-[#E5E7EB] overflow-hidden text-sm">
             <button
               onClick={() => setView('monat')}
               className={cn(
                 'px-3 py-1.5 transition-colors',
                 view === 'monat'
-                  ? 'bg-[#BA7517] text-white font-medium'
-                  : 'bg-white text-[#706D6A] hover:bg-[#F5F2EE]',
+                  ? 'bg-[#4F46E5] text-white font-medium'
+                  : 'bg-white text-[#6B7280] hover:bg-[#F3F4F6]',
               )}
             >Monat</button>
             <button
               onClick={() => setView('jahr')}
               className={cn(
-                'px-3 py-1.5 border-l border-[#EDE7DC] transition-colors',
+                'px-3 py-1.5 border-l border-[#E5E7EB] transition-colors',
                 view === 'jahr'
-                  ? 'bg-[#BA7517] text-white font-medium'
-                  : 'bg-white text-[#706D6A] hover:bg-[#F5F2EE]',
+                  ? 'bg-[#4F46E5] text-white font-medium'
+                  : 'bg-white text-[#6B7280] hover:bg-[#F3F4F6]',
               )}
             >Jahr</button>
           </div>
@@ -213,28 +213,28 @@ export default function Berichte() {
           <select
             value={filterDept}
             onChange={e => setFilterDept(e.target.value)}
-            className="h-9 rounded-md border border-[#EDE7DC] bg-white px-3 text-sm text-[#1A1917] outline-none focus:border-[#BA7517] focus:ring-2 focus:ring-[#BA7517]/20"
+            className="h-9 rounded-md border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/20"
           >
             <option value="">Alle Abteilungen</option>
             {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
 
           {/* Navigation */}
-          <div className="flex items-center gap-1 bg-white border border-[#EDE7DC] rounded-md px-1">
+          <div className="flex items-center gap-1 bg-white border border-[#E5E7EB] rounded-md px-1">
             <button
               onClick={() => view === 'monat' ? setMonthDate(d => subMonths(d, 1)) : setYearNum(y => y - 1)}
-              className="p-1.5 rounded hover:bg-[#F5F2EE] text-[#706D6A] hover:text-[#1A1917]"
+              className="p-1.5 rounded hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827]"
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="px-3 py-1 text-xs text-[#706D6A] min-w-[140px] text-center capitalize">
+            <span className="px-3 py-1 text-xs text-[#6B7280] min-w-[140px] text-center capitalize">
               {view === 'monat'
                 ? format(monthDate, 'MMMM yyyy', { locale: de })
                 : yearNum}
             </span>
             <button
               onClick={() => view === 'monat' ? setMonthDate(d => addMonths(d, 1)) : setYearNum(y => y + 1)}
-              className="p-1.5 rounded hover:bg-[#F5F2EE] text-[#706D6A] hover:text-[#1A1917]"
+              className="p-1.5 rounded hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827]"
             >
               <ChevronRight size={16} />
             </button>
@@ -244,32 +244,32 @@ export default function Berichte() {
 
       {/* ── Tabelle ── */}
       {loading ? (
-        <p className="text-sm text-[#706D6A]">Lade…</p>
+        <p className="text-sm text-[#6B7280]">Lade…</p>
       ) : (
-        <div className="bg-white border border-[#EDE7DC] rounded-lg overflow-x-auto">
+        <div className="bg-white border border-[#E5E7EB] rounded-lg overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="bg-[#F5F2EE]">
-                <th className="text-left px-4 py-2.5 text-[#706D6A] font-medium border-b border-[#EDE7DC] whitespace-nowrap">Mitarbeiter</th>
-                <th className="text-left px-3 py-2.5 text-[#706D6A] font-medium border-b border-[#EDE7DC] whitespace-nowrap">Abt.</th>
-                <th className="text-right px-3 py-2.5 text-[#706D6A] font-medium border-b border-[#EDE7DC] whitespace-nowrap">Soll</th>
-                <th className="text-right px-3 py-2.5 text-[#706D6A] font-medium border-b border-[#EDE7DC] whitespace-nowrap">Ist</th>
-                <th className="text-right px-3 py-2.5 text-[#706D6A] font-medium border-b border-[#EDE7DC] whitespace-nowrap">Differenz</th>
+              <tr className="bg-[#F3F4F6]">
+                <th className="text-left px-4 py-2.5 text-[#6B7280] font-medium border-b border-[#E5E7EB] whitespace-nowrap">Mitarbeiter</th>
+                <th className="text-left px-3 py-2.5 text-[#6B7280] font-medium border-b border-[#E5E7EB] whitespace-nowrap">Abt.</th>
+                <th className="text-right px-3 py-2.5 text-[#6B7280] font-medium border-b border-[#E5E7EB] whitespace-nowrap">Soll</th>
+                <th className="text-right px-3 py-2.5 text-[#6B7280] font-medium border-b border-[#E5E7EB] whitespace-nowrap">Ist</th>
+                <th className="text-right px-3 py-2.5 text-[#6B7280] font-medium border-b border-[#E5E7EB] whitespace-nowrap">Differenz</th>
                 {view === 'jahr' && (
-                  <th className="text-center px-3 py-2.5 text-[#706D6A] font-medium border-b border-[#EDE7DC] whitespace-nowrap">
-                    Urlaub <span className="font-normal text-[#AAAAAA]">(gen./Anspr.)</span>
+                  <th className="text-center px-3 py-2.5 text-[#6B7280] font-medium border-b border-[#E5E7EB] whitespace-nowrap">
+                    Urlaub <span className="font-normal text-[#9CA3AF]">(gen./Anspr.)</span>
                   </th>
                 )}
                 {ABSENCE_COLS.map(t => (
                   <th
                     key={t}
-                    className="text-center px-2 py-2.5 font-medium border-b border-[#EDE7DC] whitespace-nowrap text-xs"
+                    className="text-center px-2 py-2.5 font-medium border-b border-[#E5E7EB] whitespace-nowrap text-xs"
                     style={{ color: ABSENCE_COLORS[t].text, backgroundColor: ABSENCE_COLORS[t].bg }}
                   >
                     {t}
                   </th>
                 ))}
-                <th className="border-b border-[#EDE7DC] w-9" />
+                <th className="border-b border-[#E5E7EB] w-9" />
               </tr>
             </thead>
             <tbody>
@@ -277,11 +277,11 @@ export default function Berichte() {
                 const { soll, ist, delta, byType, vacTaken, vacTotal } = empData(emp)
                 const dept = emp.expand?.department
                 return (
-                  <tr key={emp.id} className={cn('border-b border-[#EDE7DC] last:border-0', i % 2 === 1 && 'bg-[#FAFAF8]')}>
-                    <td className="px-4 py-2.5 font-medium text-[#1A1917] whitespace-nowrap">
+                  <tr key={emp.id} className={cn('border-b border-[#E5E7EB] last:border-0', i % 2 === 1 && 'bg-[#F9FAFB]')}>
+                    <td className="px-4 py-2.5 font-medium text-[#111827] whitespace-nowrap">
                       {emp.last_name}, {emp.first_name}
                     </td>
-                    <td className="px-3 py-2.5 text-[#706D6A] whitespace-nowrap">
+                    <td className="px-3 py-2.5 text-[#6B7280] whitespace-nowrap">
                       {dept ? (
                         <span className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: dept.color }} />
@@ -289,32 +289,32 @@ export default function Berichte() {
                         </span>
                       ) : '–'}
                     </td>
-                    <td className="px-3 py-2.5 text-right text-[#706D6A] tabular-nums whitespace-nowrap">{fmtH(soll)}</td>
-                    <td className="px-3 py-2.5 text-right text-[#1A1917] tabular-nums whitespace-nowrap">{fmtH(ist)}</td>
+                    <td className="px-3 py-2.5 text-right text-[#6B7280] tabular-nums whitespace-nowrap">{fmtH(soll)}</td>
+                    <td className="px-3 py-2.5 text-right text-[#111827] tabular-nums whitespace-nowrap">{fmtH(ist)}</td>
                     <td className={cn(
                       'px-3 py-2.5 text-right tabular-nums font-medium whitespace-nowrap',
-                      delta > 0.02 ? 'text-emerald-600' : delta < -0.02 ? 'text-red-500' : 'text-[#AAAAAA]',
+                      delta > 0.02 ? 'text-emerald-600' : delta < -0.02 ? 'text-red-500' : 'text-[#9CA3AF]',
                     )}>
                       {fmtDelta(delta)}
                     </td>
                     {view === 'jahr' && (
-                      <td className="px-3 py-2.5 text-center tabular-nums text-[#706D6A] whitespace-nowrap">
+                      <td className="px-3 py-2.5 text-center tabular-nums text-[#6B7280] whitespace-nowrap">
                         {vacTaken > 0 || vacTotal !== null
-                          ? <><span className="font-medium text-[#1A1917]">{vacTaken}</span> / {vacTotal ?? '–'}</>
-                          : <span className="text-[#D0CBC2]">–</span>}
+                          ? <><span className="font-medium text-[#111827]">{vacTaken}</span> / {vacTotal ?? '–'}</>
+                          : <span className="text-[#D1D5DB]">–</span>}
                       </td>
                     )}
                     {ABSENCE_COLS.map(t => (
                       <td key={t} className="px-2 py-2.5 text-center tabular-nums">
                         {byType[t]
                           ? <span className="font-medium text-xs" style={{ color: ABSENCE_COLORS[t].text }}>{byType[t]}</span>
-                          : <span className="text-[#D0CBC2]">–</span>}
+                          : <span className="text-[#D1D5DB]">–</span>}
                       </td>
                     ))}
                     <td className="px-2 py-2.5 text-center">
                       <button
                         onClick={() => setDruckEmp(emp)}
-                        className="p-1 rounded text-[#BBBBBB] hover:text-[#BA7517] hover:bg-[#F5F2EE] transition-colors"
+                        className="p-1 rounded text-[#9CA3AF] hover:text-[#4F46E5] hover:bg-[#F3F4F6] transition-colors"
                         title="Druckansicht öffnen"
                       >
                         <Printer size={14} />
@@ -326,7 +326,7 @@ export default function Berichte() {
 
               {employees.length === 0 && (
                 <tr>
-                  <td colSpan={colSpanEmpty} className="px-4 py-10 text-center text-[#706D6A]">
+                  <td colSpan={colSpanEmpty} className="px-4 py-10 text-center text-[#6B7280]">
                     Keine Mitarbeiter gefunden.
                   </td>
                 </tr>
@@ -346,14 +346,14 @@ export default function Berichte() {
               }
               return (
                 <tfoot>
-                  <tr className="bg-[#F5F2EE] border-t-2 border-[#EDE7DC] font-medium">
-                    <td className="px-4 py-2.5 text-[#706D6A] text-xs uppercase tracking-wide">Gesamt</td>
+                  <tr className="bg-[#F3F4F6] border-t-2 border-[#E5E7EB] font-medium">
+                    <td className="px-4 py-2.5 text-[#6B7280] text-xs uppercase tracking-wide">Gesamt</td>
                     <td />
-                    <td className="px-3 py-2.5 text-right tabular-nums text-[#706D6A]">{fmtH(totalSoll)}</td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-[#1A1917]">{fmtH(totalIst)}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-[#6B7280]">{fmtH(totalSoll)}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-[#111827]">{fmtH(totalIst)}</td>
                     <td className={cn(
                       'px-3 py-2.5 text-right tabular-nums',
-                      totalDelta > 0.02 ? 'text-emerald-600' : totalDelta < -0.02 ? 'text-red-500' : 'text-[#AAAAAA]',
+                      totalDelta > 0.02 ? 'text-emerald-600' : totalDelta < -0.02 ? 'text-red-500' : 'text-[#9CA3AF]',
                     )}>
                       {fmtDelta(totalDelta)}
                     </td>
@@ -362,7 +362,7 @@ export default function Berichte() {
                       <td key={t} className="px-2 py-2.5 text-center tabular-nums text-xs">
                         {byTypeSum[t]
                           ? <span style={{ color: ABSENCE_COLORS[t].text }}>{byTypeSum[t]}</span>
-                          : <span className="text-[#D0CBC2]">–</span>}
+                          : <span className="text-[#D1D5DB]">–</span>}
                       </td>
                     ))}
                     <td />
