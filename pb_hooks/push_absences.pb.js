@@ -16,8 +16,8 @@ onRecordAfterUpdateSuccess((e) => {
     return
   }
 
-  const dateFrom = record.get('date_from') ?? ''
-  const dateTo   = record.get('date_to')   ?? ''
+  const dateFrom = String(record.get('date_from') ?? '')
+  const dateTo   = String(record.get('date_to')   ?? '')
 
   try {
     $http.send({
