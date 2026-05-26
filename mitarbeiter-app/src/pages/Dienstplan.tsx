@@ -7,7 +7,7 @@ import { de } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { pb } from '../lib/pb'
 import { useAuthStore } from '../stores/auth'
-import { getHolidayDates } from '../lib/holidays'
+import { getHolidayMap } from '../lib/holidays'
 import { cn } from '@/lib/utils'
 import type { PBRecord, Department } from '@shared/types'
 
@@ -63,7 +63,7 @@ export default function Dienstplan() {
   }, [employeeId, weekStart])
 
   const weekDays = eachDayOfInterval({ start: weekStart, end: endOfWeek(weekStart, { weekStartsOn: 1 }) })
-  const holidays = getHolidayDates(weekStart.getFullYear(), fedState)
+  const holidays = getHolidayMap(weekStart.getFullYear(), fedState)
   const kw       = getISOWeek(weekStart)
 
   const totalMins = entries.reduce((sum, e) => {
