@@ -28,15 +28,15 @@ export default function KalenderTable({
     <div className="overflow-x-auto">
       <table className="border-collapse text-[11px] leading-none select-none">
         <thead>
-          <tr className="bg-[#F5F2EE]">
-            <th className="sticky left-0 z-10 bg-[#F5F2EE] text-left text-xs font-semibold text-[#1A1917] px-3 py-2 min-w-[160px] border-b border-r border-[#EDE7DC]">
+          <tr className="bg-[#F3F4F6]">
+            <th className="sticky left-0 z-10 bg-[#F3F4F6] text-left text-xs font-semibold text-[#111827] px-3 py-2 min-w-[160px] border-b border-r border-[#E5E7EB]">
               Mitarbeiter
             </th>
             {calendarDays.map(day => (
               <th
                 key={day.date}
                 className={cn(
-                  'w-6 min-w-[24px] text-center font-normal border-b border-r border-[#EDE7DC] py-1',
+                  'w-6 min-w-[24px] text-center font-normal border-b border-r border-[#E5E7EB] py-1',
                   (day.isWeekend || day.isHoliday) && 'bg-gray-100 text-gray-400',
                 )}
               >
@@ -44,9 +44,9 @@ export default function KalenderTable({
                 <div className="text-gray-400">{day.dayLabel}</div>
               </th>
             ))}
-            <th className="sticky right-[64px] z-20 w-8 min-w-[32px] text-center text-xs font-semibold text-[#706D6A] border-b border-r border-l-2 border-[#EDE7DC] border-l-[#C8BFB2] bg-[#F5F2EE] px-1 py-2">AT</th>
-            <th className="sticky right-[32px] z-20 w-8 min-w-[32px] text-center text-xs font-semibold text-[#706D6A] border-b border-r border-[#EDE7DC] bg-[#F5F2EE] px-1 py-2">U</th>
-            <th className="sticky right-0     z-20 w-8 min-w-[32px] text-center text-xs font-semibold text-[#706D6A] border-b border-r border-[#EDE7DC] bg-[#F5F2EE] px-1 py-2">K</th>
+            <th className="sticky right-[64px] z-20 w-8 min-w-[32px] text-center text-xs font-semibold text-[#6B7280] border-b border-r border-l-2 border-[#E5E7EB] border-l-[#D1D5DB] bg-[#F3F4F6] px-1 py-2">AT</th>
+            <th className="sticky right-[32px] z-20 w-8 min-w-[32px] text-center text-xs font-semibold text-[#6B7280] border-b border-r border-[#E5E7EB] bg-[#F3F4F6] px-1 py-2">U</th>
+            <th className="sticky right-0     z-20 w-8 min-w-[32px] text-center text-xs font-semibold text-[#6B7280] border-b border-r border-[#E5E7EB] bg-[#F3F4F6] px-1 py-2">K</th>
           </tr>
         </thead>
         <tbody>
@@ -54,7 +54,7 @@ export default function KalenderTable({
             const sum = summaries.get(emp.id) ?? { at: 0, vacation: 0, sick: 0 }
             return (
               <tr key={emp.id} className="group">
-                <td className="sticky left-0 z-10 bg-white border-b border-r border-[#EDE7DC] px-3 py-1 font-medium text-[#1A1917] whitespace-nowrap group-hover:bg-[#FDFCFB]">
+                <td className="sticky left-0 z-10 bg-white border-b border-r border-[#E5E7EB] px-3 py-1 font-medium text-[#111827] whitespace-nowrap group-hover:bg-[#F9FAFB]">
                   {emp.last_name}, {emp.first_name}
                 </td>
                 {calendarDays.map(day => {
@@ -72,9 +72,9 @@ export default function KalenderTable({
                       key={day.date}
                       data-cell={`${emp.id}_${day.date}`}
                       className={cn(
-                        'w-6 min-w-[24px] h-7 border-b border-r border-[#EDE7DC] text-center align-middle cursor-default',
+                        'w-6 min-w-[24px] h-7 border-b border-r border-[#E5E7EB] text-center align-middle cursor-default',
                         isBlocked && 'bg-gray-50',
-                        !isBlocked && !absence && 'group-hover:bg-[#FDFCFB] hover:bg-[#F5F2EE] cursor-pointer',
+                        !isBlocked && !absence && 'group-hover:bg-[#F9FAFB] hover:bg-[#F3F4F6] cursor-pointer',
                         !isBlocked && absence && 'cursor-grab',
                         isActive && 'z-20',
                         inDrag && !isBlocked && 'bg-amber-100 drag-over-anim',
@@ -84,7 +84,7 @@ export default function KalenderTable({
                       style={{
                         ...(absence && colors ? { backgroundColor: colors.bg } : {}),
                         ...(isActive ? {
-                          outline: '2px solid #BA7517',
+                          outline: '2px solid #4F46E5',
                           outlineOffset: '-2px',
                           boxShadow: 'inset 0 0 0 3px white',
                         } : {}),
@@ -104,14 +104,14 @@ export default function KalenderTable({
                           {absence.type}
                         </span>
                       ) : isActive && inputValue ? (
-                        <span className="text-[#BA7517] font-medium">{inputValue}</span>
+                        <span className="text-[#4F46E5] font-medium">{inputValue}</span>
                       ) : null}
                     </td>
                   )
                 })}
-                <td className="sticky right-[64px] z-10 w-8 min-w-[32px] text-center border-b border-r border-l-2 border-[#EDE7DC] border-l-[#C8BFB2] bg-white text-[#1A1917] text-[11px] font-medium group-hover:bg-[#FDFCFB]">{sum.at}</td>
-                <td className="sticky right-[32px] z-10 w-8 min-w-[32px] text-center border-b border-r border-[#EDE7DC] bg-white text-[#706D6A] text-[11px] group-hover:bg-[#FDFCFB]">{sum.vacation || '–'}</td>
-                <td className="sticky right-0     z-10 w-8 min-w-[32px] text-center border-b border-r border-[#EDE7DC] bg-white text-[#706D6A] text-[11px] group-hover:bg-[#FDFCFB]">{sum.sick || '–'}</td>
+                <td className="sticky right-[64px] z-10 w-8 min-w-[32px] text-center border-b border-r border-l-2 border-[#E5E7EB] border-l-[#D1D5DB] bg-white text-[#111827] text-[11px] font-medium group-hover:bg-[#F9FAFB]">{sum.at}</td>
+                <td className="sticky right-[32px] z-10 w-8 min-w-[32px] text-center border-b border-r border-[#E5E7EB] bg-white text-[#6B7280] text-[11px] group-hover:bg-[#F9FAFB]">{sum.vacation || '–'}</td>
+                <td className="sticky right-0     z-10 w-8 min-w-[32px] text-center border-b border-r border-[#E5E7EB] bg-white text-[#6B7280] text-[11px] group-hover:bg-[#F9FAFB]">{sum.sick || '–'}</td>
               </tr>
             )
           })}
