@@ -91,7 +91,7 @@ export default function Dashboard() {
     const from = format(startOfMonth(viewMonth), 'yyyy-MM-dd')
     const to   = format(endOfMonth(viewMonth),   'yyyy-MM-dd')
     pb.collection('time_entries').getFullList<TimeEntry>({
-      filter: `employee = "${employeeId}" && start_time >= "${from}" && start_time < "${to} 23:59:59"`,
+      filter: `employee = "${employeeId}" && start_time >= "${from}" && start_time <= "${to} 23:59:59"`,
       sort: 'start_time',
       requestKey: null,
     }).then(setMonthEntries).catch(console.error)
