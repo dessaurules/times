@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { format, differenceInMinutes, parseISO, eachDayOfInterval, isWeekend } from 'date-fns'
+import { format, differenceInMinutes, parseISO, eachDayOfInterval, isWeekend, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { LogIn, LogOut, Clock, CalendarOff, Plus } from 'lucide-react'
+import { LogIn, LogOut, Clock, Plus } from 'lucide-react'
 import { pb } from '../lib/pb'
 import { useAuthStore } from '../stores/auth'
 import type { TimeEntry, Absence, VacationAccount, Employee } from '@shared/types'
@@ -9,6 +9,8 @@ import { VACATION_TYPES, ABSENCE_COLORS } from '@shared/types'
 import { cn } from '@/lib/utils'
 import AntragDialog from './Abwesenheiten/AntragDialog'
 import { getHolidayDates } from '../lib/holidays'
+import MonatsstundenGauge from '../components/MonatsstundenGauge'
+import UrlaubsCard from '../components/UrlaubsCard'
 
 function formatDuration(mins: number) {
   const h = Math.floor(Math.abs(mins) / 60)
@@ -43,6 +45,8 @@ export default function Dashboard() {
   const [showAntrag, setShowAntrag] = useState(false)
   const [antragDate, setAntragDate] = useState<string | undefined>()
   const [fedState,   setFedState]   = useState('ST')
+  const [viewMonth, setViewMonth] = useState(new Date())
+  const [monthEntries, setMonthEntries] = useState<TimeEntry[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const employeeId = user?.employee
@@ -81,6 +85,17 @@ export default function Dashboard() {
       setVacAcc(va)
     }).catch(console.error)
   }, [employeeId, year])
+
+  useEffect(() => {
+    if (!employeeId) return
+    const from = format(startOfMonth(viewMonth), 'yyyy-MM-dd')
+    const to   = format(endOfMonth(viewMonth),   'yyyy-MM-dd')
+    pb.collection('time_entries').getFullList<TimeEntry>({
+      filter: `employee = "${employeeId}" && start_time >= "${from}" && start_time < "${to} 23:59:59"`,
+      sort: 'start_time',
+      requestKey: null,
+    }).then(setMonthEntries).catch(console.error)
+  }, [employeeId, viewMonth])
 
   useEffect(() => {
     timerRef.current = setInterval(() => setNow(new Date()), 10_000)
@@ -127,6 +142,32 @@ export default function Dashboard() {
 
   const holidays = useMemo(() => getHolidayDates(year, fedState), [year, fedState])
 
+  const targetMins = useMemo(() => {
+    const days = eachDayOfInterval({
+      start: startOfMonth(viewMonth),
+      end:   endOfMonth(viewMonth),
+    }).filter(d => !isWeekend(d) && !holidays.has(format(d, 'yyyy-MM-dd')))
+    return Math.round((emp?.weekly_hours ?? 0) / 5 * days.length * 60)
+  }, [viewMonth, emp, holidays])
+
+  const actualMonthMins = useMemo(() => {
+    return monthEntries.reduce((sum, e) => {
+      const gross = differenceInMinutes(
+        e.end_time ? parseISO(e.end_time) : new Date(),
+        parseISO(e.start_time)
+      )
+      return sum + Math.max(0, gross - (e.break_minutes ?? 0))
+    }, 0)
+  }, [monthEntries])
+
+  const plannedDays = useMemo(() => absences
+    .filter(a => VACATION_TYPES.includes(a.type) && a.status === 'pending')
+    .reduce((sum, a) => {
+      return sum + eachDayOfInterval({ start: parseISO(a.date_from), end: parseISO(a.date_to) })
+        .filter(d => !isWeekend(d) && !holidays.has(format(d, 'yyyy-MM-dd')))
+        .length
+    }, 0), [absences, holidays])
+
   const takenDays = useMemo(() => absences
     .filter(a => VACATION_TYPES.includes(a.type) && a.status === 'approved')
     .reduce((sum, a) => {
@@ -136,7 +177,6 @@ export default function Dashboard() {
     }, 0), [absences, holidays])
 
   const entitlement = (vacAcc?.entitlement ?? emp?.vacation_days ?? 0) + (vacAcc?.carry_over ?? 0)
-  const remaining   = entitlement - takenDays
 
   const pendingCount = absences.filter(a => a.status === 'pending').length
 
@@ -206,32 +246,21 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Urlaubskonto */}
-        <div className="rounded-2xl p-6 bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100">
-          <div className="flex items-center gap-2 mb-4">
-            <CalendarOff size={16} className="text-indigo-400" />
-            <span className="text-sm font-medium text-indigo-600">Urlaubskonto {year}</span>
-          </div>
-          <div className="space-y-2.5">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-[#6B7280]">Anspruch</span>
-              <span className="text-sm font-semibold text-[#111827]">{entitlement} Tage</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-[#6B7280]">Genommen</span>
-              <span className="text-sm font-semibold text-[#111827]">{takenDays} Tage</span>
-            </div>
-            <div className="h-px bg-indigo-100" />
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-indigo-700">Verbleibend</span>
-              <span className={cn(
-                'text-lg font-bold',
-                remaining <= 3 ? 'text-red-600' : remaining <= 7 ? 'text-amber-600' : 'text-indigo-600'
-              )}>
-                {remaining} Tage
-              </span>
-            </div>
-          </div>
+        {/* Monatsstunden + Urlaub */}
+        <div className="space-y-3">
+          <MonatsstundenGauge
+            actualMins={actualMonthMins}
+            targetMins={targetMins}
+            month={viewMonth}
+            onPrev={() => setViewMonth(m => subMonths(m, 1))}
+            onNext={() => setViewMonth(m => addMonths(m, 1))}
+          />
+          <UrlaubsCard
+            taken={takenDays}
+            planned={plannedDays}
+            entitlement={entitlement}
+            monthDeltaMins={actualMonthMins - targetMins}
+          />
         </div>
       </div>
 
