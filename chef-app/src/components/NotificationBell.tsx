@@ -81,7 +81,7 @@ export default function NotificationBell() {
   function handleToggle() {
     if (!open && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect()
-      setPos({ top: rect.bottom + 8, left: rect.right + 8 })
+      setPos({ top: rect.bottom + 8, left: Math.max(8, rect.right - 320) })
     }
     setOpen(v => !v)
   }
