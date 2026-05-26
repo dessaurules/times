@@ -22,7 +22,7 @@ function Dialog({ open, onClose, children }: DialogProps) {
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/20" onClick={onClose} />
-      <div className="relative z-10 bg-white rounded-lg shadow-lg border border-[#EDE7DC] w-full max-w-sm mx-4">
+      <div className="relative z-10 bg-white rounded-lg shadow-lg border border-[#E5E7EB] w-full max-w-sm mx-4">
         {children}
       </div>
     </div>,
@@ -35,24 +35,24 @@ function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 }
 
 function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h2 className={cn('text-base font-semibold text-[#1A1917]', className)} {...props} />
+  return <h2 className={cn('text-base font-semibold text-[#111827]', className)} {...props} />
 }
 
 function DialogClose({ onClose }: { onClose: () => void }) {
   return (
-    <button onClick={onClose} className="text-[#706D6A] hover:text-[#1A1917] transition-colors">
+    <button onClick={onClose} className="text-[#6B7280] hover:text-[#111827] transition-colors">
       <X size={16} />
     </button>
   )
 }
 
 function DialogBody({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('px-5 pb-3 text-sm text-[#706D6A]', className)} {...props} />
+  return <div className={cn('px-5 pb-3 text-sm text-[#6B7280]', className)} {...props} />
 }
 
 function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('flex justify-end gap-2 px-5 py-4 border-t border-[#EDE7DC]', className)} {...props} />
+    <div className={cn('flex justify-end gap-2 px-5 py-4 border-t border-[#E5E7EB]', className)} {...props} />
   )
 }
 
