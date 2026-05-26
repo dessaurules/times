@@ -60,6 +60,22 @@ async function patchCollection(id, body) {
   return d
 }
 
+async function addFieldIfMissing(collectionName, field) {
+  const r = await fetch(`${BASE}/api/collections/${collectionName}`, { headers: H })
+  if (!r.ok) { console.error(`Collection ${collectionName} nicht gefunden`); return }
+  const col = await r.json()
+  if (col.fields.some(f => f.name === field.name)) {
+    console.log(`  Feld "${field.name}" in "${collectionName}" bereits vorhanden`)
+    return
+  }
+  const pr = await fetch(`${BASE}/api/collections/${col.id}`, {
+    method: 'PATCH', headers: H, body: JSON.stringify({ fields: [...col.fields, field] }),
+  })
+  const pd = await pr.json()
+  if (!pr.ok) throw new Error(`addField ${collectionName}.${field.name}: ${JSON.stringify(pd)}`)
+  console.log(`✓ Feld "${field.name}" zu "${collectionName}" hinzugefügt`)
+}
+
 // ── Feld-Definitionen (PocketBase v0.23+ flat API) ────
 const f = {
   text:     (name, o = {}) => ({ type: 'text',     name, required: false, ...o }),
@@ -284,6 +300,27 @@ for (const s of defaultSettings) {
     console.log(`  Setting "${s.key}" bereits vorhanden`)
   }
 }
+
+// ── push_notified Felder (für Push-Notifications) ─────
+await addFieldIfMissing('absences',    f.bool('push_notified'))
+await addFieldIfMissing('shift_plans', f.bool('push_notified'))
+
+// ── push_subscriptions ────────────────────────────────
+await create({
+  name: 'push_subscriptions', type: 'base',
+  listRule:   "@request.auth.id != '' && employee = @request.auth.employee",
+  viewRule:   "@request.auth.id != '' && employee = @request.auth.employee",
+  createRule: "@request.auth.id != ''",
+  updateRule: "@request.auth.id != '' && employee = @request.auth.employee",
+  deleteRule: "@request.auth.id != '' && employee = @request.auth.employee",
+  fields: [
+    f.relation('employee', employees.id, { required: true }),
+    f.text('endpoint',  { required: true }),
+    f.text('p256dh',    { required: true }),
+    f.text('auth',      { required: true }),
+    f.text('user_agent'),
+  ],
+})
 
 console.log('\n✅ PocketBase Schema vollständig eingerichtet.')
 console.log('👉 Erstelle jetzt einen GF-Nutzer unter http://127.0.0.1:8091/_/')
