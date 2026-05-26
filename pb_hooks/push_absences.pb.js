@@ -9,7 +9,7 @@ onRecordAfterCreateSuccess((e) => {
   let empName = employeeId
   try {
     const emp = $app.findRecordById('employees', employeeId)
-    empName = String(emp.get('name') ?? employeeId)
+    empName = `${emp.get('first_name') ?? ''} ${emp.get('last_name') ?? ''}`.trim() || employeeId
   } catch {}
 
   const dateFrom = String(record.get('date_from') ?? '')
