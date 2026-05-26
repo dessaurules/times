@@ -19,7 +19,7 @@ export async function checkAusstempel() {
   const now   = new Date()
 
   const openEntries = await pb.collection('time_entries').getFullList<TimeEntry>({
-    filter: `end_time = "" || end_time = null`,
+    filter: `(end_time = "" || end_time = null) && start_time >= "${today} 00:00:00"`,
     requestKey: null,
   }).catch(() => [] as TimeEntry[])
 
