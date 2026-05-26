@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { Bell } from 'lucide-react'
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { pb } from '../lib/pb'
 import { useAuthStore } from '../stores/auth'
@@ -163,7 +163,7 @@ export default function NotificationBell() {
                       <div className="text-xs font-medium text-[#111827] truncate">{n.title}</div>
                       <div className="text-xs text-[#6B7280] mt-0.5 line-clamp-2">{n.message}</div>
                       <div className="text-[10px] text-[#9CA3AF] mt-1">
-                        {format(parseISO(n.created), 'dd.MM. HH:mm', { locale: de })}
+                        {n.created ? format(new Date(n.created), 'dd.MM. HH:mm', { locale: de }) : ''}
                         {' · '}
                         {TYPE_LABEL[n.type] ?? n.type}
                       </div>
