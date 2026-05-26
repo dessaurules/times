@@ -246,7 +246,7 @@ await create({
   name: 'notifications', type: 'base',
   listRule:   "user = @request.auth.id",
   viewRule:   "user = @request.auth.id",
-  createRule: "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  createRule: "@request.auth.id != ''",
   updateRule: "user = @request.auth.id",
   deleteRule: "user = @request.auth.id",
   fields: [
