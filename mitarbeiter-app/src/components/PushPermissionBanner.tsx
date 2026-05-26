@@ -11,9 +11,8 @@ export default function PushPermissionBanner() {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
-    if (!('Notification' in window)) return
-    if (Notification.permission !== 'default') return
-    if (isIOS && !isInStandaloneMode) return
+    if (!('Notification' in window) && !(isIOS && !isInStandaloneMode)) return
+    if ('Notification' in window && Notification.permission !== 'default') return
     setShow(true)
   }, [])
 
