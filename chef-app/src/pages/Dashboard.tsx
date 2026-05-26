@@ -687,11 +687,11 @@ function StatCard({ label, value, sub, color, icon: Icon }: {
   return (
     <Card className="h-full flex flex-col">
       <div className={`h-1 w-full flex-none ${colorMap.accent}`} />
-      <CardContent className="flex-1 flex items-center justify-between gap-3 py-4 px-5">
+      <CardContent className="flex-1 flex items-start justify-between gap-3 py-4 px-5">
         <div className="min-w-0">
-          <CardTitle className="mb-2 truncate">{label}</CardTitle>
+          <CardTitle className="mb-2 leading-snug">{label}</CardTitle>
           <div className={`text-4xl font-bold leading-none mb-1.5 tabular-nums ${colorMap.numColor}`}>{value}</div>
-          <CardDescription className="truncate">{sub}</CardDescription>
+          <CardDescription className="leading-snug">{sub}</CardDescription>
         </div>
         <div className={`flex-none w-12 h-12 rounded-xl flex items-center justify-center ${colorMap.iconBg}`}>
           <Icon size={22} className={colorMap.iconColor} strokeWidth={1.75} />
