@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { format, parseISO, differenceInMinutes } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Check, XCircle, Plus, X, LogOut, SlidersHorizontal } from 'lucide-react'
+import { Check, XCircle, Plus, X, LogOut, SlidersHorizontal, UserCheck, UserX, Bell, CalendarX, type LucideIcon } from 'lucide-react'
 import GridLayout, { WidthProvider } from 'react-grid-layout/legacy'
 import type { Layout, LayoutItem } from 'react-grid-layout/legacy'
 import { pb } from '../lib/pb'
@@ -572,20 +572,20 @@ export default function Dashboard() {
   function renderWidget(id: WidgetId) {
     switch (id) {
       case 'stat-eingestempelt':
-        return <StatCard label="Eingestempelt heute" value={presentToday}            sub={`von ${data.activeTotal} aktiven MA`}     color="green"  />
+        return <StatCard label="Eingestempelt heute" value={presentToday}            sub={`von ${data.activeTotal} aktiven MA`}     color="green"                                             icon={UserCheck} />
       case 'stat-abwesend':
-        return <StatCard label="Abwesend heute"       value={data.absentToday.length} sub={absentSub}                                color={data.absentToday.length > 0 ? 'amber' : 'default'} />
+        return <StatCard label="Abwesend heute"       value={data.absentToday.length} sub={absentSub}                                color={data.absentToday.length > 0 ? 'amber' : 'default'} icon={UserX}     />
       case 'stat-genehmigungen':
-        return <StatCard label="Offene Genehmigungen" value={data.pending.length}     sub="Warten auf Freigabe"                      color={data.pending.length > 0 ? 'red' : 'default'} />
+        return <StatCard label="Offene Genehmigungen" value={data.pending.length}     sub="Warten auf Freigabe"                      color={data.pending.length > 0 ? 'red' : 'default'}       icon={Bell}      />
       case 'stat-resturlaub':
-        return <StatCard label="Resturlaub-Verfall"   value={data.carryOverCount}     sub={`Resturlaub ${year}`}                     color={data.carryOverCount > 0 ? 'amber' : 'default'} />
+        return <StatCard label="Resturlaub-Verfall"   value={data.carryOverCount}     sub={`Resturlaub ${year}`}                     color={data.carryOverCount > 0 ? 'amber' : 'default'}     icon={CalendarX} />
       case 'antraege':      return renderAntraege()
       case 'abwesend':      return renderAbwesend()
       case 'arbeitszeiten': return renderArbeitszeiten()
       case 'stat-ueberstunden':
-        return <StatCard label="Überstunden diese Woche" value={0} sub="Demnächst verfügbar" color="default" />
+        return <StatCard label="Überstunden diese Woche" value={0} sub="Demnächst verfügbar" color="default" icon={Bell} />
       case 'stat-krankmeldungen':
-        return <StatCard label="Krankmeldungen" value={data.absentToday.filter(a => a.type === 'K' || a.type === 'KK').length} sub="Aktuelle K/KK-Einträge" color={data.absentToday.some(a => a.type === 'K' || a.type === 'KK') ? 'red' : 'default'} />
+        return <StatCard label="Krankmeldungen" value={data.absentToday.filter(a => a.type === 'K' || a.type === 'KK').length} sub="Aktuelle K/KK-Einträge" color={data.absentToday.some(a => a.type === 'K' || a.type === 'KK') ? 'red' : 'default'} icon={UserX} />
       case 'geburtstage':
         return <WidgetStub label="Geburtstage im Monat" />
       case 'dokumente-ablauf':
@@ -675,16 +675,27 @@ function calcDays(from: string, to: string): number {
   return Math.round((parseISO(to).getTime() - parseISO(from).getTime()) / 86_400_000) + 1
 }
 
-function StatCard({ label, value, sub, color }: {
-  label: string; value: number; sub: string; color: 'green' | 'amber' | 'red' | 'default'
+function StatCard({ label, value, sub, color, icon: Icon }: {
+  label: string; value: number; sub: string; color: 'green' | 'amber' | 'red' | 'default'; icon: LucideIcon
 }) {
-  const cls = { green: 'text-green-600', amber: 'text-amber-600', red: 'text-red-600', default: 'text-[#111827]' }[color]
+  const colorMap = {
+    green:   { accent: 'bg-green-500',  iconBg: 'bg-green-50',  iconColor: 'text-green-600',  numColor: 'text-green-600'  },
+    amber:   { accent: 'bg-amber-500',  iconBg: 'bg-amber-50',  iconColor: 'text-amber-600',  numColor: 'text-amber-600'  },
+    red:     { accent: 'bg-red-500',    iconBg: 'bg-red-50',    iconColor: 'text-red-600',    numColor: 'text-red-600'    },
+    default: { accent: 'bg-[#4F46E5]', iconBg: 'bg-[#EEF2FF]', iconColor: 'text-[#4F46E5]', numColor: 'text-[#111827]' },
+  }[color]
   return (
-    <Card className="h-full">
-      <CardContent>
-        <CardTitle className="mb-2">{label}</CardTitle>
-        <div className={`text-3xl font-bold my-2 ${cls}`}>{value}</div>
-        <CardDescription>{sub}</CardDescription>
+    <Card className="h-full flex flex-col">
+      <div className={`h-1 w-full flex-none ${colorMap.accent}`} />
+      <CardContent className="flex-1 flex items-center justify-between gap-3 py-4 px-5">
+        <div className="min-w-0">
+          <CardTitle className="mb-2 truncate">{label}</CardTitle>
+          <div className={`text-4xl font-bold leading-none mb-1.5 tabular-nums ${colorMap.numColor}`}>{value}</div>
+          <CardDescription className="truncate">{sub}</CardDescription>
+        </div>
+        <div className={`flex-none w-12 h-12 rounded-xl flex items-center justify-center ${colorMap.iconBg}`}>
+          <Icon size={22} className={colorMap.iconColor} strokeWidth={1.75} />
+        </div>
       </CardContent>
     </Card>
   )
