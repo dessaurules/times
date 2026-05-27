@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { SHIFT_COLOR_BG, SHIFT_COLOR_TEXT, type ShiftColor } from '@shared/types'
+import { SHIFT_COLOR_BG, type ShiftColor } from '@shared/types'
 
 const SHIFT_COLORS: ShiftColor[] = ['blue', 'green', 'amber', 'purple', 'rose']
 
