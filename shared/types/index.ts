@@ -11,7 +11,7 @@ export type ContractType   = 'vz' | 'tz' | 'mj' | 'az'
 export type AbsenceType    = 'U' | 'RU' | 'U3' | 'SU' | 'K' | 'KK' | 'AT' | 'S' | 'ÜA'
 export type AbsenceStatus  = 'pending' | 'approved' | 'rejected'
 export type DocumentType   = 'vertrag' | 'lohnschein' | 'au_schein' | 'sonstiges'
-export type NotifType      = 'absence_request' | 'absence_approved' | 'absence_rejected' | 'general'
+export type NotifType      = 'absence_request' | 'absence_approved' | 'absence_rejected' | 'general' | 'shift_published'
 
 // ── Collections ────────────────────────────────────────
 export interface User extends PBRecord {
@@ -45,6 +45,7 @@ export interface Employee extends PBRecord {
   end_date?: string       // ISO date
   vacation_days: number
   active: boolean
+  planner_departments?: string[]  // Array von Department-IDs, z.B. ["dept_id_1","dept_id_2"]
   expand?: { department?: Department }
 }
 
@@ -129,4 +130,52 @@ export const ABSENCE_COLORS: Record<AbsenceType, { bg: string; text: string }> =
   AT:   { bg: '#F1EFE8', text: '#444441' },
   S:    { bg: '#E6F1FB', text: '#0C447C' },
   'ÜA': { bg: '#E1F5EE', text: '#085041' },
+}
+
+// ── Dienstplan ─────────────────────────────────────────
+export type ShiftColor  = 'blue' | 'green' | 'amber' | 'purple' | 'rose'
+export type ShiftStatus = 'draft' | 'published'
+
+export interface ShiftPlan extends PBRecord {
+  week_start:  string        // 'yyyy-MM-dd' — Montag der Woche
+  week_end:    string        // 'yyyy-MM-dd' — Sonntag (oder letzter geplanter Tag)
+  status:      ShiftStatus
+  created_by:  string        // User-ID
+  push_notified?: boolean
+}
+
+export interface ShiftEntry extends PBRecord {
+  plan_id:      string       // Relation zu ShiftPlan
+  employee:     string       // Relation zu Employee
+  department:   string       // Relation zu Department
+  date:         string       // 'yyyy-MM-dd'
+  start_time:   string       // 'HH:mm'
+  end_time:     string       // 'HH:mm'
+  color:        ShiftColor
+  start_time2?: string       // Split-Schicht: zweite Beginn-Zeit
+  end_time2?:   string       // Split-Schicht: zweite End-Zeit
+  color2?:      ShiftColor
+  note?:        string
+  note2?:       string
+  status:       ShiftStatus
+  expand?: {
+    employee?:   Employee
+    department?: Department
+  }
+}
+
+export const SHIFT_COLOR_BG: Record<ShiftColor, string> = {
+  blue:   '#DBEAFE',
+  green:  '#D1FAE5',
+  amber:  '#FEF3C7',
+  purple: '#EDE9FE',
+  rose:   '#FFE4E6',
+}
+
+export const SHIFT_COLOR_TEXT: Record<ShiftColor, string> = {
+  blue:   '#1E40AF',
+  green:  '#065F46',
+  amber:  '#92400E',
+  purple: '#5B21B6',
+  rose:   '#9F1239',
 }

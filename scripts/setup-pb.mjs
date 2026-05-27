@@ -90,6 +90,7 @@ const f = {
     collectionId, cascadeDelete: false, minSelect: 0, maxSelect: 1,
     ...o,
   }),
+  json: (name, o = {}) => ({ type: 'json', name, required: false, ...o }),
 }
 
 // ── 1. departments ────────────────────────────────────
@@ -321,6 +322,17 @@ await create({
     f.text('user_agent'),
   ],
 })
+
+// ── shift_entries: Split-Schicht + Farb-Felder ────────
+await addFieldIfMissing('shift_entries', f.text('color'))
+await addFieldIfMissing('shift_entries', f.text('start_time2'))
+await addFieldIfMissing('shift_entries', f.text('end_time2'))
+await addFieldIfMissing('shift_entries', f.text('color2'))
+await addFieldIfMissing('shift_entries', f.text('note'))
+await addFieldIfMissing('shift_entries', f.text('note2'))
+
+// ── employees: Dienstplan-Berechtigungen ─────────────
+await addFieldIfMissing('employees', { type: 'json', name: 'planner_departments', required: false })
 
 console.log('\n✅ PocketBase Schema vollständig eingerichtet.')
 console.log('👉 Erstelle jetzt einen GF-Nutzer unter http://127.0.0.1:8091/_/')
