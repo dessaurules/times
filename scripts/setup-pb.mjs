@@ -254,7 +254,7 @@ await create({
     f.relation('user',         USERS_ID, { required: true, cascadeDelete: true }),
     f.text('title',            { required: true }),
     f.text('message'),
-    f.select('type', ['absence_request','absence_approved','absence_rejected','general'], { required: true }),
+    f.select('type', ['absence_request','absence_approved','absence_rejected','general','shift_published'], { required: true }),
     f.bool('read'),
     f.text('reference_id'),
   ],
@@ -306,6 +306,26 @@ for (const s of defaultSettings) {
 await addFieldIfMissing('absences',    f.bool('push_notified'))
 await addFieldIfMissing('shift_plans', f.bool('push_notified'))
 
+// notifications.type um shift_published erweitern (falls Collection bereits existierte)
+{
+  const notifRes = await fetch(`${BASE}/api/collections/notifications`, { headers: H })
+  if (notifRes.ok) {
+    const notifCol = await notifRes.json()
+    const typeField = notifCol.fields?.find(f => f.name === 'type')
+    if (typeField && !typeField.values?.includes('shift_published')) {
+      typeField.values = [...(typeField.values ?? []), 'shift_published']
+      const patchRes = await fetch(`${BASE}/api/collections/${notifCol.id}`, {
+        method: 'PATCH', headers: H,
+        body: JSON.stringify({ fields: notifCol.fields }),
+      })
+      if (patchRes.ok) console.log('✓ notifications.type um shift_published erweitert')
+      else console.error('  notifications.type patch fehlgeschlagen:', await patchRes.text())
+    } else {
+      console.log('  notifications.type: shift_published bereits vorhanden')
+    }
+  }
+}
+
 // ── push_subscriptions ────────────────────────────────
 await create({
   name: 'push_subscriptions', type: 'base',
@@ -324,6 +344,7 @@ await create({
 })
 
 // ── shift_entries: Split-Schicht + Farb-Felder ────────
+await addFieldIfMissing('shift_entries', f.select('status', ['draft', 'published']))
 await addFieldIfMissing('shift_entries', f.text('color'))
 await addFieldIfMissing('shift_entries', f.text('start_time2'))
 await addFieldIfMissing('shift_entries', f.text('end_time2'))
