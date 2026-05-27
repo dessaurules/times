@@ -277,7 +277,50 @@ await create({
   ],
 })
 
-// ── 11. Default settings ──────────────────────────────
+// ── 11. shift_plans ───────────────────────────────────
+const shiftPlans = await create({
+  name: 'shift_plans', type: 'base',
+  listRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  viewRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  createRule: "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  updateRule: "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  deleteRule: "@request.auth.role = 'gf'",
+  fields: [
+    f.date('week_start',  { required: true }),
+    f.date('week_end',    { required: true }),
+    f.select('status', ['draft', 'published'], { required: true }),
+    f.relation('created_by', USERS_ID, { required: true }),
+    f.bool('push_notified'),
+  ],
+})
+
+// ── 12. shift_entries ─────────────────────────────────
+await create({
+  name: 'shift_entries', type: 'base',
+  listRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || employee = @request.auth.employee",
+  viewRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || employee = @request.auth.employee",
+  createRule: "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  updateRule: "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  deleteRule: "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  fields: [
+    f.relation('plan_id',    shiftPlans.id,   { required: true, cascadeDelete: true }),
+    f.relation('employee',   employees.id,    { required: true }),
+    f.relation('department', departments.id,  { required: true }),
+    f.date('date',           { required: true }),
+    f.text('start_time',     { required: true }),
+    f.text('end_time',       { required: true }),
+    f.select('status', ['draft', 'published'], { required: true }),
+    f.text('color'),
+    f.text('start_time2'),
+    f.text('end_time2'),
+    f.text('color2'),
+    f.text('note'),
+    f.text('note2'),
+    f.bool('is_open'),
+  ],
+})
+
+// ── 13. Default settings ──────────────────────────────
 const defaultSettings = [
   { key: 'company_name',        value: 'Mein Betrieb' },
   { key: 'federal_state',       value: 'ST' },
