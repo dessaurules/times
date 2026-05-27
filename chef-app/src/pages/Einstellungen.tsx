@@ -36,13 +36,14 @@ const DEPT_COLORS = [
   '#6B7280', '#111827',
 ]
 
-type Section = 'allgemein' | 'abteilungen' | 'zeiterfassung' | 'nutzer'
+type Section = 'allgemein' | 'abteilungen' | 'zeiterfassung' | 'nutzer' | 'dienstplan'
 
 const NAV: { id: Section; label: string }[] = [
   { id: 'allgemein',     label: 'Allgemein' },
   { id: 'abteilungen',   label: 'Abteilungen' },
   { id: 'zeiterfassung', label: 'Zeiterfassung' },
   { id: 'nutzer',        label: 'Nutzer & Rollen' },
+  { id: 'dienstplan',    label: 'Dienstplan' },
 ]
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -89,6 +90,7 @@ export default function Einstellungen() {
           {section === 'abteilungen'   && <AbteilungenSection />}
           {section === 'zeiterfassung' && <ZeiterfassungSection />}
           {section === 'nutzer'        && <NutzerSection />}
+          {section === 'dienstplan'    && <DienstplanSection />}
         </div>
       </div>
     </div>
@@ -662,6 +664,117 @@ function NutzerSection() {
           </tbody>
         </table>
       )}
+    </div>
+  )
+}
+
+// ── Dienstplan-Berechtigungen ─────────────────────────────────────────────────
+
+type UserWithEmployee = User & { expand?: { employee?: Employee } }
+
+function DienstplanSection() {
+  const [users, setUsers]             = useState<UserWithEmployee[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [empDepts, setEmpDepts]       = useState<Record<string, string[]>>({})  // employeeId → deptIds
+  const [saving, setSaving]           = useState<Record<string, boolean>>({})
+  const [loading, setLoading]         = useState(true)
+
+  const saveTimers = useState<Record<string, ReturnType<typeof setTimeout>>>(() => ({}))[0]
+
+  useEffect(() => {
+    Promise.all([
+      pb.collection('users').getFullList<UserWithEmployee>({ expand: 'employee', sort: 'name', requestKey: null }),
+      pb.collection('departments').getFullList<Department>({ sort: 'sort_order', requestKey: null }),
+      pb.collection('employees').getFullList<Employee>({ requestKey: null }),
+    ]).then(([us, ds, emps]) => {
+      setUsers(us)
+      setDepartments(ds)
+      const map: Record<string, string[]> = {}
+      emps.forEach(e => { map[e.id] = e.planner_departments ?? [] })
+      setEmpDepts(map)
+    }).finally(() => setLoading(false))
+  }, [])
+
+  function toggleDept(empId: string, deptId: string) {
+    const current = empDepts[empId] ?? []
+    const updated = current.includes(deptId)
+      ? current.filter(d => d !== deptId)
+      : [...current, deptId]
+
+    setEmpDepts(prev => ({ ...prev, [empId]: updated }))
+
+    clearTimeout(saveTimers[empId])
+    saveTimers[empId] = setTimeout(async () => {
+      setSaving(s => ({ ...s, [empId]: true }))
+      try {
+        await pb.collection('employees').update(empId, { planner_departments: updated }, { requestKey: null })
+      } finally {
+        setSaving(s => ({ ...s, [empId]: false }))
+      }
+    }, 500)
+  }
+
+  if (loading) return <div className="text-sm text-[#6B7280]">Lade…</div>
+
+  return (
+    <div className="bg-white border border-[#E5E7EB] rounded-lg p-5">
+      <h2 className="text-sm font-semibold text-[#111827] mb-1">Dienstplan-Berechtigungen</h2>
+      <p className="text-xs text-[#6B7280] mb-4">
+        Lege fest, welche Nutzer Dienstpläne erstellen dürfen und für welche Abteilungen.
+      </p>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-[#E5E7EB]">
+            <th className="text-left py-2 pr-4 text-xs font-medium text-[#6B7280] min-w-[140px]">Nutzer</th>
+            <th className="text-left py-2 text-xs font-medium text-[#6B7280]">Berechtigte Abteilungen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map(u => {
+            const emp = u.expand?.employee
+            return (
+              <tr key={u.id} className="border-b border-[#E5E7EB] last:border-0">
+                <td className="py-3 pr-4">
+                  <div className="font-medium text-[#111827]">{u.name}</div>
+                  <div className="text-[11px] text-[#6B7280]">{ROLE_LABELS[u.role]}</div>
+                </td>
+                <td className="py-3">
+                  {u.role === 'gf' ? (
+                    <span className="text-xs text-emerald-600 font-medium">Alle (automatisch)</span>
+                  ) : !emp ? (
+                    <span className="text-xs text-[#9CA3AF]">Kein Mitarbeiterprofil</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      {departments.map(d => {
+                        const active = (empDepts[emp.id] ?? []).includes(d.id)
+                        return (
+                          <button
+                            key={d.id}
+                            type="button"
+                            disabled={saving[emp.id]}
+                            onClick={() => toggleDept(emp.id, d.id)}
+                            className={cn(
+                              'text-xs px-2.5 py-1 rounded-full border transition-colors disabled:opacity-50',
+                              active
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-white text-[#6B7280] border-[#E5E7EB] hover:border-indigo-400 hover:text-indigo-600',
+                            )}
+                          >
+                            {d.name}
+                          </button>
+                        )
+                      })}
+                      {saving[emp.id] && (
+                        <span className="text-[10px] text-[#9CA3AF]">Speichern…</span>
+                      )}
+                    </div>
+                  )}
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
     </div>
   )
 }
