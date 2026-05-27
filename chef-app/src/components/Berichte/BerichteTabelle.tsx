@@ -33,7 +33,7 @@ function KpiCard({ label, value, color }: { label: string; value: string; color:
   )
 }
 
-export function BerichteTabelle({ rows, onExportPdf }: Props) {
+export default function BerichteTabelle({ rows, onExportPdf }: Props) {
   const totalSoll    = rows.reduce((s, r) => s + r.soll, 0)
   const totalIst     = rows.reduce((s, r) => s + r.ist, 0)
   const totalUeberst = rows.reduce((s, r) => s + r.ueberst_kumuliert, 0)

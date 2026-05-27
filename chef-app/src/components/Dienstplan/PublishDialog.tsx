@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 
 interface Props {
@@ -26,12 +26,11 @@ export default function PublishDialog({ open, weekLabel, deptCount, empCount, on
   }
 
   return (
-    <Dialog open={open} onOpenChange={v => { if (!v && !loading) onClose() }}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Dienstplan veröffentlichen</DialogTitle>
-        </DialogHeader>
-
+    <Dialog open={open} onClose={() => { if (!loading) onClose() }}>
+      <DialogHeader>
+        <DialogTitle>Dienstplan veröffentlichen</DialogTitle>
+      </DialogHeader>
+      <DialogBody>
         {/* Grüne Info-Box */}
         <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-sm text-emerald-800">
           <p className="font-semibold">{weekLabel}</p>
@@ -62,7 +61,7 @@ export default function PublishDialog({ open, weekLabel, deptCount, empCount, on
             {loading ? 'Wird veröffentlicht…' : 'Veröffentlichen'}
           </Button>
         </div>
-      </DialogContent>
+      </DialogBody>
     </Dialog>
   )
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -62,12 +62,12 @@ export default function ShiftEditor({
   }
 
   return (
-    <Dialog open={open} onOpenChange={v => { if (!v) onClose() }}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? 'Schicht bearbeiten' : 'Schicht eintragen'}</DialogTitle>
-        </DialogHeader>
+    <Dialog open={open} onClose={onClose}>
+      <DialogHeader>
+        <DialogTitle>{isEdit ? 'Schicht bearbeiten' : 'Schicht eintragen'}</DialogTitle>
+      </DialogHeader>
 
+      <DialogBody>
         <div className="space-y-3">
           {/* Readonly info */}
           <div className="grid grid-cols-2 gap-2">
@@ -193,7 +193,7 @@ export default function ShiftEditor({
             <Button size="sm" onClick={handleSave}>Speichern</Button>
           </div>
         </div>
-      </DialogContent>
+      </DialogBody>
     </Dialog>
   )
 }
