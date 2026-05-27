@@ -9,6 +9,7 @@ import { Badge }     from '../components/ui/badge'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '../components/ui/table'
+import { AnimatePresence } from 'motion/react'
 import MitarbeiterModal from './MitarbeiterModal'
 
 type EmployeeRow = Employee & { expand?: { department?: Department } }
@@ -158,10 +159,15 @@ export default function Mitarbeiterliste() {
         </div>
       )}
 
-      <MitarbeiterModal
-        employeeId={selectedId}
-        onClose={() => setSelectedId(null)}
-      />
+      <AnimatePresence>
+        {selectedId !== null && (
+          <MitarbeiterModal
+            key={String(selectedId)}
+            employeeId={selectedId}
+            onClose={() => setSelectedId(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

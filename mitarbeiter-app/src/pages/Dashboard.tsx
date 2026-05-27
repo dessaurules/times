@@ -12,6 +12,40 @@ import { getHolidayDates } from '../lib/holidays'
 import MonatsstundenGauge from '../components/MonatsstundenGauge'
 import UrlaubsCard from '../components/UrlaubsCard'
 
+function daysBetween(a: string, b: string) {
+  return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000)
+}
+
+type AbsenceGroup = {
+  type: AbsenceType
+  status: string
+  dateFrom: string
+  dateTo: string
+  note?: string
+}
+
+function groupAbsences(absences: Absence[]): AbsenceGroup[] {
+  const sorted = [...absences].sort((a, b) => a.date_from.localeCompare(b.date_from))
+  const groups: AbsenceGroup[] = []
+
+  for (const abs of sorted) {
+    const last = groups[groups.length - 1]
+    if (
+      last &&
+      last.type === abs.type &&
+      last.status === abs.status &&
+      daysBetween(last.dateTo, abs.date_from) <= 3
+    ) {
+      if (abs.date_to > last.dateTo) last.dateTo = abs.date_to
+      if (!last.note && abs.note) last.note = abs.note
+    } else {
+      groups.push({ type: abs.type as AbsenceType, status: abs.status, dateFrom: abs.date_from, dateTo: abs.date_to, note: abs.note })
+    }
+  }
+
+  return groups.reverse()
+}
+
 function formatDuration(mins: number) {
   const h = Math.floor(Math.abs(mins) / 60)
   const m = Math.abs(mins) % 60
@@ -101,6 +135,22 @@ export default function Dashboard() {
     timerRef.current = setInterval(() => setNow(new Date()), 10_000)
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [])
+
+  const unsubTimeRef = useRef<(() => void) | null>(null)
+  useEffect(() => {
+    if (!employeeId) return
+    pb.collection('time_entries').subscribe<TimeEntry>('*', (e) => {
+      if (e.record.employee !== employeeId) return
+      if (e.action === 'create') {
+        setEntries(prev => [e.record, ...prev])
+      } else if (e.action === 'update') {
+        setEntries(prev => prev.map(t => t.id === e.record.id ? e.record : t))
+      } else if (e.action === 'delete') {
+        setEntries(prev => prev.filter(t => t.id !== e.record.id))
+      }
+    }, { requestKey: null }).then(fn => { unsubTimeRef.current = fn })
+    return () => { unsubTimeRef.current?.(); pb.collection('time_entries').unsubscribe('*') }
+  }, [employeeId])
 
   const openEntry = entries.find(e => !e.end_time)
   const isStamped = !!openEntry
@@ -289,28 +339,28 @@ export default function Dashboard() {
           </div>
         ) : (
           <ul className="divide-y divide-[#F3F4F6]">
-            {absences.map(a => {
-              const isRejected = a.status === 'rejected'
-              const isApproved = a.status === 'approved'
-              const colors = ABSENCE_COLORS[a.type]
+            {groupAbsences(absences).map((g, i) => {
+              const isRejected = g.status === 'rejected'
+              const isApproved = g.status === 'approved'
+              const colors = ABSENCE_COLORS[g.type]
               return (
-                <li key={a.id} className="flex items-center gap-3 px-5 py-3.5">
+                <li key={i} className="flex items-center gap-3 px-5 py-3.5">
                   <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: colors.bg }}
                   >
-                    <span className="text-xs font-bold" style={{ color: colors.text }}>{a.type}</span>
+                    <span className="text-xs font-bold" style={{ color: colors.text }}>{g.type}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className={cn(
                       'text-sm font-medium',
                       isRejected ? 'line-through text-[#9CA3AF]' : 'text-[#111827]'
                     )}>
-                      {a.date_from === a.date_to
-                        ? format(parseISO(a.date_from), 'dd.MM.yyyy')
-                        : `${format(parseISO(a.date_from), 'dd.MM.')} – ${format(parseISO(a.date_to), 'dd.MM.yyyy')}`}
+                      {g.dateFrom === g.dateTo
+                        ? format(parseISO(g.dateFrom), 'dd.MM.yyyy')
+                        : `${format(parseISO(g.dateFrom), 'dd.MM.')} – ${format(parseISO(g.dateTo), 'dd.MM.yyyy')}`}
                     </div>
-                    {a.note && <div className="text-xs text-[#9CA3AF] truncate">{a.note}</div>}
+                    {g.note && <div className="text-xs text-[#9CA3AF] truncate">{g.note}</div>}
                   </div>
                   {isRejected ? (
                     <span className="flex items-center gap-1 text-xs text-red-600 bg-red-50 px-2.5 py-1 rounded-full border border-red-100 shrink-0">

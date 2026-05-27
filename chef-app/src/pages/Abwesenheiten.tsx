@@ -255,14 +255,22 @@ export default function Abwesenheiten() {
     setDragRange({ empId, start: s, end: e })
   }
 
-  function handleMouseUp() {
+  const mouseUpHandlerRef = useRef<() => void>(() => {})
+  mouseUpHandlerRef.current = () => {
     if (didDragRef.current && dragRef.current) {
       if (confirmTimer.current) clearTimeout(confirmTimer.current)
       executeConfirm(dragRef.current.kuerzel, null, dragRef.current, null)
     }
     dragRef.current = null
+    setDragRange(null)
     setTimeout(() => { didDragRef.current = false }, 0)
   }
+
+  useEffect(() => {
+    const handler = () => mouseUpHandlerRef.current()
+    window.addEventListener('mouseup', handler)
+    return () => window.removeEventListener('mouseup', handler)
+  }, [])
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (!activeCell && !dragRange) return
@@ -355,7 +363,7 @@ export default function Abwesenheiten() {
   if (loading && employees.length === 0) return <p className="text-sm text-[#6B7280]">Lade…</p>
 
   return (
-    <div onMouseUp={handleMouseUp}>
+    <div>
       <input
         ref={inputRef}
         className="sr-only"

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { motion } from 'motion/react'
 import { Trash2, Save, Upload, Download, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { format, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns'
 import { de } from 'date-fns/locale'
@@ -241,11 +242,21 @@ export default function MitarbeiterModal({ employeeId, onClose }: Props) {
   if (!employeeId) return null
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.18 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="relative bg-white rounded-2xl w-[90vw] max-w-[860px] max-h-[90vh] overflow-y-auto shadow-2xl">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+        className="relative bg-white rounded-2xl w-[90vw] max-w-[860px] max-h-[90vh] overflow-y-auto shadow-2xl"
+      >
         <button
           onClick={onClose}
           className="absolute top-4 right-4 z-10 p-1.5 rounded-lg text-[#6B7280] hover:bg-[#E5E7EB] transition-colors"
@@ -423,8 +434,8 @@ export default function MitarbeiterModal({ employeeId, onClose }: Props) {
             </>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   )
 }
 

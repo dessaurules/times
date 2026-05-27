@@ -58,26 +58,31 @@ export default function KalenderTable({
                   {emp.last_name}, {emp.first_name}
                 </td>
                 {calendarDays.map(day => {
-                  const key = `${emp.id}_${day.date}`
-                  const absence = absenceMap.get(key)
+                  const key      = `${emp.id}_${day.date}`
+                  const absence  = absenceMap.get(key)
                   const isBlocked = day.isWeekend || day.isHoliday
-                  const isActive = activeCell?.empId === emp.id && activeCell?.date === day.date
-                  const inDrag = dragRange?.empId === emp.id &&
-                    day.date >= dragRange.start && day.date <= dragRange.end
-                  const colors = absence ? ABSENCE_COLORS[absence.type] : null
+                  const isActive  = activeCell?.empId === emp.id && activeCell?.date === day.date
+                  // Frage 5C: Quell-Zelle gestrichelt
+                  const isSource  = dragRange !== null &&
+                    dragRange.empId === emp.id && day.date === dragRange.start
+                  // Frage 3A: Drag-Over Indigo — Quell-Zelle ausgenommen
+                  const inDrag    = !!dragRange && dragRange.empId === emp.id &&
+                    day.date > dragRange.start && day.date <= dragRange.end
+                  const colors    = absence ? ABSENCE_COLORS[absence.type] : null
                   const animState = animatingCells.get(key)
 
                   return (
                     <td
                       key={day.date}
-                      data-cell={`${emp.id}_${day.date}`}
+                      data-cell={key}
                       className={cn(
                         'w-6 min-w-[24px] h-7 border-b border-r border-[#E5E7EB] text-center align-middle cursor-default',
                         isBlocked && 'bg-gray-50',
                         !isBlocked && !absence && 'group-hover:bg-[#F9FAFB] hover:bg-[#F3F4F6] cursor-pointer',
                         !isBlocked && absence && 'cursor-grab',
                         isActive && 'z-20',
-                        inDrag && !isBlocked && 'bg-amber-100 drag-over-anim',
+                        inDrag   && !isBlocked && 'bg-[#EEF2FF] drag-over-anim',
+                        isSource && !isBlocked && 'drag-src',
                         animState === 'filled'  && 'just-filled',
                         animState === 'cleared' && 'just-cleared',
                       )}
@@ -90,15 +95,12 @@ export default function KalenderTable({
                         } : {}),
                       }}
                       onClick={() => !isBlocked && onCellClick(emp.id, day.date, absence)}
-                      onMouseDown={() => !isBlocked && absence && onCellMouseDown(emp.id, day.date, absence.type)}
+                      onMouseDown={e => { e.preventDefault(); if (!isBlocked && absence) onCellMouseDown(emp.id, day.date, absence.type) }}
                       onMouseEnter={() => onCellMouseEnter(emp.id, day.date)}
                     >
                       {absence ? (
                         <span
-                          className={cn(
-                            'font-medium',
-                            absence.status === 'pending' && 'opacity-60',
-                          )}
+                          className={cn('font-medium pointer-events-none', absence.status === 'pending' && 'opacity-60')}
                           style={colors ? { color: colors.text } : undefined}
                         >
                           {absence.type}

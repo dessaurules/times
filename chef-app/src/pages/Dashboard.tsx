@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { format, parseISO, differenceInMinutes } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { Check, XCircle, Plus, X, LogOut, SlidersHorizontal, UserCheck, UserX, Bell, CalendarX, type LucideIcon } from 'lucide-react'
@@ -41,14 +41,37 @@ const DEFAULT_LAYOUT: LayoutItem[] = [
   { i: 'stat-abwesend',       x: 1, y: 0, w: 1, h: 1 },
   { i: 'stat-genehmigungen',  x: 2, y: 0, w: 1, h: 1 },
   { i: 'stat-resturlaub',     x: 3, y: 0, w: 1, h: 1 },
-  { i: 'antraege',            x: 0, y: 1, w: 2, h: 3 },
+  { i: 'antraege',            x: 0, y: 1, w: 2, h: 2 },
   { i: 'abwesend',            x: 2, y: 1, w: 2, h: 2 },
-  { i: 'arbeitszeiten',       x: 0, y: 4, w: 4, h: 3 },
+  { i: 'arbeitszeiten',       x: 0, y: 4, w: 4, h: 2 },
 ]
 
-const LS_KEY = 'chef-dashboard-layout-v2'
+const LS_KEY        = 'chef-dashboard-layout-v3'
+const LS_MANUAL_KEY = 'chef-dashboard-manual-resize-v2'
+
+const AUTO_RESIZE_IDS = new Set(['antraege', 'abwesend', 'arbeitszeiten'])
+const ROW_H = 160, MAR_Y = 16
+
+function pxToRows(px: number, min: number): number {
+  return Math.max(min, Math.ceil((px + MAR_Y) / (ROW_H + MAR_Y)))
+}
 
 function useGridLayout() {
+  const [manualResized, setManualResized] = useState<Set<string>>(() => {
+    try {
+      const s = localStorage.getItem(LS_MANUAL_KEY)
+      return s ? new Set(JSON.parse(s) as string[]) : new Set()
+    } catch { return new Set() }
+  })
+
+  function markManualResize(id: string) {
+    setManualResized(prev => {
+      const next = new Set(prev).add(id)
+      localStorage.setItem(LS_MANUAL_KEY, JSON.stringify([...next]))
+      return next
+    })
+  }
+
   const [layout, setLayout] = useState<LayoutItem[]>(() => {
     try {
       const saved = localStorage.getItem(LS_KEY)
@@ -88,7 +111,7 @@ function useGridLayout() {
     })
   }
 
-  return { layout, visible, hidden, saveLayout, removeWidget, addWidget }
+  return { layout, setLayout, visible, hidden, saveLayout, removeWidget, addWidget, manualResized, markManualResize }
 }
 
 type AbsenceExp   = Absence   & { expand?: { employee?: Employee } }
@@ -120,7 +143,7 @@ export default function Dashboard() {
   const canApprove = user?.role === 'gf'
   const today      = format(new Date(), 'yyyy-MM-dd')
 
-  const { layout, visible, hidden, saveLayout, removeWidget, addWidget } = useGridLayout()
+  const { layout, setLayout, visible, hidden, saveLayout, removeWidget, addWidget, manualResized, markManualResize } = useGridLayout()
   const [editMode,  setEditMode]  = useState(false)
 
   const [data,    setData]    = useState<DashData>({ activeTotal: 0, absentToday: [], pending: [], carryOverCount: 0 })
@@ -185,6 +208,28 @@ export default function Dashboard() {
     load()
   }, [today])
 
+  const unsubTimeRef = useRef<(() => void) | null>(null)
+  useEffect(() => {
+    pb.collection('time_entries').subscribe<TimeEntryExp>('*', (e) => {
+      const entryDate = e.record.start_time.slice(0, 10)
+      if (e.action === 'create') {
+        if (entryDate !== today) return
+        pb.collection('time_entries').getOne<TimeEntryExp>(e.record.id, {
+          expand: 'employee', requestKey: null,
+        }).then(full => setTimeEntries(prev => [...prev, full])).catch(() => {
+          setTimeEntries(prev => [...prev, e.record])
+        })
+      } else if (e.action === 'update') {
+        setTimeEntries(prev => prev.map(t =>
+          t.id === e.record.id ? { ...e.record, expand: t.expand } : t
+        ))
+      } else if (e.action === 'delete') {
+        setTimeEntries(prev => prev.filter(t => t.id !== e.record.id))
+      }
+    }, { requestKey: null }).then(fn => { unsubTimeRef.current = fn })
+    return () => { unsubTimeRef.current?.(); pb.collection('time_entries').unsubscribe('*') }
+  }, [today])
+
   useEffect(() => {
     if (antragTab !== 'verlauf') return
     setVerlaufLoading(true)
@@ -230,6 +275,28 @@ export default function Dashboard() {
     })
     return rows
   }, [timeEntries, now])
+
+  useEffect(() => {
+    if (loading) return
+    const ideal: Record<string, number> = {
+      antraege:      pxToRows(42 + 40 + Math.max(38, data.pending.length * 38), 1),
+      abwesend:      pxToRows(42 + 40 + Math.max(30, Math.ceil(data.absentToday.length / 3) * 30), 1),
+      arbeitszeiten: pxToRows(42 + Math.max(38, stempel.length * 38), 1),
+    }
+    setLayout(prev => {
+      let changed = false
+      const next = prev.map(l => {
+        if (!AUTO_RESIZE_IDS.has(l.i) || manualResized.has(l.i)) return l
+        const h = ideal[l.i]
+        if (h === undefined || h === l.h) return l
+        changed = true
+        return { ...l, h }
+      })
+      if (!changed) return prev
+      localStorage.setItem(LS_KEY, JSON.stringify(next))
+      return next
+    })
+  }, [loading, data.pending.length, data.absentToday.length, stempel.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function absDateLabel(abs: Absence) {
     return abs.date_from === abs.date_to
@@ -625,12 +692,14 @@ export default function Dashboard() {
       ) : (
         <>
           <RGL
+            measureBeforeMount
             layout={layout}
             cols={4}
             rowHeight={160}
             isDraggable={editMode}
             isResizable={editMode}
             onLayoutChange={saveLayout}
+            onResizeStop={(_l, _old, newItem) => markManualResize(newItem.i)}
             margin={[16, 16]}
             containerPadding={[0, 0]}
             draggableCancel=".widget-no-drag"
