@@ -4,13 +4,17 @@ import {
   format, parseISO, getDay, addDays, max, min,
 } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight, Printer } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { pb } from '../lib/pb'
 import { getHolidayDates } from '../lib/holidays'
 import type { Employee, Department, TimeEntry, Absence, VacationAccount, AbsenceType } from '@shared/types'
-import { VACATION_TYPES, ABSENCE_COLORS } from '@shared/types'
+import { VACATION_TYPES } from '@shared/types'
 import { cn } from '@/lib/utils'
 import DruckModal from './DruckModal'
+import BerichteTabelle from '@/components/Berichte/BerichteTabelle'
+import BerichteKacheln from '@/components/Berichte/BerichteKacheln'
+import BerichteJahr from '@/components/Berichte/BerichteJahr'
+import { toExcel, toCsv, type BerichtRow } from '@/lib/exportUtils'
 
 // ── Helfer ────────────────────────────────────────────────────────────────────
 
@@ -178,7 +182,77 @@ export default function Berichte() {
     return { soll, ist, delta, byType, vacTaken, vacTotal }
   }
 
-  const colSpanEmpty = 6 + (view === 'jahr' ? 1 : 0) + ABSENCE_COLS.length
+  // ── Berichte-Ansicht (Tab-Switcher) ─────────────────────────────────────────
+  type BerichteView = 'tabelle' | 'kacheln' | 'jahresverlauf'
+  const [berichteView, setBerichteViewRaw] = useState<BerichteView>(() => {
+    const saved = localStorage.getItem('berichte-view')
+    return (saved === 'tabelle' || saved === 'kacheln' || saved === 'jahresverlauf') ? saved : 'tabelle'
+  })
+  function setBerichteView(v: BerichteView) {
+    setBerichteViewRaw(v)
+    localStorage.setItem('berichte-view', v)
+  }
+
+  // BerichtRow[] aus empData() aufbauen
+  const berichtRows = useMemo<BerichtRow[]>(() => {
+    if (loading) return []
+    return employees.map(emp => {
+      const { soll, ist, delta, byType, vacTaken, vacTotal } = empData(emp)
+      const vacK = (['K', 'KK'] as AbsenceType[]).reduce((s, t) => s + (byType[t] ?? 0), 0)
+      return {
+        name:              `${emp.last_name}, ${emp.first_name}`,
+        abteilung:         emp.expand?.department?.name ?? '',
+        soll,
+        ist,
+        differenz:         delta,
+        ueberst_kumuliert: delta,
+        urlaub_genommen:   vacTaken,
+        urlaub_gesamt:     vacTotal ?? 0,
+        krank:             vacK,
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, employees, entries, absences, vacAccounts])
+
+  // Monatliche Δ-Werte für BerichteJahr (nur wenn Jahresansicht aktiv)
+  const monthlyData = useMemo<Record<string, number[]>>(() => {
+    if (view !== 'jahr' || loading) return {}
+    const result: Record<string, number[]> = {}
+    for (const emp of employees) {
+      const yearHols = getHolidayDates(yearNum, federalState)
+      const monthly: number[] = Array(12).fill(0)
+      for (let m = 0; m < 12; m++) {
+        const mFrom = new Date(yearNum, m, 1)
+        const mTo   = endOfMonth(mFrom)
+        const soll  = sollHours(emp, mFrom, mTo, yearHols)
+        const fromStr = format(mFrom, 'yyyy-MM-dd')
+        const toStr   = format(mTo,   'yyyy-MM-dd')
+        const istMins = entries
+          .filter(e => {
+            if (e.employee !== emp.id) return false
+            const d = format(parseISO(e.start_time), 'yyyy-MM-dd')
+            return d >= fromStr && d <= toStr
+          })
+          .reduce((s, e) => s + netMinutes(e), 0)
+        monthly[m] = istMins / 60 - soll
+      }
+      result[`${emp.last_name}, ${emp.first_name}`] = monthly
+    }
+    return result
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, loading, employees, entries, yearNum, federalState])
+
+  // Export-Handler
+  const monthStr = view === 'monat'
+    ? format(monthDate, 'yyyy-MM')
+    : String(yearNum)
+
+  function handleExcelExport() {
+    toExcel(berichtRows, `Berichte_${monthStr}.xlsx`, monthStr)
+  }
+  function handleCsvExport() {
+    toCsv(berichtRows, `Berichte_${monthStr}.csv`)
+  }
 
   return (
     <div>
@@ -186,7 +260,41 @@ export default function Berichte() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-[#111827]">Berichte</h1>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Ansichts-Tab-Switcher */}
+          <div className="flex rounded-lg border border-[#E5E7EB] overflow-hidden text-sm">
+            {(['tabelle', 'kacheln', 'jahresverlauf'] as const).map(v => (
+              <button
+                key={v}
+                onClick={() => setBerichteView(v)}
+                className={cn(
+                  'px-3 py-1.5 transition-colors border-r border-[#E5E7EB] last:border-0',
+                  berichteView === v
+                    ? 'bg-[#4F46E5] text-white font-medium'
+                    : 'bg-white text-[#6B7280] hover:bg-[#F3F4F6]',
+                )}
+              >
+                {v === 'tabelle' ? '☰ Tabelle' : v === 'kacheln' ? '⊞ Kacheln' : '📅 Jahresverlauf'}
+              </button>
+            ))}
+          </div>
+
+          {/* Export-Buttons */}
+          <button
+            onClick={handleExcelExport}
+            className="h-9 px-3 text-sm border border-[#E5E7EB] rounded-md bg-white text-[#374151] hover:bg-[#F3F4F6] transition-colors"
+            title="Excel exportieren"
+          >
+            📊 Excel
+          </button>
+          <button
+            onClick={handleCsvExport}
+            className="h-9 px-3 text-sm border border-[#E5E7EB] rounded-md bg-white text-[#374151] hover:bg-[#F3F4F6] transition-colors"
+            title="CSV exportieren"
+          >
+            📋 CSV
+          </button>
+
           {/* Monat / Jahr Toggle */}
           <div className="flex rounded-md border border-[#E5E7EB] overflow-hidden text-sm">
             <button
@@ -242,137 +350,17 @@ export default function Berichte() {
         </div>
       </div>
 
-      {/* ── Tabelle ── */}
+      {/* ── Ansichten ── */}
       {loading ? (
         <p className="text-sm text-[#6B7280]">Lade…</p>
-      ) : (
-        <div className="bg-white border border-[#E5E7EB] rounded-lg overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="bg-[#F3F4F6]">
-                <th className="text-left px-4 py-2.5 text-[#6B7280] font-medium border-b border-[#E5E7EB] whitespace-nowrap">Mitarbeiter</th>
-                <th className="text-left px-3 py-2.5 text-[#6B7280] font-medium border-b border-[#E5E7EB] whitespace-nowrap">Abt.</th>
-                <th className="text-right px-3 py-2.5 text-[#6B7280] font-medium border-b border-[#E5E7EB] whitespace-nowrap">Soll</th>
-                <th className="text-right px-3 py-2.5 text-[#6B7280] font-medium border-b border-[#E5E7EB] whitespace-nowrap">Ist</th>
-                <th className="text-right px-3 py-2.5 text-[#6B7280] font-medium border-b border-[#E5E7EB] whitespace-nowrap">Differenz</th>
-                {view === 'jahr' && (
-                  <th className="text-center px-3 py-2.5 text-[#6B7280] font-medium border-b border-[#E5E7EB] whitespace-nowrap">
-                    Urlaub <span className="font-normal text-[#9CA3AF]">(gen./Anspr.)</span>
-                  </th>
-                )}
-                {ABSENCE_COLS.map(t => (
-                  <th
-                    key={t}
-                    className="text-center px-2 py-2.5 font-medium border-b border-[#E5E7EB] whitespace-nowrap text-xs"
-                    style={{ color: ABSENCE_COLORS[t].text, backgroundColor: ABSENCE_COLORS[t].bg }}
-                  >
-                    {t}
-                  </th>
-                ))}
-                <th className="border-b border-[#E5E7EB] w-9" />
-              </tr>
-            </thead>
-            <tbody>
-              {employees.map((emp, i) => {
-                const { soll, ist, delta, byType, vacTaken, vacTotal } = empData(emp)
-                const dept = emp.expand?.department
-                return (
-                  <tr key={emp.id} className={cn('border-b border-[#E5E7EB] last:border-0', i % 2 === 1 && 'bg-[#F9FAFB]')}>
-                    <td className="px-4 py-2.5 font-medium text-[#111827] whitespace-nowrap">
-                      {emp.last_name}, {emp.first_name}
-                    </td>
-                    <td className="px-3 py-2.5 text-[#6B7280] whitespace-nowrap">
-                      {dept ? (
-                        <span className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: dept.color }} />
-                          {dept.name}
-                        </span>
-                      ) : '–'}
-                    </td>
-                    <td className="px-3 py-2.5 text-right text-[#6B7280] tabular-nums whitespace-nowrap">{fmtH(soll)}</td>
-                    <td className="px-3 py-2.5 text-right text-[#111827] tabular-nums whitespace-nowrap">{fmtH(ist)}</td>
-                    <td className={cn(
-                      'px-3 py-2.5 text-right tabular-nums font-medium whitespace-nowrap',
-                      delta > 0.02 ? 'text-emerald-600' : delta < -0.02 ? 'text-red-500' : 'text-[#9CA3AF]',
-                    )}>
-                      {fmtDelta(delta)}
-                    </td>
-                    {view === 'jahr' && (
-                      <td className="px-3 py-2.5 text-center tabular-nums text-[#6B7280] whitespace-nowrap">
-                        {vacTaken > 0 || vacTotal !== null
-                          ? <><span className="font-medium text-[#111827]">{vacTaken}</span> / {vacTotal ?? '–'}</>
-                          : <span className="text-[#D1D5DB]">–</span>}
-                      </td>
-                    )}
-                    {ABSENCE_COLS.map(t => (
-                      <td key={t} className="px-2 py-2.5 text-center tabular-nums">
-                        {byType[t]
-                          ? <span className="font-medium text-xs" style={{ color: ABSENCE_COLORS[t].text }}>{byType[t]}</span>
-                          : <span className="text-[#D1D5DB]">–</span>}
-                      </td>
-                    ))}
-                    <td className="px-2 py-2.5 text-center">
-                      <button
-                        onClick={() => setDruckEmp(emp)}
-                        className="p-1 rounded text-[#9CA3AF] hover:text-[#4F46E5] hover:bg-[#F3F4F6] transition-colors"
-                        title="Druckansicht öffnen"
-                      >
-                        <Printer size={14} />
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
+      ) : berichteView === 'tabelle' ? (
+        <BerichteTabelle rows={berichtRows} onExportPdf={emp => { const e = employees.find(x => `${x.last_name}, ${x.first_name}` === emp); if (e) setDruckEmp(e) }} />
+      ) : berichteView === 'kacheln' ? (
+        <BerichteKacheln rows={berichtRows} />
+      ) : berichteView === 'jahresverlauf' ? (
+        <BerichteJahr rows={berichtRows} year={yearNum} monthlyData={monthlyData} />
+      ) : null}
 
-              {employees.length === 0 && (
-                <tr>
-                  <td colSpan={colSpanEmpty} className="px-4 py-10 text-center text-[#6B7280]">
-                    Keine Mitarbeiter gefunden.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-
-            {/* Summenzeile */}
-            {employees.length > 1 && (() => {
-              const totals = employees.map(empData)
-              const totalSoll  = totals.reduce((s, d) => s + d.soll, 0)
-              const totalIst   = totals.reduce((s, d) => s + d.ist,  0)
-              const totalDelta = totalIst - totalSoll
-              const byTypeSum: Partial<Record<AbsenceType, number>> = {}
-              for (const t of ABSENCE_COLS) {
-                const sum = totals.reduce((s, d) => s + (d.byType[t] ?? 0), 0)
-                if (sum > 0) byTypeSum[t] = sum
-              }
-              return (
-                <tfoot>
-                  <tr className="bg-[#F3F4F6] border-t-2 border-[#E5E7EB] font-medium">
-                    <td className="px-4 py-2.5 text-[#6B7280] text-xs uppercase tracking-wide">Gesamt</td>
-                    <td />
-                    <td className="px-3 py-2.5 text-right tabular-nums text-[#6B7280]">{fmtH(totalSoll)}</td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-[#111827]">{fmtH(totalIst)}</td>
-                    <td className={cn(
-                      'px-3 py-2.5 text-right tabular-nums',
-                      totalDelta > 0.02 ? 'text-emerald-600' : totalDelta < -0.02 ? 'text-red-500' : 'text-[#9CA3AF]',
-                    )}>
-                      {fmtDelta(totalDelta)}
-                    </td>
-                    {view === 'jahr' && <td />}
-                    {ABSENCE_COLS.map(t => (
-                      <td key={t} className="px-2 py-2.5 text-center tabular-nums text-xs">
-                        {byTypeSum[t]
-                          ? <span style={{ color: ABSENCE_COLORS[t].text }}>{byTypeSum[t]}</span>
-                          : <span className="text-[#D1D5DB]">–</span>}
-                      </td>
-                    ))}
-                    <td />
-                  </tr>
-                </tfoot>
-              )
-            })()}
-          </table>
-        </div>
-      )}
 
       {druckEmp && (
         <DruckModal
