@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, Users, CalendarOff, Clock, BarChart2, Settings, LogOut,
+  LayoutDashboard, Users, CalendarOff, CalendarRange, Clock, BarChart2, Settings, LogOut,
 } from 'lucide-react'
 import { useAuthStore } from '../../stores/auth'
 import { cn } from '@/lib/utils'
@@ -10,6 +10,7 @@ const NAV = [
   { to: '/',              icon: LayoutDashboard, label: 'Dashboard',     end: true,  gfOnly: false },
   { to: '/mitarbeiter',   icon: Users,           label: 'Mitarbeiter',               gfOnly: true  },
   { to: '/abwesenheiten', icon: CalendarOff,     label: 'Abwesenheiten',             gfOnly: false },
+  { to: '/dienstplan',   icon: CalendarRange,   label: 'Dienstplan',                gfOnly: false },
   { to: '/zeiterfassung', icon: Clock,           label: 'Zeiterfassung',             gfOnly: false },
   { to: '/berichte',      icon: BarChart2,       label: 'Berichte',                  gfOnly: false },
   { to: '/einstellungen', icon: Settings,        label: 'Einstellungen',             gfOnly: true  },
