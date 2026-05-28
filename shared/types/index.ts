@@ -15,10 +15,12 @@ export type NotifType      = 'absence_request' | 'absence_approved' | 'absence_r
 
 // ── Collections ────────────────────────────────────────
 export interface User extends PBRecord {
-  email: string
-  name: string
-  role: UserRole
-  employee?: string
+  email:      string
+  name:       string
+  first_name: string
+  last_name:  string
+  role:       UserRole
+  employee?:  string
   expand?: { employee?: Employee }
 }
 
@@ -115,6 +117,7 @@ export interface Availability extends PBRecord {
 // ── Konstanten ─────────────────────────────────────────
 export const VACATION_TYPES: AbsenceType[] = ['U', 'RU', 'U3', 'SU']
 export const AUTO_APPROVED_TYPES: AbsenceType[] = ['K', 'KK', 'AT', 'S', 'ÜA']
+export const SOLL_EXEMPT_ABSENCE_TYPES: AbsenceType[] = ['AT']
 
 export const CONTRACT_LABELS: Record<ContractType, string> = {
   vz: 'Vollzeit', tz: 'Teilzeit', mj: 'Minijob', az: 'Azubi',
@@ -130,6 +133,18 @@ export const ABSENCE_COLORS: Record<AbsenceType, { bg: string; text: string }> =
   AT:   { bg: '#F1EFE8', text: '#444441' },
   S:    { bg: '#E6F1FB', text: '#0C447C' },
   'ÜA': { bg: '#E1F5EE', text: '#085041' },
+}
+
+export const ABSENCE_LABELS: Record<AbsenceType, string> = {
+  U:   'Urlaub',
+  RU:  'Resturlaub',
+  U3:  'Urlaub (Teilzeit)',
+  SU:  'Sonderurlaub',
+  K:   'Krank',
+  KK:  'Krank (Kind)',
+  AT:  'Arzttermin',
+  S:   'Schulung',
+  'ÜA':'Übergang',
 }
 
 // ── Dienstplan ─────────────────────────────────────────
@@ -157,6 +172,7 @@ export interface ShiftEntry extends PBRecord {
   color2?:      ShiftColor
   note?:        string
   note2?:       string
+  is_free_day?: boolean      // Kennzeichnung als freier Tag
   status:       ShiftStatus
   expand?: {
     employee?:   Employee

@@ -58,7 +58,7 @@ export default function Einstellungen() {
   const [section, setSection] = useState<Section>('allgemein')
 
   return (
-    <div>
+    <div className="max-w-3xl">
       <h1 className="text-2xl font-bold text-[#111827] mb-1">Einstellungen</h1>
       <p className="text-sm text-[#6B7280] mb-6">Betriebseinstellungen verwalten</p>
 
@@ -589,7 +589,7 @@ function NutzerSection() {
   const [error,   setError]   = useState<string | null>(null)
 
   useEffect(() => {
-    pb.collection('users').getFullList<UserRow>({ expand: 'employee', sort: 'name', requestKey: null })
+    pb.collection('users').getFullList<UserRow>({ expand: 'employee', sort: 'last_name,first_name', requestKey: null })
       .then(setUsers)
       .catch(e => setError((e as Error).message))
       .finally(() => setLoading(false))
@@ -637,7 +637,7 @@ function NutzerSection() {
               const emp    = u.expand?.employee
               return (
                 <tr key={u.id} className="border-b border-[#E5E7EB] last:border-0">
-                  <td className="py-2.5 pr-4 font-medium text-[#111827]">{u.name}</td>
+                  <td className="py-2.5 pr-4 font-medium text-[#111827]">{u.last_name}, {u.first_name}</td>
                   <td className="py-2.5 pr-4 text-[#6B7280] text-xs">{u.email}</td>
                   <td className="py-2.5 pr-4 text-[#6B7280]">
                     {emp ? `${emp.last_name}, ${emp.first_name}` : <span className="text-[#9CA3AF]">—</span>}
@@ -683,7 +683,7 @@ function DienstplanSection() {
 
   useEffect(() => {
     Promise.all([
-      pb.collection('users').getFullList<UserWithEmployee>({ expand: 'employee', sort: 'name', requestKey: null }),
+      pb.collection('users').getFullList<UserWithEmployee>({ expand: 'employee', sort: 'last_name,first_name', requestKey: null }),
       pb.collection('departments').getFullList<Department>({ sort: 'sort_order', requestKey: null }),
       pb.collection('employees').getFullList<Employee>({ requestKey: null }),
     ]).then(([us, ds, emps]) => {
@@ -735,7 +735,7 @@ function DienstplanSection() {
             return (
               <tr key={u.id} className="border-b border-[#E5E7EB] last:border-0">
                 <td className="py-3 pr-4">
-                  <div className="font-medium text-[#111827]">{u.name}</div>
+                  <div className="font-medium text-[#111827]">{u.last_name}, {u.first_name}</div>
                   <div className="text-[11px] text-[#6B7280]">{ROLE_LABELS[u.role]}</div>
                 </td>
                 <td className="py-3">

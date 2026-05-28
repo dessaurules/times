@@ -101,7 +101,7 @@ export default function AntragDialog({ employeeId, initialFrom, onClose, onCreat
         const dateLabel = dateFrom === dateTo ? dateFrom : `${dateFrom} – ${dateTo}`
         notifyGF(
           'Neuer Antrag',
-          `${user?.name ?? 'Ein Mitarbeiter'} hat einen ${type}-Antrag gestellt (${dateLabel}).`,
+          `${user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : user?.name ?? 'Ein Mitarbeiter'} hat einen ${type}-Antrag gestellt (${dateLabel}).`,
           'absence_request',
           created.id,
         )

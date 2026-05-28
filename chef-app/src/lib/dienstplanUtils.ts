@@ -1,6 +1,7 @@
 import { startOfWeek, addDays, format, isSameDay, getISOWeek } from 'date-fns'
 import { getHolidays } from 'feiertagejs'
-import type { Employee } from '@shared/types'
+import type { Employee, ShiftEntry, Absence } from '@shared/types'
+import { SOLL_EXEMPT_ABSENCE_TYPES } from '@shared/types'
 
 export interface WeekDay {
   date:         string   // 'yyyy-MM-dd'
@@ -90,6 +91,27 @@ export function saveRowOrder(weekStart: string, order: Record<string, string[]>)
   localStorage.setItem(LS_KEY(weekStart), JSON.stringify(order))
 }
 
+export function calcShiftMins(entry: ShiftEntry): number {
+  function segMins(start: string, end: string): number {
+    const [sh, sm] = start.split(':').map(Number)
+    const [eh, em] = end.split(':').map(Number)
+    return Math.max(0, (eh * 60 + em) - (sh * 60 + sm))
+  }
+  let total = segMins(entry.start_time, entry.end_time)
+  if (entry.start_time2 && entry.end_time2) {
+    total += segMins(entry.start_time2, entry.end_time2)
+  }
+  return total
+}
+
+export function fmtMins(mins: number): string {
+  const sign = mins < 0 ? '−' : ''
+  const abs = Math.abs(mins)
+  const h = Math.floor(abs / 60)
+  const m = abs % 60
+  return `${sign}${h}${m > 0 ? `:${String(m).padStart(2, '0')}` : ''} h`
+}
+
 export function sortEmployees(
   employees: Employee[],
   deptId: string,
@@ -106,4 +128,23 @@ export function sortEmployees(
       return aIdx - bIdx
     },
   )
+}
+
+export function calcSollMins(
+  emp: Employee,
+  days: WeekDay[],
+  absenceMap: Record<string, Absence>,
+): number {
+  const weeklyMins = (emp.weekly_hours ?? 0) * 60
+  const dailyMins  = Math.round(weeklyMins / 5)
+  let reduceDays = 0
+  for (const day of days) {
+    if (day.isWeekend) continue
+    if (day.isHoliday) { reduceDays++; continue }
+    const absence = absenceMap[`${emp.id}_${day.date}`]
+    if (absence && !SOLL_EXEMPT_ABSENCE_TYPES.includes(absence.type)) {
+      reduceDays++
+    }
+  }
+  return Math.max(0, weeklyMins - reduceDays * dailyMins)
 }

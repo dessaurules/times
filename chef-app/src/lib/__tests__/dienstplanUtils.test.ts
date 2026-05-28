@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest'
-import { getWeekDays, getWeekStart, canEditDept, visibleDepts, sortEmployees } from '../dienstplanUtils'
-import type { Employee } from '@shared/types'
+import { getWeekDays, getWeekStart, canEditDept, visibleDepts, sortEmployees, calcSollMins } from '../dienstplanUtils'
+import type { Employee, Absence } from '@shared/types'
 
 describe('getWeekDays', () => {
   // Pfingstmontag 2026 is 2026-05-25.
@@ -70,6 +70,70 @@ describe('visibleDepts', () => {
   test('filter auf existierende Depts', () => {
     const result = visibleDepts('sl', ['a', 'x'], ['a', 'b', 'c'])
     expect(result).toEqual(['a']) // 'x' nicht in allDeptIds
+  })
+})
+
+describe('calcSollMins', () => {
+  const emp   = { id: 'e1', weekly_hours: 40 } as Employee
+  const daily = Math.round(40 / 5) * 60 // 480 min
+
+  // Normale Woche ohne Feiertage (KW11 2026)
+  const normalDays = getWeekDays(new Date('2026-03-16T00:00:00'), 'ST')
+
+  // KW21 2026 — enthält Pfingstmontag (2026-05-25) als 8. Tag (Werktag)
+  const daysWithHoliday = getWeekDays(new Date('2026-05-18T00:00:00'), 'ST')
+
+  function absence(type: Absence['type']): Absence {
+    return { id: 'a1', type, status: 'approved' } as Absence
+  }
+
+  test('keine Abwesenheit, kein Feiertag → volles Soll', () => {
+    expect(calcSollMins(emp, normalDays, {})).toBe(40 * 60)
+  })
+
+  test('1 Urlaubstag (Arbeitstag) → Soll reduziert um 1 Tagessoll', () => {
+    const map = { 'e1_2026-03-16': absence('U') } // Montag KW11
+    expect(calcSollMins(emp, normalDays, map)).toBe(40 * 60 - daily)
+  })
+
+  test('Urlaub auf Samstag → kein Abzug', () => {
+    const map = { 'e1_2026-03-21': absence('U') }
+    expect(calcSollMins(emp, normalDays, map)).toBe(40 * 60)
+  })
+
+  test('Urlaub auf Sonntag → kein Abzug', () => {
+    const map = { 'e1_2026-03-22': absence('U') }
+    expect(calcSollMins(emp, normalDays, map)).toBe(40 * 60)
+  })
+
+  test('Feiertag auf Werktag (Pfingstmontag) → Abzug ohne Abwesenheit', () => {
+    expect(calcSollMins(emp, daysWithHoliday, {})).toBe(40 * 60 - daily)
+  })
+
+  test('AT auf Arbeitstag → kein Abzug', () => {
+    const map = { 'e1_2026-03-16': absence('AT') }
+    expect(calcSollMins(emp, normalDays, map)).toBe(40 * 60)
+  })
+
+  test('Krank auf Arbeitstag → Abzug', () => {
+    const map = { 'e1_2026-03-17': absence('K') } // Dienstag KW11
+    expect(calcSollMins(emp, normalDays, map)).toBe(40 * 60 - daily)
+  })
+
+  test('5 Urlaubstage Mo–Fr → Soll = 0', () => {
+    const map: Record<string, Absence> = {
+      'e1_2026-03-16': absence('U'),
+      'e1_2026-03-17': absence('U'),
+      'e1_2026-03-18': absence('U'),
+      'e1_2026-03-19': absence('U'),
+      'e1_2026-03-20': absence('U'),
+    }
+    expect(calcSollMins(emp, normalDays, map)).toBe(0)
+  })
+
+  test('Mitarbeiter ohne weekly_hours → Soll 0, kein Crash', () => {
+    const empNoHours = { id: 'e2' } as Employee
+    expect(calcSollMins(empNoHours, normalDays, {})).toBe(0)
   })
 })
 

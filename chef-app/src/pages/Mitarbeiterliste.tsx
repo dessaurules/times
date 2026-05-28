@@ -25,6 +25,7 @@ export default function Mitarbeiterliste() {
   const [filterDept, setFilterDept]         = useState('')
   const [filterContract, setFilterContract] = useState('')
   const [filterActive, setFilterActive]     = useState('')
+  const [refreshKey, setRefreshKey]         = useState(0)
   const perPage = 20
 
   useEffect(() => {
@@ -52,7 +53,7 @@ export default function Mitarbeiterliste() {
       .finally(() => { if (!cancelled) setLoading(false) })
 
     return () => { cancelled = true }
-  }, [search, page, filterDept, filterContract, filterActive])
+  }, [search, page, filterDept, filterContract, filterActive, refreshKey])
 
   function resetFilters() {
     setSearch(''); setFilterDept(''); setFilterContract(''); setFilterActive(''); setPage(1)
@@ -165,6 +166,7 @@ export default function Mitarbeiterliste() {
             key={String(selectedId)}
             employeeId={selectedId}
             onClose={() => setSelectedId(null)}
+            onSaved={() => { setSelectedId(null); setRefreshKey(k => k + 1) }}
           />
         )}
       </AnimatePresence>

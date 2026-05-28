@@ -15,7 +15,8 @@ import { cn } from '@/lib/utils'
 
 interface Props {
   employeeId: string | 'new' | null
-  onClose: () => void
+  onClose:  () => void
+  onSaved?: () => void
 }
 
 type Tab = 'stammdaten' | 'urlaubskonto' | 'dokumente'
@@ -56,7 +57,7 @@ function toDateInput(v: string | undefined): string {
 
 // ── Hauptkomponente ───────────────────────────────────────────────────────────
 
-export default function MitarbeiterModal({ employeeId, onClose }: Props) {
+export default function MitarbeiterModal({ employeeId, onClose, onSaved }: Props) {
   const id    = employeeId === 'new' ? undefined : (employeeId ?? undefined)
   const isNew = employeeId === 'new'
 
@@ -193,6 +194,8 @@ export default function MitarbeiterModal({ employeeId, onClose }: Props) {
             password:        tempPass,
             passwordConfirm: tempPass,
             name:            `${form.first_name} ${form.last_name}`,
+            first_name:      form.first_name,
+            last_name:       form.last_name,
             role:            'mitarbeiter',
             employee:        rec.id,
           })
@@ -213,7 +216,16 @@ export default function MitarbeiterModal({ employeeId, onClose }: Props) {
         onClose()
       } else {
         await pb.collection('employees').update(id!, data)
-        onClose()
+        // users first_name / last_name / name synchron halten
+        pb.collection('users')
+          .getFirstListItem(`employee = "${id}"`, { requestKey: null })
+          .then(u => pb.collection('users').update(u.id, {
+            first_name: form.first_name,
+            last_name:  form.last_name,
+            name:       `${form.first_name} ${form.last_name}`,
+          }))
+          .catch(() => {/* kein User verknüpft — ignorieren */})
+        onSaved ? onSaved() : onClose()
       }
     } catch (err: unknown) {
       const pbErr = err as { status?: number; response?: { data?: Record<string, { message: string }> }; message?: string }

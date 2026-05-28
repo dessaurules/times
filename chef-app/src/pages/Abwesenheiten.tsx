@@ -416,25 +416,23 @@ export default function Abwesenheiten() {
         </span>
       </div>
 
-      <div className="bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
-        {employees.length === 0 && !loading ? (
-          <p className="text-sm text-[#6B7280] p-6 text-center">Keine aktiven Mitarbeiter vorhanden.</p>
-        ) : (
-          <KalenderTable
-            employees={employees}
-            absenceMap={absenceMap}
-            calendarDays={calendarDays}
-            summaries={summaries}
-            activeCell={activeCell}
-            inputValue={inputValue}
-            dragRange={dragRange}
-            onCellClick={handleCellClick}
-            onCellMouseDown={handleCellMouseDown}
-            onCellMouseEnter={handleCellMouseEnter}
-            animatingCells={animatingCells}
-          />
-        )}
-      </div>
+      {employees.length === 0 && !loading ? (
+        <p className="text-sm text-[#6B7280] p-6 text-center">Keine aktiven Mitarbeiter vorhanden.</p>
+      ) : (
+        <KalenderTable
+          employees={employees}
+          absenceMap={absenceMap}
+          calendarDays={calendarDays}
+          summaries={summaries}
+          activeCell={activeCell}
+          inputValue={inputValue}
+          dragRange={dragRange}
+          onCellClick={handleCellClick}
+          onCellMouseDown={handleCellMouseDown}
+          onCellMouseEnter={handleCellMouseEnter}
+          animatingCells={animatingCells}
+        />
+      )}
 
       {popover && canApprove && (
         <ApprovalPopover

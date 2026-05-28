@@ -239,7 +239,7 @@ export default function Dashboard() {
       <div className="mb-6">
         <p className="text-sm text-[#6B7280]">{dayLabel}</p>
         <h1 className="text-2xl font-bold text-[#111827] mt-0.5">
-          {greeting}, {user?.name?.split(' ')[0] ?? ''}
+          {greeting}, {user?.first_name ?? user?.name?.split(' ')[0] ?? ''}
         </h1>
       </div>
 
