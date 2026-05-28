@@ -73,7 +73,7 @@ export default function WeekGrid({
                 )}
               </th>
             ))}
-            <th className="sticky right-0 z-30 bg-indigo-50 border-b border-l-2 border-l-indigo-200 border-[#E5E7EB] px-2 py-1 min-w-[80px] text-center">
+            <th className="sticky right-0 z-30 bg-white border-b border-l border-[#E5E7EB] px-2 py-1 min-w-[80px] text-center">
               <span className="block text-[10px] font-bold text-indigo-600 uppercase tracking-wide">Σ h</span>
             </th>
           </tr>
@@ -110,7 +110,7 @@ export default function WeekGrid({
                     />
                     {dept.name}
                   </td>
-                  <td className="sticky right-0 bg-indigo-50 border-l-2 border-l-indigo-200 border-b border-[#E5E7EB]" />
+                  <td className="sticky right-0 bg-indigo-50 border-l border-indigo-100 border-b border-[#E5E7EB]" />
                 </tr>
                 {/* Mitarbeiter-Zeilen */}
                 {!isCollapsed &&
@@ -307,7 +307,7 @@ export default function WeekGrid({
                             ? 'bg-red-50 text-red-600'
                             : 'bg-emerald-50 text-emerald-600'
                         return (
-                          <td className="sticky right-0 bg-indigo-50/80 border-l-2 border-l-indigo-200 border-b border-[#E5E7EB] px-2 py-1.5 min-w-[80px]">
+                          <td className="sticky right-0 bg-white border-l border-[#E5E7EB] border-b border-[#E5E7EB] px-2 py-1.5 min-w-[80px]">
                             <div className="flex items-center justify-between gap-1">
                               <p className="text-sm font-bold text-gray-800 leading-none">{fmtMins(netMins)}</p>
                               {sollMins > 0 && (

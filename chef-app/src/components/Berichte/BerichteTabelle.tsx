@@ -56,108 +56,126 @@ export default function BerichteTabelle({ rows, onExportPdf }: Props) {
         <table className="min-w-full text-sm border-collapse">
           <thead>
             <tr className="border-b border-[#E5E7EB] bg-gray-50">
-              <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <th className="text-left px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Mitarbeiter
               </th>
-              <th className="text-right px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <th className="text-right px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Soll
               </th>
-              <th className="text-right px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <th className="text-right px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Ist
               </th>
-              <th className="text-right px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <th className="text-right px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Δ
               </th>
-              <th className="text-right px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+              <th className="text-right px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
                 Überstd. kum.
               </th>
-              <th className="text-right px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <th className="text-right px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Urlaub
               </th>
-              <th className="text-right px-3 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <th className="text-right px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Krank
               </th>
-              {onExportPdf && <th className="px-3 py-2.5 w-16" />}
+              {onExportPdf && <th className="px-3 py-1.5 w-10" />}
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, i) => (
-              <tr
-                key={i}
-                className="border-b border-[#E5E7EB] last:border-0 hover:bg-gray-50/50 transition-colors"
-              >
-                <td className="px-4 py-3">
-                  <div className="font-medium text-gray-800">{row.name}</div>
-                  <span className="text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-medium">
-                    {row.abteilung}
-                  </span>
-                </td>
-                <td className="px-3 py-3 text-right text-gray-600 tabular-nums">{fmtH(row.soll)}</td>
-                <td className="px-3 py-3 text-right font-medium text-gray-800 tabular-nums">{fmtH(row.ist)}</td>
-                <td
-                  className={cn(
-                    'px-3 py-3 text-right font-medium tabular-nums',
-                    row.differenz > 0.05
-                      ? 'text-emerald-600'
-                      : row.differenz < -0.05
-                        ? 'text-red-600'
-                        : 'text-gray-400',
-                  )}
-                >
-                  {Math.abs(row.differenz) < 0.05
-                    ? '–'
-                    : (row.differenz > 0 ? '+' : '') + fmtH(row.differenz)}
-                </td>
-                <td
-                  className={cn(
-                    'px-3 py-3 text-right tabular-nums',
-                    row.ueberst_kumuliert > 0.05
-                      ? 'text-emerald-600'
-                      : row.ueberst_kumuliert < -0.05
-                        ? 'text-red-600'
-                        : 'text-gray-400',
-                  )}
-                >
-                  {Math.abs(row.ueberst_kumuliert) < 0.05
-                    ? '–'
-                    : (row.ueberst_kumuliert > 0 ? '+' : '') + fmtH(row.ueberst_kumuliert)}
-                </td>
-                <td className="px-3 py-3 text-right text-gray-600 tabular-nums">
-                  {row.urlaub_genommen}
-                  {row.urlaub_gesamt > 0 ? `/${row.urlaub_gesamt}` : ''} Tage
-                </td>
-                <td className="px-3 py-3 text-right text-gray-600 tabular-nums">
-                  {row.krank > 0 ? `${row.krank} Tage` : '–'}
-                </td>
-                {onExportPdf && (
-                  <td className="px-3 py-3">
-                    <button
-                      onClick={() => onExportPdf(row.name)}
-                      className="p-1.5 rounded hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
-                      title="PDF drucken"
-                    >
-                      <FileText className="w-4 h-4" />
-                    </button>
+            {(() => {
+              // Nach Abteilung gruppieren
+              const grouped = new Map<string, BerichtRow[]>()
+              for (const row of rows) {
+                const dept = row.abteilung || 'Ohne Abteilung'
+                if (!grouped.has(dept)) grouped.set(dept, [])
+                grouped.get(dept)!.push(row)
+              }
+              const colSpan = onExportPdf ? 8 : 7
+              return [...grouped.entries()].flatMap(([dept, deptRows]) => [
+                // Abteilungs-Header
+                <tr key={`dept-${dept}`}>
+                  <td
+                    colSpan={colSpan}
+                    className="bg-indigo-50 text-indigo-700 text-[11px] font-bold uppercase tracking-wide px-3 py-1 border-y border-indigo-100"
+                  >
+                    {dept}
                   </td>
-                )}
-              </tr>
-            ))}
+                </tr>,
+                // Mitarbeiter-Zeilen
+                ...deptRows.map((row, i) => (
+                  <tr
+                    key={`${dept}-${i}`}
+                    className="border-b border-[#F3F4F6] last:border-0 hover:bg-gray-50/50 transition-colors"
+                  >
+                    <td className="px-3 py-1.5">
+                      <span className="font-medium text-[13px] text-[#111827]">{row.name}</span>
+                    </td>
+                    <td className="px-3 py-1.5 text-right text-gray-600 tabular-nums text-xs">{fmtH(row.soll)}</td>
+                    <td className="px-3 py-1.5 text-right font-medium text-gray-800 tabular-nums text-xs">{fmtH(row.ist)}</td>
+                    <td
+                      className={cn(
+                        'px-3 py-1.5 text-right font-medium tabular-nums text-xs',
+                        row.differenz > 0.05
+                          ? 'text-emerald-600'
+                          : row.differenz < -0.05
+                            ? 'text-red-600'
+                            : 'text-gray-400',
+                      )}
+                    >
+                      {Math.abs(row.differenz) < 0.05
+                        ? '–'
+                        : (row.differenz > 0 ? '+' : '') + fmtH(row.differenz)}
+                    </td>
+                    <td
+                      className={cn(
+                        'px-3 py-1.5 text-right tabular-nums text-xs',
+                        row.ueberst_kumuliert > 0.05
+                          ? 'text-emerald-600'
+                          : row.ueberst_kumuliert < -0.05
+                            ? 'text-red-600'
+                            : 'text-gray-400',
+                      )}
+                    >
+                      {Math.abs(row.ueberst_kumuliert) < 0.05
+                        ? '–'
+                        : (row.ueberst_kumuliert > 0 ? '+' : '') + fmtH(row.ueberst_kumuliert)}
+                    </td>
+                    <td className="px-3 py-1.5 text-right text-gray-600 tabular-nums text-xs">
+                      {row.urlaub_genommen}{row.urlaub_gesamt > 0 ? `/${row.urlaub_gesamt}` : ''} T
+                    </td>
+                    <td className="px-3 py-1.5 text-right text-gray-600 tabular-nums text-xs">
+                      {row.krank > 0 ? `${row.krank} T` : '–'}
+                    </td>
+                    {onExportPdf && (
+                      <td className="px-2 py-1.5">
+                        <button
+                          onClick={() => onExportPdf(row.name)}
+                          className="p-1 rounded hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+                          title="PDF drucken"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                )),
+              ])
+            })()}
           </tbody>
           {rows.length > 1 && (
             <tfoot>
               <tr className="bg-gray-50 border-t-2 border-[#E5E7EB]">
-                <td className="px-4 py-2.5 text-xs font-semibold text-gray-600">
+                <td className="px-4 py-1.5 text-xs font-semibold text-gray-600">
                   Gesamt ({rows.length} MA)
                 </td>
-                <td className="px-3 py-2.5 text-right text-xs font-semibold text-gray-600 tabular-nums">
+                <td className="px-3 py-1.5 text-right text-xs font-semibold text-gray-600 tabular-nums">
                   {fmtH(totalSoll)}
                 </td>
-                <td className="px-3 py-2.5 text-right text-xs font-semibold text-gray-600 tabular-nums">
+                <td className="px-3 py-1.5 text-right text-xs font-semibold text-gray-600 tabular-nums">
                   {fmtH(totalIst)}
                 </td>
                 <td
                   className={cn(
-                    'px-3 py-2.5 text-right text-xs font-semibold tabular-nums',
+                    'px-3 py-1.5 text-right text-xs font-semibold tabular-nums',
                     totalIst - totalSoll > 0.05
                       ? 'text-emerald-600'
                       : totalIst - totalSoll < -0.05
@@ -169,13 +187,13 @@ export default function BerichteTabelle({ rows, onExportPdf }: Props) {
                     ? '–'
                     : (totalIst - totalSoll > 0 ? '+' : '') + fmtH(totalIst - totalSoll)}
                 </td>
-                <td className="px-3 py-2.5 text-right text-xs font-semibold text-gray-600 tabular-nums">
+                <td className="px-3 py-1.5 text-right text-xs font-semibold text-gray-600 tabular-nums">
                   {fmtH(totalUeberst)}
                 </td>
-                <td className="px-3 py-2.5 text-right text-xs font-semibold text-gray-600 tabular-nums">
+                <td className="px-3 py-1.5 text-right text-xs font-semibold text-gray-600 tabular-nums">
                   {totalUrlaub} Tage
                 </td>
-                <td className="px-3 py-2.5 text-right text-xs font-semibold text-gray-600 tabular-nums">
+                <td className="px-3 py-1.5 text-right text-xs font-semibold text-gray-600 tabular-nums">
                   {totalKrank} Tage
                 </td>
                 {onExportPdf && <td />}
