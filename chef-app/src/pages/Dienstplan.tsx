@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
-import { addDays, format } from 'date-fns'
+import { addDays, format, parseISO, isAfter } from 'date-fns'
 import { ChevronLeft, ChevronRight, Check, AlertCircle } from 'lucide-react'
 import { pb } from '../lib/pb'
 import { useAuthStore } from '../stores/auth'
-import type { Department, Employee, Settings, ShiftPlan, ShiftEntry } from '@shared/types'
+import type { Department, Employee, Settings, ShiftPlan, ShiftEntry, Absence } from '@shared/types'
 import { cn } from '@/lib/utils'
 import {
   getWeekStart, getWeekDays, getWeekLabel,
@@ -98,7 +98,7 @@ export default function Dienstplan() {
   useEffect(() => {
     setPlanLoading(true)
     pb.collection('shift_plans')
-      .getFirstListItem<ShiftPlan>(`week_start = "${weekStartStr}"`, { requestKey: null })
+      .getFirstListItem<ShiftPlan>(`week_start ~ "${weekStartStr}"`, { requestKey: null })
       .then(p => { setPlan(p); return p })
       .catch(async () => {
         const created = await pb.collection('shift_plans').create<ShiftPlan>({
@@ -120,16 +120,45 @@ export default function Dienstplan() {
       .finally(() => setPlanLoading(false))
   }, [weekStartStr, weekStart, days.length])
 
+  // ── Abwesenheiten laden ───────────────────────────────────────────
+  const [absences, setAbsences] = useState<Absence[]>([])
+
+  useEffect(() => {
+    if (days.length === 0) return
+    const firstDay = days[0].date
+    const lastDay  = days[days.length - 1].date
+    pb.collection('absences').getFullList<Absence>({
+      filter: `date_from <= "${lastDay}" && date_to >= "${firstDay}" && status != "rejected"`,
+      requestKey: null,
+    }).then(setAbsences).catch(() => setAbsences([]))
+  }, [days])
+
+  const absenceMap = useMemo(() => {
+    const map: Record<string, Absence> = {}
+    for (const absence of absences) {
+      let cur = parseISO(absence.date_from)
+      const end = parseISO(absence.date_to)
+      while (!isAfter(cur, end)) {
+        const dateStr = format(cur, 'yyyy-MM-dd')
+        map[`${absence.employee}_${dateStr}`] = absence
+        cur = addDays(cur, 1)
+      }
+    }
+    return map
+  }, [absences])
+
   // ── ShiftEditor-State ─────────────────────────────────────────────
   const [editorOpen,    setEditorOpen]    = useState(false)
   const [editorEmpId,   setEditorEmpId]   = useState('')
   const [editorDate,    setEditorDate]    = useState('')
   const [editorEntry,   setEditorEntry]   = useState<ShiftEntry | undefined>()
+  const [editorAbsence, setEditorAbsence] = useState<Absence | undefined>()
 
-  function handleCellClick(empId: string, date: string, existing?: ShiftEntry) {
+  function handleCellClick(empId: string, date: string, existing?: ShiftEntry, absence?: Absence) {
     setEditorEmpId(empId)
     setEditorDate(date)
     setEditorEntry(existing)
+    setEditorAbsence(absence)
     setEditorOpen(true)
   }
 
@@ -166,6 +195,7 @@ export default function Dienstplan() {
       employee: toEmpId,
       date: toDate,
       department: employees.find(e => e.id === toEmpId)?.department ?? '',
+      status: 'draft',
     }, { requestKey: null })
     setEntries(prev => prev.map(e => e.id === entryId ? updated : e))
   }
@@ -173,34 +203,46 @@ export default function Dienstplan() {
   // ── Publish ───────────────────────────────────────────────────────
   const [publishOpen, setPublishOpen] = useState(false)
 
+  const draftEntries = useMemo(() => entries.filter(e => e.status === 'draft'), [entries])
+  const isUpdate     = plan?.status === 'published'
+
   async function handlePublish(notify: boolean) {
     if (!plan) return
-    await pb.collection('shift_plans').update(plan.id, { status: 'published' }, { requestKey: null })
+    const toPublish = isUpdate ? draftEntries : entries
+
+    if (!isUpdate) {
+      await pb.collection('shift_plans').update(plan.id, { status: 'published' }, { requestKey: null })
+    }
     await Promise.all(
-      entries.map(e =>
+      toPublish.map(e =>
         pb.collection('shift_entries').update(e.id, { status: 'published' }, { requestKey: null }),
       ),
     )
     if (notify) {
-      const affectedEmpIds = [...new Set(entries.map(e => e.employee))]
+      const changedEmpIds = [...new Set(toPublish.map(e => e.employee))]
       await Promise.all(
-        affectedEmpIds.map(empId =>
+        changedEmpIds.map(empId =>
           notifyEmployee(
             empId,
             'shift_published',
-            'Dienstplan veröffentlicht',
-            `Dein Dienstplan für ${weekLabel} wurde veröffentlicht.`,
+            isUpdate ? 'Dienstplan aktualisiert' : 'Dienstplan veröffentlicht',
+            isUpdate
+              ? `Dein Dienstplan für ${weekLabel} wurde aktualisiert.`
+              : `Dein Dienstplan für ${weekLabel} wurde veröffentlicht.`,
           ),
         ),
       )
     }
     setPlan(prev => prev ? { ...prev, status: 'published' } : prev)
-    setEntries(prev => prev.map(e => ({ ...e, status: 'published' })))
+    setEntries(prev => prev.map(e =>
+      toPublish.some(t => t.id === e.id) ? { ...e, status: 'published' } : e,
+    ))
   }
 
   // ── Hilfs-Daten für PublishDialog ─────────────────────────────────
-  const affectedEmpIds   = useMemo(() => [...new Set(entries.map(e => e.employee))], [entries])
-  const affectedDeptIds  = useMemo(() => [...new Set(entries.map(e => e.department))], [entries])
+  const dialogEntries   = isUpdate ? draftEntries : entries
+  const affectedEmpIds  = useMemo(() => [...new Set(dialogEntries.map(e => e.employee))], [dialogEntries])
+  const affectedDeptIds = useMemo(() => [...new Set(dialogEntries.map(e => e.department))], [dialogEntries])
 
   // ── Editor-Hilfsdaten ─────────────────────────────────────────────
   const editorEmp = employees.find(e => e.id === editorEmpId)
@@ -258,24 +300,29 @@ export default function Dienstplan() {
           {plan && (
             <span className={cn(
               'inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full font-medium',
-              plan.status === 'published'
-                ? 'bg-emerald-100 text-emerald-700'
-                : 'bg-amber-100 text-amber-700',
+              isUpdate && draftEntries.length > 0
+                ? 'bg-amber-100 text-amber-700'
+                : plan.status === 'published'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-amber-100 text-amber-700',
             )}>
-              {plan.status === 'published'
+              {plan.status === 'published' && draftEntries.length === 0
                 ? <><Check className="w-3 h-3" /> Veröffentlicht</>
-                : <><AlertCircle className="w-3 h-3" /> Entwurf</>
+                : <><AlertCircle className="w-3 h-3" /> {plan.status === 'published' ? 'Änderungen ausstehend' : 'Entwurf'}</>
               }
             </span>
           )}
 
-          {/* Veröffentlichen-Button */}
-          {plan?.status !== 'published' && editableDepts.length > 0 && entries.length > 0 && (
+          {/* Veröffentlichen- / Aktualisieren-Button */}
+          {editableDepts.length > 0 && (
+            (!isUpdate && entries.length > 0) ||
+            (isUpdate && draftEntries.length > 0)
+          ) && (
             <button
               onClick={() => setPublishOpen(true)}
               className="text-sm bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700 transition-colors font-medium"
             >
-              Veröffentlichen
+              {isUpdate ? 'Aktualisierung veröffentlichen' : 'Veröffentlichen'}
             </button>
           )}
         </div>
@@ -292,6 +339,7 @@ export default function Dienstplan() {
           departments={shownDepts}
           employees={employees}
           entries={entries}
+          absenceMap={absenceMap}
           rowOrder={rowOrder}
           editableDepts={editableDepts}
           onCellClick={handleCellClick}
@@ -302,7 +350,9 @@ export default function Dienstplan() {
 
       {/* ShiftEditor */}
       <ShiftEditor
+        key={`${editorEmpId}_${editorDate}`}
         open={editorOpen}
+        absence={editorAbsence}
         onClose={() => setEditorOpen(false)}
         onSave={handleEditorSave}
         onDelete={editorEntry ? handleEditorDelete : undefined}
@@ -327,6 +377,7 @@ export default function Dienstplan() {
         weekLabel={weekLabel}
         deptCount={affectedDeptIds.length}
         empCount={affectedEmpIds.length}
+        isUpdate={isUpdate}
         onClose={() => setPublishOpen(false)}
         onPublish={handlePublish}
       />

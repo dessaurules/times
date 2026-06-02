@@ -4,7 +4,8 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { SHIFT_COLOR_BG, type ShiftColor } from '@shared/types'
+import { SHIFT_COLOR_BG, ABSENCE_LABELS, ABSENCE_COLORS, type ShiftColor } from '@shared/types'
+import type { Absence } from '@shared/types'
 
 const SHIFT_COLORS: ShiftColor[] = ['blue', 'green', 'amber', 'purple', 'rose']
 
@@ -17,6 +18,7 @@ export interface ShiftEditorData {
   color2?:      ShiftColor
   note?:        string
   note2?:       string
+  is_free_day?: boolean
 }
 
 interface Props {
@@ -25,15 +27,17 @@ interface Props {
   onSave:        (data: ShiftEditorData) => void
   onDelete?:     () => void
   employeeName:  string
-  dayLabel:      string       // z.B. 'Mo 25.05.'
+  dayLabel:      string
   initial?:      Partial<ShiftEditorData>
   isEdit?:       boolean
+  absence?:      Absence
 }
 
 export default function ShiftEditor({
   open, onClose, onSave, onDelete,
-  employeeName, dayLabel, initial, isEdit = false,
+  employeeName, dayLabel, initial, isEdit = false, absence,
 }: Props) {
+  const [isFreeDay,  setIsFreeDay]  = useState(!!(initial?.is_free_day))
   const [startTime,  setStartTime]  = useState(initial?.start_time  ?? '08:00')
   const [endTime,    setEndTime]    = useState(initial?.end_time     ?? '16:00')
   const [color,      setColor]      = useState<ShiftColor>(initial?.color ?? 'blue')
@@ -45,19 +49,24 @@ export default function ShiftEditor({
   const [note2,      setNote2]      = useState(initial?.note2        ?? '')
 
   function handleSave() {
-    const data: ShiftEditorData = {
-      start_time: startTime,
-      end_time:   endTime,
-      color,
-      note:       note || undefined,
+    if (isFreeDay) {
+      onSave({ start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: true })
+    } else {
+      const data: ShiftEditorData = {
+        start_time: startTime,
+        end_time:   endTime,
+        color,
+        note:       note || undefined,
+        is_free_day: false,
+      }
+      if (showSplit) {
+        data.start_time2 = startTime2
+        data.end_time2   = endTime2
+        data.color2      = color2
+        data.note2       = note2 || undefined
+      }
+      onSave(data)
     }
-    if (showSplit) {
-      data.start_time2 = startTime2
-      data.end_time2   = endTime2
-      data.color2      = color2
-      data.note2       = note2 || undefined
-    }
-    onSave(data)
     onClose()
   }
 
@@ -65,10 +74,51 @@ export default function ShiftEditor({
     <Dialog open={open} onClose={onClose}>
       <DialogHeader>
         <DialogTitle>{isEdit ? 'Schicht bearbeiten' : 'Schicht eintragen'}</DialogTitle>
+        {/* Freier Tag Checkbox */}
+        <label className="flex items-center gap-1.5 cursor-pointer select-none ml-auto">
+          <input
+            type="checkbox"
+            checked={isFreeDay}
+            onChange={e => setIsFreeDay(e.target.checked)}
+            className="w-3.5 h-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          <span className="text-xs font-medium text-gray-600">Freier Tag</span>
+        </label>
       </DialogHeader>
 
-      <DialogBody>
+      <DialogBody onKeyDown={e => e.key === 'Enter' && handleSave()}>
         <div className="space-y-3">
+          {/* Freier Tag Anzeige */}
+          {isFreeDay && (
+            <div className="flex items-center justify-center py-6">
+              <div className="text-center">
+                <div className="text-5xl font-black text-emerald-600 leading-none">F</div>
+                <div className="text-sm font-semibold text-emerald-700 mt-2">Freier Tag</div>
+              </div>
+            </div>
+          )}
+
+          {/* Abwesenheits-Warnung */}
+          {!isFreeDay && absence && (
+            <div
+              className="rounded-lg p-3 border"
+              style={{
+                background: ABSENCE_COLORS[absence.type].bg,
+                borderColor: ABSENCE_COLORS[absence.type].text + '44',
+              }}
+            >
+              <p className="text-sm font-semibold" style={{ color: ABSENCE_COLORS[absence.type].text }}>
+                ⚠ Abwesenheit an diesem Tag
+              </p>
+              <p className="text-xs mt-0.5" style={{ color: ABSENCE_COLORS[absence.type].text }}>
+                {ABSENCE_LABELS[absence.type]} · {absence.date_from} – {absence.date_to}
+              </p>
+              <p className="text-xs mt-1 opacity-75" style={{ color: ABSENCE_COLORS[absence.type].text }}>
+                Die Schicht kann trotzdem eingetragen werden.
+              </p>
+            </div>
+          )}
+
           {/* Readonly info */}
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -81,61 +131,66 @@ export default function ShiftEditor({
             </div>
           </div>
 
-          {/* Schicht 1 */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Beginn</Label>
-              <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="mt-0.5" />
-            </div>
-            <div>
-              <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Ende</Label>
-              <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="mt-0.5" />
-            </div>
-          </div>
+          {/* Schichtfelder (ausgeblendet bei Freiem Tag) */}
+          {!isFreeDay && (
+            <>
+              {/* Schicht 1 */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Beginn</Label>
+                  <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="mt-0.5" />
+                </div>
+                <div>
+                  <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Ende</Label>
+                  <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="mt-0.5" />
+                </div>
+              </div>
 
-          <div>
-            <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Hinweis</Label>
-            <Input
-              value={note}
-              onChange={e => setNote(e.target.value)}
-              placeholder="z.B. Springer, Vertretung…"
-              className="mt-0.5"
-            />
-          </div>
-
-          <div>
-            <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Farbe</Label>
-            <div className="flex gap-2 mt-1">
-              {SHIFT_COLORS.map(c => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setColor(c)}
-                  className={cn(
-                    'w-6 h-6 rounded-full border-2 transition-transform',
-                    color === c ? 'border-gray-800 scale-110' : 'border-transparent hover:scale-105',
-                  )}
-                  style={{ background: SHIFT_COLOR_BG[c] }}
-                  title={c}
+              <div>
+                <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Hinweis</Label>
+                <Input
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
+                  placeholder="z.B. Springer, Vertretung…"
+                  className="mt-0.5"
                 />
-              ))}
-            </div>
-          </div>
+              </div>
 
-          {/* Split-Schicht Toggle */}
-          <div className="border-t border-gray-100 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowSplit(v => !v)}
-              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-600 transition-colors"
-            >
-              <span className={cn('transition-transform', showSplit ? 'rotate-90' : '')}>&rsaquo;</span>
-              {showSplit ? 'Zweite Teilschicht entfernen' : 'Zweite Teilschicht hinzufügen'}
-            </button>
-          </div>
+              <div>
+                <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Farbe</Label>
+                <div className="flex gap-2 mt-1">
+                  {SHIFT_COLORS.map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setColor(c)}
+                      className={cn(
+                        'w-6 h-6 rounded-full border-2 transition-transform',
+                        color === c ? 'border-gray-800 scale-110' : 'border-transparent hover:scale-105',
+                      )}
+                      style={{ background: SHIFT_COLOR_BG[c] }}
+                      title={c}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Split-Schicht Toggle */}
+              <div className="border-t border-gray-100 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSplit(v => !v)}
+                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-600 transition-colors"
+                >
+                  <span className={cn('transition-transform', showSplit ? 'rotate-90' : '')}>&rsaquo;</span>
+                  {showSplit ? 'Zweite Teilschicht entfernen' : 'Zweite Teilschicht hinzufügen'}
+                </button>
+              </div>
+            </>
+          )}
 
           {/* Schicht 2 */}
-          {showSplit && (
+          {!isFreeDay && showSplit && (
             <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 space-y-3">
               <p className="text-xs font-semibold text-indigo-700">&#x2702; Zweite Teilschicht</p>
               <div className="grid grid-cols-2 gap-2">

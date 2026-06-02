@@ -52,7 +52,8 @@ export default function Abwesenheiten() {
     Promise.all([
       pb.collection('settings').getFullList({ requestKey: 'abs-settings' }),
       pb.collection('employees').getFullList<Employee>({
-        sort: 'last_name,first_name', filter: 'active = true', requestKey: 'abs-employees',
+        sort: 'last_name,first_name', filter: 'active = true',
+        expand: 'department', requestKey: 'abs-employees',
       }),
     ]).then(([settings, emps]) => {
       const fs = (settings as unknown as { key: string; value: string }[]).find(s => s.key === 'federal_state')?.value ?? 'ST'

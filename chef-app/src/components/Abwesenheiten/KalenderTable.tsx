@@ -29,7 +29,7 @@ export default function KalenderTable({
       <table className="border-collapse text-[11px] leading-none select-none">
         <thead>
           <tr className="bg-[#F3F4F6]">
-            <th className="sticky left-0 z-10 bg-[#F3F4F6] text-left text-xs font-semibold text-[#111827] px-3 py-2 min-w-[160px] border-b border-r border-[#E5E7EB]">
+            <th className="sticky left-0 z-10 bg-[#F3F4F6] text-left text-xs font-semibold text-[#111827] px-3 py-1.5 min-w-[160px] border-b border-r border-[#E5E7EB]">
               Mitarbeiter
             </th>
             {calendarDays.map(day => (
@@ -50,7 +50,26 @@ export default function KalenderTable({
           </tr>
         </thead>
         <tbody>
-          {employees.map(emp => {
+          {(() => {
+            // Mitarbeiter nach Abteilung gruppieren
+            const grouped = new Map<string, { deptName: string; emps: Employee[] }>()
+            for (const emp of employees) {
+              const key      = emp.department || '__none__'
+              const deptName = emp.expand?.department?.name ?? 'Ohne Abteilung'
+              if (!grouped.has(key)) grouped.set(key, { deptName, emps: [] })
+              grouped.get(key)!.emps.push(emp)
+            }
+            const colSpan = calendarDays.length + 4
+            return [...grouped.values()].flatMap(({ deptName, emps }) => [
+              <tr key={`dept-${deptName}`}>
+                <td
+                  colSpan={colSpan}
+                  className="bg-indigo-50 text-indigo-700 text-[11px] font-bold uppercase tracking-wide px-3 py-1 border-y border-indigo-100 select-none"
+                >
+                  {deptName}
+                </td>
+              </tr>,
+              ...emps.map(emp => {
             const sum = summaries.get(emp.id) ?? { at: 0, vacation: 0, sick: 0 }
             return (
               <tr key={emp.id} className="group">
@@ -116,7 +135,9 @@ export default function KalenderTable({
                 <td className="sticky right-0     z-10 w-8 min-w-[32px] text-center border-b border-r border-[#E5E7EB] bg-white text-[#6B7280] text-[11px] group-hover:bg-[#F9FAFB]">{sum.sick || '–'}</td>
               </tr>
             )
-          })}
+          }),
+            ])
+          })()}
         </tbody>
       </table>
     </div>

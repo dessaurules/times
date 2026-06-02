@@ -394,6 +394,7 @@ await addFieldIfMissing('shift_entries', f.text('end_time2'))
 await addFieldIfMissing('shift_entries', f.text('color2'))
 await addFieldIfMissing('shift_entries', f.text('note'))
 await addFieldIfMissing('shift_entries', f.text('note2'))
+await addFieldIfMissing('shift_entries', f.bool('is_free_day'))
 
 // ── employees: Dienstplan-Berechtigungen ─────────────
 await addFieldIfMissing('employees', { type: 'json', name: 'planner_departments', required: false })
