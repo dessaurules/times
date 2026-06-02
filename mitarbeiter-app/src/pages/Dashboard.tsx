@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { format, differenceInMinutes, parseISO, eachDayOfInterval, isWeekend, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { LogIn, LogOut, Clock, Plus } from 'lucide-react'
+import { Clock, Plus } from 'lucide-react'
 import { pb } from '../lib/pb'
 import { useAuthStore } from '../stores/auth'
 import type { TimeEntry, Absence, VacationAccount, Employee } from '@shared/types'
@@ -11,6 +11,7 @@ import AntragDialog from './Abwesenheiten/AntragDialog'
 import { getHolidayDates } from '../lib/holidays'
 import MonatsstundenGauge from '../components/MonatsstundenGauge'
 import UrlaubsCard from '../components/UrlaubsCard'
+import { SwipeButton } from '../components/SwipeButton'
 
 function daysBetween(a: string, b: string) {
   return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000)
@@ -281,19 +282,11 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <button
-            onClick={handleStempel}
-            disabled={stamping}
-            className={cn(
-              'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all active:scale-95 disabled:opacity-60',
-              isStamped
-                ? 'bg-white/20 hover:bg-white/30 text-white border border-white/30'
-                : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-sm shadow-indigo-200 hover:from-indigo-600 hover:to-violet-700'
-            )}
-          >
-            {isStamped ? <LogOut size={15} /> : <LogIn size={15} />}
-            {stamping ? 'Bitte warten…' : isStamped ? 'Ausstempeln' : 'Einstempeln'}
-          </button>
+          <SwipeButton
+            isStamped={isStamped}
+            isLoading={stamping}
+            onSwipeComplete={handleStempel}
+          />
         </div>
 
         {/* Monatsstunden + Urlaub */}
