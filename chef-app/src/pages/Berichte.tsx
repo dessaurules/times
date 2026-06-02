@@ -58,19 +58,6 @@ function netMinutes(e: TimeEntry): number {
   return Math.max(0, Math.round((new Date(e.end_time).getTime() - new Date(e.start_time).getTime()) / 60000) - e.break_minutes)
 }
 
-function fmtH(hours: number): string {
-  if (hours <= 0) return '0 h'
-  const h = Math.floor(hours)
-  const m = Math.round((hours - h) * 60)
-  return m === 0 ? `${h} h` : `${h}:${String(m).padStart(2, '0')} h`
-}
-
-function fmtDelta(hours: number): string {
-  if (Math.abs(hours) < 0.02) return '–'
-  const sign = hours > 0 ? '+' : '-'
-  return sign + fmtH(Math.abs(hours))
-}
-
 // ── Typen ─────────────────────────────────────────────────────────────────────
 
 type EmployeeRow = Employee & { expand?: { department?: Department } }

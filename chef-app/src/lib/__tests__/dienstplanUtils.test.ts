@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { getWeekDays, getWeekStart, canEditDept, visibleDepts, sortEmployees, calcSollMins } from '../dienstplanUtils'
+import { getWeekDays, canEditDept, visibleDepts, sortEmployees, calcSollMins } from '../dienstplanUtils'
 import type { Employee, Absence } from '@shared/types'
 
 describe('getWeekDays', () => {

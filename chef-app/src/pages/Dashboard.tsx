@@ -699,7 +699,7 @@ export default function Dashboard() {
             isDraggable={editMode}
             isResizable={editMode}
             onLayoutChange={saveLayout}
-            onResizeStop={(_l, _old, newItem) => markManualResize(newItem.i)}
+            onResizeStop={(_l, _old, newItem) => newItem && markManualResize(newItem.i)}
             margin={[16, 16]}
             containerPadding={[0, 0]}
             draggableCancel=".widget-no-drag"
