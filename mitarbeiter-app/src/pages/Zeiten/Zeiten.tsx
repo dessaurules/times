@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import {
   startOfWeek, endOfWeek, eachDayOfInterval, addWeeks, subWeeks,
   format, parseISO, differenceInMinutes, isWeekend, getISOWeek, isToday,
@@ -130,7 +130,7 @@ export default function Zeiten() {
 
   // Überstunden (Jahr): Ist − Soll aller abgeschlossenen Arbeitstage
   const holidaysYear = getHolidayDates(new Date().getFullYear(), fedState)
-  const overtimeMins = (() => {
+  const overtimeMins = useMemo(() => {
     // Gruppiere abgeschlossene Einträge nach Tag
     const dayMap = new Map<string, number>()
     for (const e of allEntries) {
@@ -146,7 +146,7 @@ export default function Zeiten() {
       }
     }
     return total
-  })()
+  }, [allEntries, sollPerDay, fedState])
 
   const kw = getISOWeek(weekStart)
 

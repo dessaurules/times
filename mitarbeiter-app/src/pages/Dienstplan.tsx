@@ -92,7 +92,7 @@ export default function Dienstplan() {
       <div className="flex items-center gap-1 sm:gap-3 mb-4">
         <button
           onClick={() => setWeekStart(w => subWeeks(w, 1))}
-          className="p-2 sm:p-2 rounded-xl text-[#6B7280] hover:bg-[#F3F4F6] transition-colors flex-shrink-0"
+          className="p-2 rounded-xl text-[#6B7280] hover:bg-[#F3F4F6] transition-colors flex-shrink-0"
         >
           <ChevronLeft size={18} />
         </button>
@@ -104,7 +104,7 @@ export default function Dienstplan() {
         </div>
         <button
           onClick={() => setWeekStart(w => addWeeks(w, 1))}
-          className="p-2 sm:p-2 rounded-xl text-[#6B7280] hover:bg-[#F3F4F6] transition-colors flex-shrink-0"
+          className="p-2 rounded-xl text-[#6B7280] hover:bg-[#F3F4F6] transition-colors flex-shrink-0"
         >
           <ChevronRight size={18} />
         </button>
