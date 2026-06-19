@@ -12,36 +12,36 @@
 
 @layer base {
   :root {
-    /* ── Schicht & Plan Indigo/Violet Theme ──────────────────── */
-    --primary:           #4F46E5;
+    /* ── Schicht & Plan Amber-Theme ──────────────────── */
+    --primary:           #BA7517;
     --primary-foreground:#FFFFFF;
-    --primary-light:     rgba(79,70,229,0.10);
-    --primary-hover:     #4338CA;
+    --primary-light:     rgba(186,117,23,0.12);
+    --primary-hover:     #9E6312;
 
-    --background:        #F3F4F6;
-    --bg:                #F3F4F6;
-    --foreground:        #111827;
-    --text:              #111827;
-    --text-muted:        #6B7280;
+    --background:        #F5F2EE;
+    --bg:                #F5F2EE;
+    --foreground:        #1A1917;
+    --text:              #1A1917;
+    --text-muted:        #706D6A;
 
     --card:              #FFFFFF;
-    --card-foreground:   #111827;
+    --card-foreground:   #1A1917;
 
-    --border:            #E5E7EB;
-    --input:             #E5E7EB;
-    --ring:              #4F46E5;
+    --border:            #EDE7DC;
+    --input:             #EDE7DC;
+    --ring:              #BA7517;
 
-    --muted-foreground:  #6B7280;
-    --muted:             #F3F4F6;
+    --muted-foreground:  #706D6A;
+    --muted:             #F5F2EE;
 
     --popover:           #FFFFFF;
-    --popover-foreground:#111827;
+    --popover-foreground:#1A1917;
 
-    --secondary:         #F3F4F6;
-    --secondary-foreground: #111827;
+    --secondary:         #F5F2EE;
+    --secondary-foreground: #1A1917;
 
-    --accent:            rgba(79,70,229,0.08);
-    --accent-foreground: #4F46E5;
+    --accent:            rgba(186,117,23,0.08);
+    --accent-foreground: #633806;
 
     --destructive:       #DC2626;
     --destructive-foreground: #FFFFFF;
