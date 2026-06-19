@@ -7,15 +7,15 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT:    '#BA7517',
+          DEFAULT:    '#4F46E5',
           foreground: '#FFFFFF',
-          hover:      '#9E6312',
-          light:      'rgba(186,117,23,0.12)',
+          hover:      '#4338CA',
+          light:      'rgba(79,70,229,0.10)',
         },
-        border:       '#EDE7DC',
-        bg:           '#F5F2EE',
+        border:       '#E5E7EB',
+        bg:           '#F3F4F6',
         card:         '#FFFFFF',
-        muted:        '#706D6A',
+        muted:        '#6B7280',
         destructive: {
           DEFAULT:    '#DC2626',
           foreground: '#FFFFFF',
