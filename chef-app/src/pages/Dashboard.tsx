@@ -93,21 +93,21 @@ function SortableWidget({
       }}
     >
       {editMode && (
-        <div className="flex items-center gap-2 px-3 py-1.5 mb-1 bg-[rgba(186,117,23,0.08)] rounded-t-xl border border-b-0 border-[#EDE7DC]">
+        <div className="flex items-center gap-2 px-3 py-1.5 mb-1 bg-[rgba(79,70,229,0.08)] rounded-t-xl border border-b-0 border-[#E5E7EB]">
           <button
-            className="cursor-grab active:cursor-grabbing touch-none text-[#BA7517] hover:text-[#9E6312] transition-colors"
+            className="cursor-grab active:cursor-grabbing touch-none text-[#4F46E5] hover:text-[#4338CA] transition-colors"
             {...listeners}
             {...attributes}
             title="Verschieben"
           >
             <GripVertical size={14} />
           </button>
-          <span className="text-xs font-medium text-[#BA7517] flex-1 select-none">
+          <span className="text-xs font-medium text-[#4F46E5] flex-1 select-none">
             {WIDGET_META[id].label}
           </span>
           <button
             onClick={onRemove}
-            className="text-[#706D6A] hover:text-red-500 transition-colors"
+            className="text-[#6B7280] hover:text-red-500 transition-colors"
             title="Widget entfernen"
           >
             <X size={14} />
@@ -359,15 +359,15 @@ export default function Dashboard() {
   // ── Widget-Render-Funktionen ───────────────────────────────────────────────
   function renderAntraege() {
     return (
-      <div className="bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
-        <div className="flex border-b border-[#EDE7DC]">
+      <div className="bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
+        <div className="flex border-b border-[#E5E7EB]">
           <button
             onClick={() => setAntragTab('pending')}
             className={cn(
               'flex-1 py-3 text-[11px] font-semibold uppercase tracking-wider transition-colors',
               antragTab === 'pending'
-                ? 'text-[#BA7517] border-b-2 border-[#BA7517] bg-[#FFF9F0]'
-                : 'text-[#706D6A] hover:bg-[#FAF7F2]'
+                ? 'text-[#4F46E5] border-b-2 border-[#4F46E5] bg-[#FFF9F0]'
+                : 'text-[#6B7280] hover:bg-[#FAF7F2]'
             )}
           >
             Ausstehend{data.pending.length > 0 ? ` (${data.pending.length})` : ''}
@@ -377,8 +377,8 @@ export default function Dashboard() {
             className={cn(
               'flex-1 py-3 text-[11px] font-semibold uppercase tracking-wider transition-colors',
               antragTab === 'verlauf'
-                ? 'text-[#BA7517] border-b-2 border-[#BA7517] bg-[#FFF9F0]'
-                : 'text-[#706D6A] hover:bg-[#FAF7F2]'
+                ? 'text-[#4F46E5] border-b-2 border-[#4F46E5] bg-[#FFF9F0]'
+                : 'text-[#6B7280] hover:bg-[#FAF7F2]'
             )}
           >
             Verlauf
@@ -388,7 +388,7 @@ export default function Dashboard() {
           {antragTab === 'pending' ? (
             <>
               {data.pending.length === 0 ? (
-                <p className="text-sm text-[#706D6A]">Keine offenen Genehmigungen.</p>
+                <p className="text-sm text-[#6B7280]">Keine offenen Genehmigungen.</p>
               ) : data.pending.map(abs => {
                 const emp    = abs.expand?.employee
                 const colors = ABSENCE_COLORS[abs.type]
@@ -397,11 +397,11 @@ export default function Dashboard() {
                   ? format(parseISO(abs.date_from), 'dd.MM.yyyy', { locale: de })
                   : `${format(parseISO(abs.date_from), 'dd.MM.', { locale: de })}–${format(parseISO(abs.date_to), 'dd.MM.yyyy', { locale: de })}`
                 return (
-                  <div key={abs.id} className="flex items-center gap-2 py-2.5 border-b border-[#EDE7DC] last:border-0 text-sm">
-                    <span className="font-semibold text-[#1A1917] min-w-[130px] truncate">
+                  <div key={abs.id} className="flex items-center gap-2 py-2.5 border-b border-[#E5E7EB] last:border-0 text-sm">
+                    <span className="font-semibold text-[#111827] min-w-[130px] truncate">
                       {emp ? `${emp.last_name}, ${emp.first_name}` : '—'}
                     </span>
-                    <span className="text-[#706D6A] flex-1 text-xs whitespace-nowrap">
+                    <span className="text-[#6B7280] flex-1 text-xs whitespace-nowrap">
                       {dateLabel} · {days} T
                     </span>
                     <span className="text-[11px] font-bold px-2 py-0.5 rounded shrink-0"
@@ -427,7 +427,7 @@ export default function Dashboard() {
           ) : (
             <>
               {verlaufLoading ? (
-                <p className="text-sm text-[#706D6A]">Lade…</p>
+                <p className="text-sm text-[#6B7280]">Lade…</p>
               ) : (
                 <>
                   {verlaufEmployees.length > 1 && (
@@ -435,7 +435,7 @@ export default function Dashboard() {
                       <select
                         value={verlaufFilter}
                         onChange={e => setVerlaufFilter(e.target.value)}
-                        className="text-xs border border-[#EDE7DC] rounded px-2 py-1.5 text-[#706D6A] outline-none focus:border-[#BA7517] bg-white"
+                        className="text-xs border border-[#E5E7EB] rounded px-2 py-1.5 text-[#6B7280] outline-none focus:border-[#4F46E5] bg-white"
                       >
                         <option value="">Alle Mitarbeiter</option>
                         {verlaufEmployees.map(e => (
@@ -445,7 +445,7 @@ export default function Dashboard() {
                     </div>
                   )}
                   {filteredVerlauf.length === 0 ? (
-                    <p className="text-sm text-[#706D6A]">Kein Verlauf vorhanden.</p>
+                    <p className="text-sm text-[#6B7280]">Kein Verlauf vorhanden.</p>
                   ) : (
                     <div>
                       {filteredVerlauf.map(abs => {
@@ -457,10 +457,10 @@ export default function Dashboard() {
                           : `${format(parseISO(abs.date_from), 'dd.MM.', { locale: de })}–${format(parseISO(abs.date_to), 'dd.MM.yyyy', { locale: de })}`
                         return (
                           <div key={abs.id} className="flex items-center gap-2 py-2 border-b border-[#F5F0EA] last:border-0">
-                            <span className="font-medium text-[#1A1917] text-xs min-w-[100px] truncate">
+                            <span className="font-medium text-[#111827] text-xs min-w-[100px] truncate">
                               {emp ? `${emp.last_name}, ${emp.first_name}` : '—'}
                             </span>
-                            <span className="text-[#706D6A] flex-1 text-xs whitespace-nowrap">{dateLabel}</span>
+                            <span className="text-[#6B7280] flex-1 text-xs whitespace-nowrap">{dateLabel}</span>
                             <span className="text-[11px] font-bold px-1.5 py-0.5 rounded shrink-0"
                               style={{ backgroundColor: colors.bg, color: colors.text }}>
                               {abs.type}
@@ -487,12 +487,12 @@ export default function Dashboard() {
 
   function renderAbwesend() {
     return (
-      <div className="bg-white border border-[#EDE7DC] rounded-lg p-5">
-        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[#706D6A] mb-4">
+      <div className="bg-white border border-[#E5E7EB] rounded-lg p-5">
+        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280] mb-4">
           Heute abwesend · {format(new Date(), 'dd.MM.yyyy')}
         </h2>
         {data.absentToday.length === 0 ? (
-          <p className="text-sm text-[#706D6A]">Alle Mitarbeiter anwesend.</p>
+          <p className="text-sm text-[#6B7280]">Alle Mitarbeiter anwesend.</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {data.absentToday.map(abs => {
@@ -514,21 +514,21 @@ export default function Dashboard() {
 
   function renderArbeitszeiten() {
     return (
-      <div className="bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
-        <div className="px-5 py-3 border-b border-[#EDE7DC] bg-[#FAF7F2] flex items-center justify-between">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-[#706D6A]">
+      <div className="bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
+        <div className="px-5 py-3 border-b border-[#E5E7EB] bg-[#FAF7F2] flex items-center justify-between">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280]">
             Arbeitszeiten heute · {format(new Date(), 'dd.MM.yyyy')}
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-baseline gap-1">
-              <span className="text-base font-bold text-[#1A1917]">{stempel.filter(r => r.isActive).length}</span>
-              <span className="text-xs text-[#706D6A]">eingestempelt</span>
+              <span className="text-base font-bold text-[#111827]">{stempel.filter(r => r.isActive).length}</span>
+              <span className="text-xs text-[#6B7280]">eingestempelt</span>
             </div>
             <button
               onClick={() => { setShowClockInForm(v => !v); setClockInEmpId('') }}
               className={cn(
                 'p-1 rounded transition-colors',
-                showClockInForm ? 'bg-[#EDE7DC] text-[#1A1917]' : 'text-[#706D6A] hover:bg-[#EDE7DC]'
+                showClockInForm ? 'bg-[#E5E7EB] text-[#111827]' : 'text-[#6B7280] hover:bg-[#E5E7EB]'
               )}
               title="Mitarbeiter einstempeln"
             >
@@ -538,11 +538,11 @@ export default function Dashboard() {
         </div>
 
         {showClockInForm && (
-          <div className="px-5 py-3 border-b border-[#EDE7DC] bg-white flex items-center gap-2">
+          <div className="px-5 py-3 border-b border-[#E5E7EB] bg-white flex items-center gap-2">
             <select
               value={clockInEmpId}
               onChange={e => setClockInEmpId(e.target.value)}
-              className="flex-1 text-sm border border-[#EDE7DC] rounded px-2 py-1.5 text-[#1A1917] outline-none focus:border-[#BA7517] bg-white"
+              className="flex-1 text-sm border border-[#E5E7EB] rounded px-2 py-1.5 text-[#111827] outline-none focus:border-[#4F46E5] bg-white"
             >
               <option value="">Mitarbeiter wählen…</option>
               {allEmployees.map(e => (
@@ -558,7 +558,7 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setShowClockInForm(false)}
-              className="p-1.5 rounded text-[#706D6A] hover:bg-[#EDE7DC] transition-colors"
+              className="p-1.5 rounded text-[#6B7280] hover:bg-[#E5E7EB] transition-colors"
             >
               <X size={14} />
             </button>
@@ -566,7 +566,7 @@ export default function Dashboard() {
         )}
 
         {stempel.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-[#706D6A]">Heute noch keine Buchungen.</p>
+          <p className="px-5 py-4 text-sm text-[#6B7280]">Heute noch keine Buchungen.</p>
         ) : (
           <div className="divide-y divide-[#F5F0EA]">
             {stempel.map((row, i) => {
@@ -586,10 +586,10 @@ export default function Dashboard() {
                       'w-2 h-2 rounded-full shrink-0',
                       row.isActive ? 'bg-green-500' : 'bg-[#D1D5DB]'
                     )} />
-                    <span className="text-sm font-semibold text-[#1A1917] flex-1">
+                    <span className="text-sm font-semibold text-[#111827] flex-1">
                       {row.employee.last_name}, {row.employee.first_name}
                     </span>
-                    <span className="text-xs text-[#706D6A]">{row.sinceLabel}</span>
+                    <span className="text-xs text-[#6B7280]">{row.sinceLabel}</span>
                     {row.isActive ? (
                       <span className="text-xs font-bold tabular-nums w-16 text-right text-green-700">
                         {Math.floor(row.totalMins / 60)}
@@ -597,14 +597,14 @@ export default function Dashboard() {
                         {String(row.totalMins % 60).padStart(2, '0')} h
                       </span>
                     ) : (
-                      <span className="text-xs font-bold tabular-nums w-16 text-right text-[#706D6A]">
+                      <span className="text-xs font-bold tabular-nums w-16 text-right text-[#6B7280]">
                         {fmtMins(row.totalMins)}
                       </span>
                     )}
                     <button
                       onClick={() => row.isActive && row.openEntryId ? handleClockOut(row.openEntryId) : undefined}
                       className={cn(
-                        'flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#EDE7DC] text-[#706D6A] hover:bg-[#EDE7DC] transition-colors shrink-0',
+                        'flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#E5E7EB] text-[#6B7280] hover:bg-[#E5E7EB] transition-colors shrink-0',
                         (!row.isActive || !row.openEntryId) && 'invisible pointer-events-none'
                       )}
                       title="Ausstempeln"
@@ -645,22 +645,22 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1917]">Dashboard</h1>
-          <p className="text-sm text-[#706D6A] capitalize">
+          <h1 className="text-2xl font-bold text-[#111827]">Dashboard</h1>
+          <p className="text-sm text-[#6B7280] capitalize">
             {format(new Date(), 'EEEE, dd. MMMM yyyy', { locale: de })}
           </p>
         </div>
         {editMode ? (
           <button
             onClick={() => setEditMode(false)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#BA7517] text-white text-sm font-medium hover:bg-[#9E6312] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4F46E5] text-white text-sm font-medium hover:bg-[#4338CA] transition-colors"
           >
             Fertig
           </button>
         ) : (
           <button
             onClick={() => setEditMode(true)}
-            className="p-2 rounded-lg border border-[#EDE7DC] text-[#706D6A] hover:bg-[#F5F2EE] hover:text-[#1A1917] transition-colors"
+            className="p-2 rounded-lg border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827] transition-colors"
             title="Layout anpassen"
           >
             <SlidersHorizontal size={16} />
@@ -669,7 +669,7 @@ export default function Dashboard() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-[#706D6A]">Lade…</p>
+        <p className="text-sm text-[#6B7280]">Lade…</p>
       ) : (
         <>
           <DndContext
@@ -720,13 +720,13 @@ export default function Dashboard() {
 
           {/* Versteckte Widgets — nur im Edit-Mode */}
           {editMode && (hiddenStats.length > 0 || hiddenPanels.length > 0) && (
-            <div className="mt-4 flex flex-wrap gap-2 p-4 border border-dashed border-[#EDE7DC] rounded-xl bg-[#FAF7F2]">
-              <p className="text-xs text-[#706D6A] w-full mb-1 font-medium">Widget hinzufügen:</p>
+            <div className="mt-4 flex flex-wrap gap-2 p-4 border border-dashed border-[#E5E7EB] rounded-xl bg-[#FAF7F2]">
+              <p className="text-xs text-[#6B7280] w-full mb-1 font-medium">Widget hinzufügen:</p>
               {[...hiddenStats, ...hiddenPanels].map(id => (
                 <button
                   key={id}
                   onClick={() => add(id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#EDE7DC] text-sm text-[#706D6A] hover:border-[#BA7517] hover:text-[#BA7517] transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E5E7EB] text-sm text-[#6B7280] hover:border-[#4F46E5] hover:text-[#4F46E5] transition-colors"
                 >
                   <Plus size={13} /> {WIDGET_META[id].label}
                 </button>
@@ -747,12 +747,12 @@ function calcDays(from: string, to: string): number {
 function StatCard({ label, value, sub, color }: {
   label: string; value: number; sub: string; color: 'green' | 'amber' | 'red' | 'default'
 }) {
-  const cls = { green: 'text-green-600', amber: 'text-[#BA7517]', red: 'text-red-600', default: 'text-[#1A1917]' }[color]
+  const cls = { green: 'text-green-600', amber: 'text-[#4F46E5]', red: 'text-red-600', default: 'text-[#111827]' }[color]
   return (
-    <div className="bg-white border border-[#EDE7DC] rounded-lg p-5">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#706D6A] mb-2">{label}</div>
+    <div className="bg-white border border-[#E5E7EB] rounded-lg p-5">
+      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280] mb-2">{label}</div>
       <div className={`text-3xl font-bold mb-1 ${cls}`}>{value}</div>
-      <div className="text-xs text-[#706D6A]">{sub}</div>
+      <div className="text-xs text-[#6B7280]">{sub}</div>
     </div>
   )
 }

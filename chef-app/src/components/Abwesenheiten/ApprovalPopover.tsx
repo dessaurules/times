@@ -51,14 +51,14 @@ export default function ApprovalPopover({
     <div
       ref={ref}
       style={style}
-      className="w-52 bg-white border border-[#EDE7DC] rounded-lg shadow-lg p-3"
+      className="w-52 bg-white border border-[#E5E7EB] rounded-lg shadow-lg p-3"
     >
       <div className="flex items-start justify-between mb-2">
         <div>
-          <div className="text-xs text-[#706D6A]">{employee.last_name}, {employee.first_name}</div>
-          <div className="text-xs font-medium text-[#1A1917] mt-0.5">{dateLabel}</div>
+          <div className="text-xs text-[#6B7280]">{employee.last_name}, {employee.first_name}</div>
+          <div className="text-xs font-medium text-[#111827] mt-0.5">{dateLabel}</div>
         </div>
-        <button onClick={onClose} className="text-[#706D6A] hover:text-[#1A1917] ml-1">
+        <button onClick={onClose} className="text-[#6B7280] hover:text-[#111827] ml-1">
           <X size={14} />
         </button>
       </div>
@@ -69,7 +69,7 @@ export default function ApprovalPopover({
         {absence.type}
       </div>
       {absence.note && (
-        <p className="text-xs text-[#706D6A] mb-2 italic">"{absence.note}"</p>
+        <p className="text-xs text-[#6B7280] mb-2 italic">"{absence.note}"</p>
       )}
       <div className="flex gap-2">
         <Button size="sm" className="flex-1 h-7 text-xs bg-green-600 hover:bg-green-700 text-white" onClick={onApprove}>

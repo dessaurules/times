@@ -27,8 +27,8 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-[220px] shrink-0 bg-white border-r border-[#EDE7DC] flex flex-col h-full">
-      <div className="flex items-center gap-2 px-5 py-[18px] text-[#BA7517] font-bold text-[15px] border-b border-[#EDE7DC]">
+    <aside className="w-[220px] shrink-0 bg-white border-r border-[#E5E7EB] flex flex-col h-full">
+      <div className="flex items-center gap-2 px-5 py-[18px] text-[#4F46E5] font-bold text-[15px] border-b border-[#E5E7EB]">
         <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <circle cx="12" cy="12" r="10"/>
           <polyline points="12 6 12 12 16 14"/>
@@ -49,8 +49,8 @@ export default function Sidebar() {
               cn(
                 'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm transition-colors',
                 isActive
-                  ? 'bg-[rgba(186,117,23,0.12)] text-[#BA7517] font-medium'
-                  : 'text-[#706D6A] hover:bg-[#F5F2EE] hover:text-[#1A1917]'
+                  ? 'bg-[rgba(79,70,229,0.10)] text-[#4F46E5] font-medium'
+                  : 'text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]'
               )
             }
           >
@@ -60,16 +60,16 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className="px-3 pt-3 pb-4 border-t border-[#EDE7DC]">
+      <div className="px-3 pt-3 pb-4 border-t border-[#E5E7EB]">
         {user && (
-          <div className="px-3 py-2 mb-1 text-xs text-[#706D6A]">
-            <div className="font-medium text-[#1A1917] truncate">{user.name}</div>
+          <div className="px-3 py-2 mb-1 text-xs text-[#6B7280]">
+            <div className="font-medium text-[#111827] truncate">{user.name}</div>
             <div className="text-[11px]">{user.role === 'gf' ? 'Geschäftsführung' : 'Schichtleitung'}</div>
           </div>
         )}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-md text-sm text-[#706D6A] hover:bg-[#F5F2EE] hover:text-[#1A1917] transition-colors"
+          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-md text-sm text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827] transition-colors"
         >
           <LogOut size={16} />
           <span>Abmelden</span>
