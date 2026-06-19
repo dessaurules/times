@@ -7,24 +7,29 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT:    '#BA7517',
+          DEFAULT:    '#4F46E5',
           foreground: '#FFFFFF',
-          hover:      '#9E6312',
-          light:      'rgba(186,117,23,0.12)',
+          hover:      '#4338CA',
+          light:      'rgba(79,70,229,0.10)',
         },
-        border:       '#EDE7DC',
-        bg:           '#F5F2EE',
+        border:       '#E5E7EB',
+        bg:           '#F3F4F6',
         card:         '#FFFFFF',
-        muted:        '#706D6A',
+        muted:        '#6B7280',
         destructive: {
           DEFAULT:    '#DC2626',
           foreground: '#FFFFFF',
         },
       },
       borderRadius: {
-        lg: '8px',
-        md: '6px',
-        sm: '4px',
+        lg: '12px',
+        md: '8px',
+        sm: '6px',
+      },
+      backgroundImage: {
+        'gradient-primary': 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+        'gradient-card':    'linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 100%)',
+        'gradient-hero':    'linear-gradient(135deg, #4F46E5 0%, #7C3AED 60%, #A855F7 100%)',
       },
     },
   },
