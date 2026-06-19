@@ -56,13 +56,13 @@ ssh "$PI_USER@$PI_HOST" << 'REMOTESCRIPT'
   # 3d. Chef-App bauen
   echo "  🔨 Baue chef-app..."
   cd "$PI_PATH/chef-app"
-  VITE_PB_URL="http://127.0.0.1:8092" npm run build > /dev/null 2>&1
+  VITE_PB_URL="https://pbtimes.robeserver.duckdns.org" npm run build > /dev/null 2>&1
   cd "$PI_PATH"
 
   # 3e. Mitarbeiter-App bauen
   echo "  🔨 Baue mitarbeiter-app..."
   cd "$PI_PATH/mitarbeiter-app"
-  VITE_PB_URL="http://127.0.0.1:8092" npm run build > /dev/null 2>&1
+  VITE_PB_URL="https://pbtimes.robeserver.duckdns.org" npm run build > /dev/null 2>&1
   cd "$PI_PATH"
 
   # 3f. PocketBase binary (falls fehlend)
