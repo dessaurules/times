@@ -33,6 +33,7 @@ export default function DayTimeCard({ day, dayEntries, sollPerDay, isHoliday, no
   const isCurrent = isToday(day)
   const runningE = dayEntries.find(e => !e.end_time)
   const istMins = dayEntries.reduce((s, e) => s + netMins(e, now), 0)
+  const ds = format(day, 'yyyy-MM-dd')
 
   if (dayEntries.length === 0) {
     return (
