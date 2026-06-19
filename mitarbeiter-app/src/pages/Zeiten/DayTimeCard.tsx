@@ -33,7 +33,6 @@ export default function DayTimeCard({ day, dayEntries, sollPerDay, isHoliday, no
   const isCurrent = isToday(day)
   const runningE = dayEntries.find(e => !e.end_time)
   const istMins = dayEntries.reduce((s, e) => s + netMins(e, now), 0)
-  const ds = format(day, 'yyyy-MM-dd')
 
   if (dayEntries.length === 0) {
     return (
@@ -53,7 +52,9 @@ export default function DayTimeCard({ day, dayEntries, sollPerDay, isHoliday, no
   return (
     <div className={cn(
       'p-4 rounded-xl border space-y-2',
-      isCurrent && !isWE ? 'bg-indigo-50/40 border-indigo-200' : 'bg-white border-[#E5E7EB]'
+      (isWE || isHoliday) ? 'bg-[#F9FAFB] border-[#E5E7EB]'
+      : isCurrent ? 'bg-indigo-50/40 border-indigo-200'
+      : 'bg-white border-[#E5E7EB]'
     )}>
       {/* Header */}
       <div className="flex justify-between items-start">
@@ -95,7 +96,10 @@ export default function DayTimeCard({ day, dayEntries, sollPerDay, isHoliday, no
         <div>
           <span className="text-[#9CA3AF] block text-[10px]">Pause</span>
           <span className="font-medium text-[#111827]">
-            {dayEntries[0].break_minutes ? `${dayEntries[0].break_minutes}m` : '—'}
+            {(() => {
+              const total = dayEntries.reduce((sum, e) => sum + (e.break_minutes ?? 0), 0)
+              return total > 0 ? `${total}m` : '—'
+            })()}
           </span>
         </div>
       </div>

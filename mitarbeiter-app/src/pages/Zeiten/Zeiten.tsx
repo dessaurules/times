@@ -285,10 +285,10 @@ export default function Zeiten() {
                         }
                       </Cell>
                       <Cell>
-                        {dayEntries[0].break_minutes
-                          ? `${dayEntries[0].break_minutes} min`
-                          : '—'
-                        }
+                        {(() => {
+                          const total = dayEntries.reduce((sum, e) => sum + (e.break_minutes ?? 0), 0)
+                          return total > 0 ? `${total} min` : '—'
+                        })()}
                       </Cell>
                       <Cell>
                         <span className={cn(
