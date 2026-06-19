@@ -11,6 +11,7 @@ import { useAuthStore } from '../../stores/auth'
 import { getHolidayDates } from '../../lib/holidays'
 import type { TimeEntry, Employee } from '@shared/types'
 import { cn } from '@/lib/utils'
+import DayTimeCard from './DayTimeCard'
 
 // ── Hilfsfunktionen ───────────────────────────────────────────────────────────
 
@@ -125,7 +126,6 @@ export default function Zeiten() {
   }, 0)
 
   // Wochen-Ist inkl. laufender Session
-  const openEntry   = entries.find(e => !e.end_time)
   const weekIstMins = entries.reduce((sum, e) => sum + netMins(e, now), 0)
 
   // Überstunden (Jahr): Ist − Soll aller abgeschlossenen Arbeitstage
@@ -202,8 +202,26 @@ export default function Zeiten() {
         </button>
       </div>
 
-      {/* Wochen-Tabelle */}
-      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+      {/* Mobile Card-Liste (<768px) */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <div className="py-8 text-center text-sm text-[#6B7280]">Lade…</div>
+        ) : (
+          weekDays.map(day => (
+            <DayTimeCard
+              key={format(day, 'yyyy-MM-dd')}
+              day={day}
+              dayEntries={entriesForDay(day)}
+              sollPerDay={sollPerDay}
+              isHoliday={holidays.has(format(day, 'yyyy-MM-dd'))}
+              now={now}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Desktop Wochen-Tabelle (≥768px) */}
+      <div className="hidden md:block overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
       <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden min-w-[480px]">
         {/* Tabellen-Header */}
         <div className="grid grid-cols-[80px_1fr_1fr_80px_80px_90px] px-4 py-2.5 border-b border-[#E5E7EB] bg-[#F9FAFB]">
