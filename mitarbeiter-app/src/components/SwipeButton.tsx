@@ -15,7 +15,7 @@ export function SwipeButton({
   onSwipeComplete,
   onSwipeFailed,
 }: SwipeButtonProps) {
-  const { fillPercent, isAnimating, pointerHandlers, reset } = useSwipeGesture({
+  const { fillPercent, pointerHandlers, reset } = useSwipeGesture({
     onSwipeComplete,
     onSwipeFailed,
   })
@@ -67,7 +67,7 @@ export function SwipeButton({
           pointerHandlers.onPointerUp(e.nativeEvent)
         }
       }}
-      onPointerCancel={(e: React.PointerEvent<HTMLDivElement>) => {
+      onPointerCancel={() => {
         reset()
       }}
     >

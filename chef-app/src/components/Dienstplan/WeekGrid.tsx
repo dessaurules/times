@@ -177,7 +177,7 @@ export default function WeekGrid({
                           <td
                             key={day.date}
                             className={cn(
-                              'border-b border-r border-[#E5E7EB] p-1 w-24 h-[52px] overflow-hidden',
+                              'border-b border-r border-[#E5E7EB] p-1 w-24 h-cell',
                               day.isHoliday && 'bg-amber-50/50',
                               day.isWeekend && !day.isHoliday && 'bg-gray-50/50',
                               isDragOver &&
@@ -200,7 +200,10 @@ export default function WeekGrid({
                           >
                             {entry ? (
                               <div
-                                className="flex flex-col h-full gap-0.5"
+                                className={cn(
+                                  'flex flex-col h-full relative',
+                                  entry.start_time2 ? 'gap-0.5' : 'gap-0',
+                                )}
                                 onClick={e => {
                                   e.stopPropagation()
                                   onCellClick(emp.id, day.date, entry, absence)
@@ -212,13 +215,13 @@ export default function WeekGrid({
                                     draggable={isEditable}
                                     onDragStart={e => { e.stopPropagation(); setDragEntry(entry) }}
                                     onDragEnd={() => setDragEntry(null)}
-                                    className="text-[11px] px-1.5 h-full rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center bg-emerald-50 font-black text-emerald-600"
+                                    className="text-[11px] px-1.5 grow rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center bg-emerald-50 font-black text-emerald-600"
                                   >
                                     F
                                   </div>
                                 ) : (
                                   <>
-                                    {/* Schicht 1 — doppelte Höhe wenn keine Split-Schicht */}
+                                    {/* Schicht 1 — h-full wenn keine Split, flex-1 wenn Split */}
                                     <div
                                       draggable={isEditable}
                                       onDragStart={e => {
@@ -228,7 +231,7 @@ export default function WeekGrid({
                                       onDragEnd={() => setDragEntry(null)}
                                       className={cn(
                                         'text-[11px] px-1.5 rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center',
-                                        entry.start_time2 ? 'flex-1' : 'h-full',
+                                        entry.start_time2 ? 'flex-1' : 'grow',
                                       )}
                                       style={{
                                         background: SHIFT_COLOR_BG[entry.color],
@@ -261,10 +264,10 @@ export default function WeekGrid({
                                           )}
                                         </div>
                                       )}
-                                    {/* Abwesenheits-Warnung unter Schicht */}
+                                    {/* Abwesenheits-Warnung — absolute damit nicht den Platz aufteilt */}
                                     {absence && (
                                       <div
-                                        className="text-[9px] text-center mt-0.5 font-semibold"
+                                        className="absolute bottom-0 left-0 right-0 text-[9px] text-center font-semibold py-0.5 bg-white/90"
                                         style={{ color: ABSENCE_COLORS[absence.type].text }}
                                       >
                                         ⚠ {absence.type}
@@ -274,23 +277,27 @@ export default function WeekGrid({
                                 )}
                               </div>
                             ) : absence ? (
-                              <div
-                                className="text-[11px] px-1.5 h-full rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center font-semibold leading-none"
-                                style={{
-                                  background: ABSENCE_COLORS[absence.type].bg,
-                                  color: ABSENCE_COLORS[absence.type].text,
-                                }}
-                                onClick={e => { e.stopPropagation(); isEditable && onCellClick(emp.id, day.date, undefined, absence) }}
-                              >
-                                {absence.type}
+                              <div className="flex flex-col h-full">
+                                <div
+                                  className="text-[11px] px-1.5 grow rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center font-semibold leading-none"
+                                  style={{
+                                    background: ABSENCE_COLORS[absence.type].bg,
+                                    color: ABSENCE_COLORS[absence.type].text,
+                                  }}
+                                  onClick={e => { e.stopPropagation(); isEditable && onCellClick(emp.id, day.date, undefined, absence) }}
+                                >
+                                  {absence.type}
+                                </div>
                               </div>
                             ) : isEditable ? (
-                              <div className="flex items-center justify-center h-full">
+                              <div className="flex items-center justify-center py-3">
                                 <span className="text-[10px] text-gray-300 border border-dashed border-gray-200 rounded px-1.5 py-0.5 hover:border-indigo-300 hover:text-indigo-400 transition-colors">
                                   +
                                 </span>
                               </div>
-                            ) : null}
+                            ) : (
+                              <div className="py-3" />
+                            )}
                           </td>
                         )
                       })}
