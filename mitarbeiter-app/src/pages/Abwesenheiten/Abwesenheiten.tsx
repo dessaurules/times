@@ -104,7 +104,7 @@ export default function Abwesenheiten() {
   const holidayMap = useMemo(() => getHolidayMap(year, fedState), [year, fedState])
 
   return (
-    <div>
+    <div className="px-4 sm:px-6 md:px-0">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -137,7 +137,7 @@ export default function Abwesenheiten() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-2">
           {MONTHS.map(m => (
             <div key={m} className="h-28 rounded-2xl bg-[#F3F4F6] animate-pulse" />
           ))}
@@ -145,7 +145,7 @@ export default function Abwesenheiten() {
       ) : (
         <>
           {/* Monats-Kacheln */}
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-3 mb-5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-2 mb-5">
             {MONTHS.map(m => {
               const monthDate  = new Date(year, m)
               const monthAbs   = absencesForMonth(m)
@@ -209,7 +209,7 @@ export default function Abwesenheiten() {
           </div>
 
           {/* Jahres-Zusammenfassung */}
-          <div className="bg-white border border-[#E5E7EB] rounded-2xl px-5 py-4">
+          <div className="bg-white border border-[#E5E7EB] rounded-2xl px-4 sm:px-6 py-4">
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
               {(Object.entries(daysByType) as [AbsenceType, number][]).map(([t, d]) => {
                 const colors = ABSENCE_COLORS[t]

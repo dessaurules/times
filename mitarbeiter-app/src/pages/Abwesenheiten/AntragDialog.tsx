@@ -115,9 +115,9 @@ export default function AntragDialog({ employeeId, initialFrom, onClose, onCreat
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl">
+      <div className="w-full sm:max-w-lg bg-white rounded-2xl shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[#E5E7EB]">
           <h2 className="text-base font-semibold text-[#111827]">Neuer Antrag</h2>
           <button
             onClick={onClose}
@@ -127,7 +127,7 @@ export default function AntragDialog({ employeeId, initialFrom, onClose, onCreat
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+        <form onSubmit={handleSubmit} className="px-4 sm:px-6 py-5 space-y-4">
           {error && (
             <div className="px-4 py-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl">
               {error}
