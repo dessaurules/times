@@ -5,81 +5,93 @@ set -e
 PI_USER="server"
 PI_HOST="192.168.178.106"
 PI_PATH="/home/server/times"
-PB_URL="http://192.168.178.106:8092"
+BRANCH="feature/chefapp-phase2"
 
-echo "🚀 Schicht & Plan – Deployment Script"
+echo "🚀 Schicht & Plan – Deployment Script (Git-basiert)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# ── Schritt 1: Chef-App bauen ──────────────────────────────────
+# ── Schritt 1: Lokal validieren ────────────────────────────────
 echo ""
-echo "📦 Schritt 1: Chef-App bauen..."
+echo "📦 Schritt 1: Lokal bauen (Validierung)..."
 cd chef-app
-VITE_PB_URL="$PB_URL" npm run build
+npm run build > /dev/null 2>&1
 cd ..
-
-# ── Schritt 2: Mitarbeiter-App bauen ───────────────────────────
-echo ""
-echo "📦 Schritt 2: Mitarbeiter-App bauen..."
 cd mitarbeiter-app
-VITE_PB_URL="$PB_URL" npm run build
+npm run build > /dev/null 2>&1
 cd ..
+echo "✅ Beide Apps bauen erfolgreich"
 
-# ── Schritt 3: PocketBase-Binary kopieren ──────────────────────
+# ── Schritt 2: Git push ────────────────────────────────────────
 echo ""
-echo "📋 Schritt 3: PocketBase-Binary prüfen..."
-if [ ! -f ./pocketbase-linux ]; then
-  echo "❌ Fehler: ./pocketbase-linux nicht gefunden!"
-  echo "Bitte stelle sicher, dass die Linux-Version heruntergeladen wurde."
-  exit 1
-fi
+echo "📤 Schritt 2: Code auf GitHub pushen..."
+git push origin "$BRANCH" > /dev/null 2>&1
+echo "✅ Gepushed auf origin/$BRANCH"
 
-# ── Schritt 4: Mit rsync auf Pi übertragen ─────────────────────
+# ── Schritt 3: Remote Deployment ───────────────────────────────
 echo ""
-echo "🔄 Schritt 4: Dateien auf Pi übertragen (rsync)..."
+echo "🚀 Schritt 3: Remote Deployment (auf Pi)..."
 
-# Chef-App
-rsync -av --delete chef-app/dist/ "$PI_USER@$PI_HOST:$PI_PATH/chef-app/dist/"
+ssh "$PI_USER@$PI_HOST" << 'REMOTESCRIPT'
+  set -e
 
-# Mitarbeiter-App
-rsync -av --delete mitarbeiter-app/dist/ "$PI_USER@$PI_HOST:$PI_PATH/mitarbeiter-app/dist/"
-
-# Push-Service (Quellcode)
-rsync -av --delete --exclude node_modules --exclude .env push-service/ "$PI_USER@$PI_HOST:$PI_PATH/push-service/"
-
-# PocketBase Binary (Linux ARM Version)
-rsync -av pocketbase-linux "$PI_USER@$PI_HOST:$PI_PATH/pocketbase"
-ssh "$PI_USER@$PI_HOST" "chmod +x $PI_PATH/pocketbase"
-
-# PocketBase Migrations
-rsync -av pb_migrations/ "$PI_USER@$PI_HOST:$PI_PATH/pb_migrations/"
-
-# PocketBase Hooks
-rsync -av pb_hooks/ "$PI_USER@$PI_HOST:$PI_PATH/pb_hooks/"
-
-# Serve.mjs
-rsync -av serve.mjs "$PI_USER@$PI_HOST:$PI_PATH/"
-
-# ── Schritt 5: SSH – npm install im push-service ───────────────
-echo ""
-echo "📥 Schritt 5: npm install im push-service (Pi)..."
-ssh "$PI_USER@$PI_HOST" "cd $PI_PATH/push-service && npm install"
-
-# ── Schritt 6: SSH – logs/ Verzeichnis anlegen ──────────────────
-echo ""
-echo "📁 Schritt 6: logs/ Verzeichnis anlegen (Pi)..."
-ssh "$PI_USER@$PI_HOST" "mkdir -p $PI_PATH/logs"
-
-# ── Schritt 7: SSH – Systemd-Services anlegen ──────────────────
-echo ""
-echo "🔧 Schritt 7: Systemd-Services anlegen (Pi)..."
-
-ssh "$PI_USER@$PI_HOST" << 'EOSSH'
   PI_PATH="/home/server/times"
-  NVM_VERSION="v22.22.2"
-  NVM_DIR="/home/server/.nvm"
+  BRANCH="feature/chefapp-phase2"
 
-  # times-pb.service
-  sudo tee /etc/systemd/system/times-pb.service > /dev/null << 'EOF'
+  cd "$PI_PATH"
+
+  # 3a. Git pull
+  echo "  📥 git pull..."
+  git pull origin "$BRANCH" > /dev/null 2>&1
+
+  # 3b. Root dependencies (express, compression für serve.mjs)
+  echo "  📥 npm ci (root)..."
+  npm ci > /dev/null 2>&1
+
+  # 3c. Push-Service dependencies
+  echo "  📥 npm ci (push-service)..."
+  cd "$PI_PATH/push-service"
+  npm ci > /dev/null 2>&1
+  cd "$PI_PATH"
+
+  # 3d. Chef-App bauen
+  echo "  🔨 Baue chef-app..."
+  cd "$PI_PATH/chef-app"
+  VITE_PB_URL="http://127.0.0.1:8092" npm run build > /dev/null 2>&1
+  cd "$PI_PATH"
+
+  # 3e. Mitarbeiter-App bauen
+  echo "  🔨 Baue mitarbeiter-app..."
+  cd "$PI_PATH/mitarbeiter-app"
+  VITE_PB_URL="http://127.0.0.1:8092" npm run build > /dev/null 2>&1
+  cd "$PI_PATH"
+
+  # 3f. PocketBase binary (falls fehlend)
+  if [ ! -f "$PI_PATH/pocketbase" ]; then
+    echo "  📥 Lade PocketBase binary herunter..."
+    TMPDIR=$(mktemp -d)
+    cd "$TMPDIR"
+    wget -q https://github.com/pocketbase/pocketbase/releases/download/v0.38.1/pocketbase_0.38.1_linux_arm64.zip
+    unzip -q pocketbase_0.38.1_linux_arm64.zip pocketbase
+    mv pocketbase "$PI_PATH/pocketbase"
+    chmod +x "$PI_PATH/pocketbase"
+    cd "$PI_PATH"
+    rm -rf "$TMPDIR"
+  fi
+
+  # 3g. Verzeichnisse sicherstellen
+  echo "  📁 Verzeichnisse erstellen..."
+  mkdir -p "$PI_PATH/logs" "$PI_PATH/pb_data" "$PI_PATH/pb_hooks"
+
+  # 3h. .env falls nicht vorhanden
+  if [ ! -f "$PI_PATH/.env" ]; then
+    echo "  ⚙️  .env aus Vorlage kopieren..."
+    cp "$PI_PATH/.env.production.example" "$PI_PATH/.env"
+  fi
+
+  # 3i. Systemd-Services
+  echo "  🔧 Systemd-Services aktualisieren..."
+
+  sudo tee /etc/systemd/system/times-pb.service > /dev/null << 'PBSERVICE'
 [Unit]
 Description=Schicht & Plan – PocketBase
 After=network.target
@@ -96,21 +108,18 @@ StandardError=append:/home/server/times/logs/pb.log
 
 [Install]
 WantedBy=multi-user.target
-EOF
+PBSERVICE
 
-  # times-serve.service
-  sudo tee /etc/systemd/system/times-serve.service > /dev/null << 'EOF'
+  sudo tee /etc/systemd/system/times-serve.service > /dev/null << 'SERVESERVICE'
 [Unit]
 Description=Schicht & Plan – Static Server (Chef + Mitarbeiter)
-After=network.target times-pb.service
-Requires=times-pb.service
+After=network.target
 
 [Service]
 Type=simple
 User=server
 WorkingDirectory=/home/server/times
 Environment=PATH=/home/server/.nvm/versions/node/v22.22.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-Environment=PORT=4173
 ExecStart=/home/server/.nvm/versions/node/v22.22.2/bin/node serve.mjs
 Restart=always
 RestartSec=5
@@ -119,10 +128,9 @@ StandardError=append:/home/server/times/logs/serve.log
 
 [Install]
 WantedBy=multi-user.target
-EOF
+SERVESERVICE
 
-  # times-push.service
-  sudo tee /etc/systemd/system/times-push.service > /dev/null << 'EOF'
+  sudo tee /etc/systemd/system/times-push.service > /dev/null << 'PUSHSERVICE'
 [Unit]
 Description=Schicht & Plan – Push-Service
 After=network.target times-pb.service
@@ -134,7 +142,7 @@ User=server
 WorkingDirectory=/home/server/times/push-service
 Environment=PATH=/home/server/.nvm/versions/node/v22.22.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 EnvironmentFile=/home/server/times/.env
-ExecStart=/home/server/.nvm/versions/node/v22.22.2/bin/node src/index.ts
+ExecStart=/home/server/.nvm/versions/node/v22.22.2/bin/npx tsx src/index.ts
 Restart=always
 RestartSec=5
 StandardOutput=append:/home/server/times/logs/push.log
@@ -142,46 +150,35 @@ StandardError=append:/home/server/times/logs/push.log
 
 [Install]
 WantedBy=multi-user.target
-EOF
+PUSHSERVICE
 
-  # Systemd neu laden
+  # 3j. Services neu laden + starten
+  echo "  🔄 Systemd daemon-reload..."
   sudo systemctl daemon-reload
-  echo "✅ Systemd-Services angelegt"
-EOSSH
 
-# ── Schritt 8: SSH – Services aktivieren und starten ──────────
-echo ""
-echo "🚀 Schritt 8: Services aktivieren und starten (Pi)..."
-ssh "$PI_USER@$PI_HOST" << 'EOSSH'
-  # Aktivieren (Auto-Start on boot)
+  echo "  🚀 Services aktivieren + starten..."
   sudo systemctl enable times-pb times-serve times-push
+  sudo systemctl restart times-pb times-serve times-push
 
-  # Starten
-  sudo systemctl start times-pb
   sleep 2
-  sudo systemctl start times-serve
-  sudo systemctl start times-push
 
-  # Status anzeigen
-  echo ""
-  echo "📊 Service-Status:"
+  echo "  📊 Service-Status:"
   systemctl status times-pb times-serve times-push || true
-EOSSH
+
+REMOTESCRIPT
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "✅ Deployment abgeschlossen!"
 echo ""
 echo "📍 URLs:"
-echo "   Chef-App:        http://192.168.178.106:4173"
-echo "   Mitarbeiter-App: http://192.168.178.106:4174"
+echo "   Chef-App:        http://192.168.178.106:3001"
+echo "   Mitarbeiter-App: http://192.168.178.106:3002"
 echo "   PocketBase Admin: http://192.168.178.106:8092/_/"
 echo ""
-echo "🔍 Logs:"
+echo "🔍 Logs auf Pi:"
 echo "   ssh server@192.168.178.106 \"tail -f /home/server/times/logs/*.log\""
 echo ""
-echo "⚠️  TODO:"
-echo "   1. .env auf Pi mit echten Werten befüllen:"
-echo "      ssh server@192.168.178.106 \"nano /home/server/times/.env\""
-echo "   2. PocketBase Admin-Passwort ändern"
-echo "   3. VAPID-Keys für Push-Notifications konfigurieren"
+echo "🌐 Lokaler Browser (SSH-Tunnel):"
+echo "   ssh -L 3001:localhost:3001 server@192.168.178.106"
+echo "   Dann: http://localhost:3001"
