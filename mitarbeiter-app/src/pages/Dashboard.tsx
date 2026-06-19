@@ -195,7 +195,7 @@ export default function Dashboard() {
             onClick={handleStempel}
             disabled={stamping}
             className={cn(
-              'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all active:scale-95 disabled:opacity-60',
+              'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95 disabled:opacity-60',
               isStamped
                 ? 'bg-white/20 hover:bg-white/30 text-white border border-white/30'
                 : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-sm shadow-indigo-200 hover:from-indigo-600 hover:to-violet-700'
