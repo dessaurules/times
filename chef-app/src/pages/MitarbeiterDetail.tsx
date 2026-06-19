@@ -280,7 +280,7 @@ export default function MitarbeiterDetail() {
         <div className="mb-3 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md whitespace-pre-line">{error}</div>
       )}
       {userWarn && (
-        <div className="mb-3 p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md">{userWarn}</div>
+        <div className="mb-3 p-3 text-sm text-[#4F46E5] bg-[#EEF2FF] border border-[#E0E7FF] rounded-md">{userWarn}</div>
       )}
 
       {/* ── Stammdaten ─────────────────────────────────────────────────────── */}
