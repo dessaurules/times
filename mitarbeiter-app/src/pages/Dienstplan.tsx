@@ -80,38 +80,38 @@ export default function Dienstplan() {
   }
 
   return (
-    <div>
+    <div className="px-4 sm:px-6 md:px-0">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#111827]">Mein Dienstplan</h1>
-          <p className="text-sm text-[#6B7280] mt-0.5">Dein persönlicher Schichtplan</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#111827]">Mein Dienstplan</h1>
+          <p className="text-xs sm:text-sm text-[#6B7280] mt-0.5">Dein persönlicher Schichtplan</p>
         </div>
       </div>
 
       {/* Wochen-Navigation */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-1 sm:gap-3 mb-4">
         <button
           onClick={() => setWeekStart(w => subWeeks(w, 1))}
-          className="p-2 rounded-xl text-[#6B7280] hover:bg-[#F3F4F6] transition-colors"
+          className="p-2 sm:p-2 rounded-xl text-[#6B7280] hover:bg-[#F3F4F6] transition-colors flex-shrink-0"
         >
           <ChevronLeft size={18} />
         </button>
         <div className="text-center flex-1">
-          <div className="text-base font-bold text-[#111827]">KW {kw}</div>
+          <div className="text-sm sm:text-base font-bold text-[#111827]">KW {kw}</div>
           <div className="text-xs text-[#6B7280]">
             {format(weekStart, 'd. MMM', { locale: de })} – {format(endOfWeek(weekStart, { weekStartsOn: 1 }), 'd. MMM yyyy', { locale: de })}
           </div>
         </div>
         <button
           onClick={() => setWeekStart(w => addWeeks(w, 1))}
-          className="p-2 rounded-xl text-[#6B7280] hover:bg-[#F3F4F6] transition-colors"
+          className="p-2 sm:p-2 rounded-xl text-[#6B7280] hover:bg-[#F3F4F6] transition-colors flex-shrink-0"
         >
           <ChevronRight size={18} />
         </button>
       </div>
 
       {/* Tabelle */}
-      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+      <div className="overflow-x-auto -mx-4 sm:-mx-6 md:mx-0 px-4 sm:px-6 md:px-0">
         <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden min-w-[400px]">
           <div className="grid grid-cols-[80px_1fr_1fr_1fr_80px] px-4 py-2.5 border-b border-[#E5E7EB] bg-[#F9FAFB]">
             {['Tag', 'Kommt', 'Geht', 'Bereich', 'Std.'].map(h => (
