@@ -58,7 +58,7 @@ export default function Zeiten() {
 
   // Live-Timer für laufende Session
   useEffect(() => {
-    timerRef.current = setInterval(() => setNow(new Date()), 10_000)
+    timerRef.current = setInterval(() => setNow(new Date()), 1_000)
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [])
 
