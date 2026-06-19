@@ -1,0 +1,26 @@
+diff --git a/mitarbeiter-app/src/pages/Dashboard.tsx b/mitarbeiter-app/src/pages/Dashboard.tsx
+index 9d5218e..758b052 100644
+--- a/mitarbeiter-app/src/pages/Dashboard.tsx
++++ b/mitarbeiter-app/src/pages/Dashboard.tsx
+@@ -83,7 +83,7 @@ export default function Dashboard() {
+   }, [employeeId, year])
+ 
+   useEffect(() => {
+-    timerRef.current = setInterval(() => setNow(new Date()), 10_000)
++    timerRef.current = setInterval(() => setNow(new Date()), 1_000)
+     return () => { if (timerRef.current) clearInterval(timerRef.current) }
+   }, [])
+ 
+diff --git a/mitarbeiter-app/src/pages/Zeiten/Zeiten.tsx b/mitarbeiter-app/src/pages/Zeiten/Zeiten.tsx
+index cd9667b..59aefac 100644
+--- a/mitarbeiter-app/src/pages/Zeiten/Zeiten.tsx
++++ b/mitarbeiter-app/src/pages/Zeiten/Zeiten.tsx
+@@ -58,7 +58,7 @@ export default function Zeiten() {
+ 
+   // Live-Timer für laufende Session
+   useEffect(() => {
+-    timerRef.current = setInterval(() => setNow(new Date()), 10_000)
++    timerRef.current = setInterval(() => setNow(new Date()), 1_000)
+     return () => { if (timerRef.current) clearInterval(timerRef.current) }
+   }, [])
+ 

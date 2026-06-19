@@ -1,0 +1,251 @@
+<h2>Dienstplan — 3 Design-Vorschläge</h2>
+<p class="subtitle">Name-Spalte kompakter · Abteilungs-Gesamtstunden entfernt · Stundenanzeige neu. Klick auf deinen Favoriten.</p>
+
+<style>
+  .proposal { margin-bottom: 2rem; border-radius: 14px; overflow: hidden; border: 2px solid #E5E7EB; cursor: pointer; transition: border-color 0.15s; }
+  .proposal:hover { border-color: #6366F1; }
+  .proposal.selected { border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+  .prop-header { padding: 0.7rem 1rem; display: flex; align-items: center; gap: 10px; }
+  .prop-label { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 800; flex-shrink: 0; color: white; }
+  .prop-title { font-size: 0.8rem; font-weight: 700; }
+  .prop-desc { font-size: 0.72rem; color: #6B7280; margin-top: 1px; }
+  .prop-body { background: white; padding: 0.75rem; }
+  .prop-footer { padding: 0.6rem 1rem; font-size: 0.7rem; color: #374151; line-height: 1.5; border-top: 1px solid #E5E7EB; }
+
+  /* Tabellen-Mockup */
+  .mock-table { width: 100%; border-collapse: collapse; font-size: 0.72rem; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; }
+  .mock-table th, .mock-table td { border: 1px solid #E5E7EB; padding: 0; }
+  .mock-table thead { background: #F9FAFB; }
+  .th-name { width: 100px; padding: 6px 8px; text-align: left; font-size: 0.65rem; color: #6B7280; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+  .th-day { width: 80px; padding: 5px 4px; text-align: center; }
+  .th-day .dn { font-weight: 700; font-size: 0.75rem; color: #111827; }
+  .th-day .dl { font-size: 0.6rem; color: #9CA3AF; }
+  .th-hours { width: 72px; background: #EEF2FF; border-left: 2px solid #C7D2FE !important; padding: 6px 4px; text-align: center; font-size: 0.65rem; font-weight: 700; color: #4F46E5; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .dept-row td { background: #EEF2FF; color: #4338CA; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 5px 8px; }
+  .dept-hours { background: #EEF2FF !important; border-left: 2px solid #C7D2FE !important; color: #C7D2FE; text-align: center; font-size: 0.6rem; }
+
+  .td-name { padding: 5px 8px; font-size: 0.72rem; color: #374151; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px; }
+  .td-shift { padding: 3px; height: 44px; vertical-align: middle; }
+  .shift-cell { border-radius: 4px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 600; text-align: center; }
+  .shift-empty { border: 1px dashed #E5E7EB; border-radius: 4px; height: 100%; display: flex; align-items: center; justify-content: center; color: #D1D5DB; font-size: 0.65rem; }
+  .td-h { border-left: 2px solid #C7D2FE !important; background: #EEF2FF; vertical-align: middle; }
+</style>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- OPTION A: Nur Stunden                          -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="proposal" id="prop-a" onclick="selectProposal('a')">
+  <div class="prop-header" style="background: #EFF6FF;">
+    <div class="prop-label" style="background: #1D4ED8;">A</div>
+    <div>
+      <div class="prop-title" style="color: #1D4ED8;">Minimal — nur Stunden, kein Saldo</div>
+      <div class="prop-desc">Spalte zeigt nur die geplante Stundenzahl. Kein Balken, kein Saldo-Vergleich.</div>
+    </div>
+  </div>
+  <div class="prop-body">
+    <table class="mock-table">
+      <thead>
+        <tr>
+          <th class="th-name">Mitarbeiter</th>
+          <th class="th-day"><div class="dn">Mo</div><div class="dl">19.05.</div></th>
+          <th class="th-day"><div class="dn">Di</div><div class="dl">20.05.</div></th>
+          <th class="th-day"><div class="dn">Mi</div><div class="dl">21.05.</div></th>
+          <th class="th-day"><div class="dn">Do</div><div class="dl">22.05.</div></th>
+          <th class="th-day"><div class="dn">Fr</div><div class="dl">23.05.</div></th>
+          <th class="th-hours">Σ h</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="dept-row">
+          <td colspan="6">▾ Service</td>
+          <td class="dept-hours">—</td>
+        </tr>
+        <tr>
+          <td class="td-name">Anna Müller</td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#D1FAE5;color:#065F46;font-weight:900;">F</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">10:00–18:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-h" style="text-align:center;">
+            <span style="font-size:0.9rem;font-weight:800;color:#111827;">40 h</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="td-name">Ben Krause</td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">12:00–20:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">12:00–20:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#FAEEDA;color:#633806;font-weight:700;">U</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">12:00–20:00</div></td>
+          <td class="td-shift"><div class="shift-empty">+</div></td>
+          <td class="td-h" style="text-align:center;">
+            <span style="font-size:0.9rem;font-weight:800;color:#111827;">24 h</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="td-name">Clara Schmidt</td>
+          <td class="td-shift"><div class="shift-empty">+</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-shift"><div class="shift-empty">+</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-h" style="text-align:center;">
+            <span style="font-size:0.9rem;font-weight:800;color:#111827;">24 h</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prop-footer"><strong>Einsatz:</strong> Wenn du beim Planen nur sehen willst, wie viele Stunden jemand eingeteilt ist — ohne Soll-Vergleich.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- OPTION B: Stunden + farbige Saldo-Zahl         -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="proposal" id="prop-b" onclick="selectProposal('b')">
+  <div class="prop-header" style="background: #F0FDF4;">
+    <div class="prop-label" style="background: #15803D;">B</div>
+    <div>
+      <div class="prop-title" style="color: #15803D;">Stunden + Saldo als Zahl</div>
+      <div class="prop-desc">Stunden groß, darunter klein die Differenz zum Soll in Farbe (grün=ok, amber=über, rot=unter).</div>
+    </div>
+  </div>
+  <div class="prop-body">
+    <table class="mock-table">
+      <thead>
+        <tr>
+          <th class="th-name">Mitarbeiter</th>
+          <th class="th-day"><div class="dn">Mo</div><div class="dl">19.05.</div></th>
+          <th class="th-day"><div class="dn">Di</div><div class="dl">20.05.</div></th>
+          <th class="th-day"><div class="dn">Mi</div><div class="dl">21.05.</div></th>
+          <th class="th-day"><div class="dn">Do</div><div class="dl">22.05.</div></th>
+          <th class="th-day"><div class="dn">Fr</div><div class="dl">23.05.</div></th>
+          <th class="th-hours">Σ h</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="dept-row">
+          <td colspan="6">▾ Service</td>
+          <td class="dept-hours">—</td>
+        </tr>
+        <tr>
+          <td class="td-name">Anna Müller</td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#D1FAE5;color:#065F46;font-weight:900;">F</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">10:00–18:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-h" style="text-align:center; padding:4px;">
+            <div style="font-size:0.85rem;font-weight:800;color:#111827;line-height:1.2;">40 h</div>
+            <div style="font-size:0.6rem;font-weight:700;color:#16A34A;line-height:1.2;">±0</div>
+          </td>
+        </tr>
+        <tr>
+          <td class="td-name">Ben Krause</td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">12:00–20:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">12:00–20:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#FAEEDA;color:#633806;font-weight:700;">U</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">12:00–20:00</div></td>
+          <td class="td-shift"><div class="shift-empty">+</div></td>
+          <td class="td-h" style="text-align:center; padding:4px;">
+            <div style="font-size:0.85rem;font-weight:800;color:#111827;line-height:1.2;">24 h</div>
+            <div style="font-size:0.6rem;font-weight:700;color:#DC2626;line-height:1.2;">−8 h</div>
+          </td>
+        </tr>
+        <tr>
+          <td class="td-name">Clara Schmidt</td>
+          <td class="td-shift"><div class="shift-empty">+</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-shift"><div class="shift-empty">+</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-h" style="text-align:center; padding:4px;">
+            <div style="font-size:0.85rem;font-weight:800;color:#111827;line-height:1.2;">24 h</div>
+            <div style="font-size:0.6rem;font-weight:700;color:#B45309;line-height:1.2;">−16 h</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prop-footer"><strong>Einsatz:</strong> Wenn du beim Planen auf einen Blick sehen willst, wer noch Stunden fehlt oder wer schon drüber ist.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- OPTION C: Farbstreifen + Stunden               -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="proposal" id="prop-c" onclick="selectProposal('c')">
+  <div class="prop-header" style="background: #FFF7ED;">
+    <div class="prop-label" style="background: #C2410C;">C</div>
+    <div>
+      <div class="prop-title" style="color: #C2410C;">Farbstreifen + Stunden</div>
+      <div class="prop-desc">Linker Streifen zeigt Status: grün = Soll erreicht, amber = knapp drunter, rot = deutlich unter Soll.</div>
+    </div>
+  </div>
+  <div class="prop-body">
+    <table class="mock-table">
+      <thead>
+        <tr>
+          <th class="th-name">Mitarbeiter</th>
+          <th class="th-day"><div class="dn">Mo</div><div class="dl">19.05.</div></th>
+          <th class="th-day"><div class="dn">Di</div><div class="dl">20.05.</div></th>
+          <th class="th-day"><div class="dn">Mi</div><div class="dl">21.05.</div></th>
+          <th class="th-day"><div class="dn">Do</div><div class="dl">22.05.</div></th>
+          <th class="th-day"><div class="dn">Fr</div><div class="dl">23.05.</div></th>
+          <th class="th-hours">Σ h</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="dept-row">
+          <td colspan="6">▾ Service</td>
+          <td class="dept-hours">—</td>
+        </tr>
+        <tr>
+          <td class="td-name">Anna Müller</td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#D1FAE5;color:#065F46;font-weight:900;">F</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">10:00–18:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-h" style="position:relative; text-align:center;">
+            <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:#34D399;border-radius:0 2px 2px 0;"></div>
+            <span style="font-size:0.9rem;font-weight:800;color:#111827;">40 h</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="td-name">Ben Krause</td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">12:00–20:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">12:00–20:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#FAEEDA;color:#633806;font-weight:700;">U</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">12:00–20:00</div></td>
+          <td class="td-shift"><div class="shift-empty">+</div></td>
+          <td class="td-h" style="position:relative; text-align:center;">
+            <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:#F87171;border-radius:0 2px 2px 0;"></div>
+            <span style="font-size:0.9rem;font-weight:800;color:#111827;">24 h</span>
+          </td>
+        </tr>
+        <tr>
+          <td class="td-name">Clara Schmidt</td>
+          <td class="td-shift"><div class="shift-empty">+</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-shift"><div class="shift-empty">+</div></td>
+          <td class="td-shift"><div class="shift-cell" style="background:#DBEAFE;color:#1E40AF;">08:00–16:00</div></td>
+          <td class="td-h" style="position:relative; text-align:center;">
+            <div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:#FCD34D;border-radius:0 2px 2px 0;"></div>
+            <span style="font-size:0.9rem;font-weight:800;color:#111827;">24 h</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="prop-footer"><strong>Einsatz:</strong> Visueller Status auf einen Blick, ohne Zahlen lesen zu müssen. Ideal wenn viele Mitarbeiter gleichzeitig sichtbar sind.</div>
+</div>
+
+<script>
+function selectProposal(id) {
+  document.querySelectorAll('.proposal').forEach(p => p.classList.remove('selected'));
+  document.getElementById('prop-' + id).classList.add('selected');
+  if (window.recordChoice) recordChoice(id);
+}
+</script>

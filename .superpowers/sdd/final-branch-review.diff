@@ -1,0 +1,339 @@
+diff --git a/mitarbeiter-app/src/pages/Abwesenheiten/Abwesenheiten.tsx b/mitarbeiter-app/src/pages/Abwesenheiten/Abwesenheiten.tsx
+index 9c816b7..27afc9c 100644
+--- a/mitarbeiter-app/src/pages/Abwesenheiten/Abwesenheiten.tsx
++++ b/mitarbeiter-app/src/pages/Abwesenheiten/Abwesenheiten.tsx
+@@ -104,7 +104,7 @@ export default function Abwesenheiten() {
+   const holidayMap = useMemo(() => getHolidayMap(year, fedState), [year, fedState])
+ 
+   return (
+-    <div>
++    <div className="px-4 sm:px-6 md:px-0">
+       {/* Header */}
+       <div className="flex items-center justify-between mb-6">
+         <div>
+@@ -137,7 +137,7 @@ export default function Abwesenheiten() {
+       </div>
+ 
+       {loading ? (
+-        <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
++        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-2">
+           {MONTHS.map(m => (
+             <div key={m} className="h-28 rounded-2xl bg-[#F3F4F6] animate-pulse" />
+           ))}
+@@ -145,7 +145,7 @@ export default function Abwesenheiten() {
+       ) : (
+         <>
+           {/* Monats-Kacheln */}
+-          <div className="grid grid-cols-3 md:grid-cols-4 gap-3 mb-5">
++          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-2 mb-5">
+             {MONTHS.map(m => {
+               const monthDate  = new Date(year, m)
+               const monthAbs   = absencesForMonth(m)
+@@ -209,7 +209,7 @@ export default function Abwesenheiten() {
+           </div>
+ 
+           {/* Jahres-Zusammenfassung */}
+-          <div className="bg-white border border-[#E5E7EB] rounded-2xl px-5 py-4">
++          <div className="bg-white border border-[#E5E7EB] rounded-2xl px-4 sm:px-6 py-4">
+             <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+               {(Object.entries(daysByType) as [AbsenceType, number][]).map(([t, d]) => {
+                 const colors = ABSENCE_COLORS[t]
+diff --git a/mitarbeiter-app/src/pages/Abwesenheiten/AntragDialog.tsx b/mitarbeiter-app/src/pages/Abwesenheiten/AntragDialog.tsx
+index 6689d9a..9738e35 100644
+--- a/mitarbeiter-app/src/pages/Abwesenheiten/AntragDialog.tsx
++++ b/mitarbeiter-app/src/pages/Abwesenheiten/AntragDialog.tsx
+@@ -115,9 +115,9 @@ export default function AntragDialog({ employeeId, initialFrom, onClose, onCreat
+ 
+   return (
+     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl">
++      <div className="w-full sm:max-w-lg bg-white rounded-2xl shadow-2xl">
+         {/* Header */}
+-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E7EB]">
++        <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-[#E5E7EB]">
+           <h2 className="text-base font-semibold text-[#111827]">Neuer Antrag</h2>
+           <button
+             onClick={onClose}
+@@ -127,7 +127,7 @@ export default function AntragDialog({ employeeId, initialFrom, onClose, onCreat
+           </button>
+         </div>
+ 
+-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
++        <form onSubmit={handleSubmit} className="px-4 sm:px-6 py-5 space-y-4">
+           {error && (
+             <div className="px-4 py-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl">
+               {error}
+diff --git a/mitarbeiter-app/src/pages/Dashboard.tsx b/mitarbeiter-app/src/pages/Dashboard.tsx
+index ed4ffb2..758b052 100644
+--- a/mitarbeiter-app/src/pages/Dashboard.tsx
++++ b/mitarbeiter-app/src/pages/Dashboard.tsx
+@@ -83,7 +83,7 @@ export default function Dashboard() {
+   }, [employeeId, year])
+ 
+   useEffect(() => {
+-    timerRef.current = setInterval(() => setNow(new Date()), 10_000)
++    timerRef.current = setInterval(() => setNow(new Date()), 1_000)
+     return () => { if (timerRef.current) clearInterval(timerRef.current) }
+   }, [])
+ 
+@@ -146,9 +146,9 @@ export default function Dashboard() {
+   return (
+     <div>
+       {/* Header */}
+-      <div className="mb-6">
++      <div className="px-4 sm:px-6 md:px-0 mb-4 sm:mb-6">
+         <p className="text-sm text-[#6B7280]">{dayLabel}</p>
+-        <h1 className="text-2xl font-bold text-[#111827] mt-0.5">
++        <h1 className="text-xl sm:text-2xl font-bold text-[#111827] mt-0.5">
+           {greeting}, {user?.name?.split(' ')[0] ?? ''}
+         </h1>
+       </div>
+@@ -159,10 +159,10 @@ export default function Dashboard() {
+         </div>
+       )}
+ 
+-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
++      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mb-4 sm:mb-6">
+         {/* Stempeluhr */}
+         <div className={cn(
+-          'rounded-2xl p-6 transition-all',
++          'rounded-2xl p-4 sm:p-6 transition-all',
+           isStamped
+             ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200'
+             : 'bg-white border border-[#E5E7EB] shadow-sm'
+@@ -195,7 +195,7 @@ export default function Dashboard() {
+             onClick={handleStempel}
+             disabled={stamping}
+             className={cn(
+-              'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all active:scale-95 disabled:opacity-60',
++              'flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 active:scale-95 disabled:opacity-60',
+               isStamped
+                 ? 'bg-white/20 hover:bg-white/30 text-white border border-white/30'
+                 : 'bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-sm shadow-indigo-200 hover:from-indigo-600 hover:to-violet-700'
+diff --git a/mitarbeiter-app/src/pages/Dienstplan.tsx b/mitarbeiter-app/src/pages/Dienstplan.tsx
+index e7e8c1e..3b09ea7 100644
+--- a/mitarbeiter-app/src/pages/Dienstplan.tsx
++++ b/mitarbeiter-app/src/pages/Dienstplan.tsx
+@@ -80,38 +80,38 @@ export default function Dienstplan() {
+   }
+ 
+   return (
+-    <div>
++    <div className="px-4 sm:px-6 md:px-0">
+       <div className="flex items-center justify-between mb-6">
+         <div>
+-          <h1 className="text-2xl font-bold text-[#111827]">Mein Dienstplan</h1>
+-          <p className="text-sm text-[#6B7280] mt-0.5">Dein persönlicher Schichtplan</p>
++          <h1 className="text-xl sm:text-2xl font-bold text-[#111827]">Mein Dienstplan</h1>
++          <p className="text-xs sm:text-sm text-[#6B7280] mt-0.5">Dein persönlicher Schichtplan</p>
+         </div>
+       </div>
+ 
+       {/* Wochen-Navigation */}
+-      <div className="flex items-center gap-3 mb-4">
++      <div className="flex items-center gap-1 sm:gap-3 mb-4">
+         <button
+           onClick={() => setWeekStart(w => subWeeks(w, 1))}
+-          className="p-2 rounded-xl text-[#6B7280] hover:bg-[#F3F4F6] transition-colors"
++          className="p-2 sm:p-2 rounded-xl text-[#6B7280] hover:bg-[#F3F4F6] transition-colors flex-shrink-0"
+         >
+           <ChevronLeft size={18} />
+         </button>
+         <div className="text-center flex-1">
+-          <div className="text-base font-bold text-[#111827]">KW {kw}</div>
++          <div className="text-sm sm:text-base font-bold text-[#111827]">KW {kw}</div>
+           <div className="text-xs text-[#6B7280]">
+             {format(weekStart, 'd. MMM', { locale: de })} – {format(endOfWeek(weekStart, { weekStartsOn: 1 }), 'd. MMM yyyy', { locale: de })}
+           </div>
+         </div>
+         <button
+           onClick={() => setWeekStart(w => addWeeks(w, 1))}
+-          className="p-2 rounded-xl text-[#6B7280] hover:bg-[#F3F4F6] transition-colors"
++          className="p-2 sm:p-2 rounded-xl text-[#6B7280] hover:bg-[#F3F4F6] transition-colors flex-shrink-0"
+         >
+           <ChevronRight size={18} />
+         </button>
+       </div>
+ 
+       {/* Tabelle */}
+-      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
++      <div className="overflow-x-auto -mx-4 sm:-mx-6 md:mx-0 px-4 sm:px-6 md:px-0">
+         <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden min-w-[400px]">
+           <div className="grid grid-cols-[80px_1fr_1fr_1fr_80px] px-4 py-2.5 border-b border-[#E5E7EB] bg-[#F9FAFB]">
+             {['Tag', 'Kommt', 'Geht', 'Bereich', 'Std.'].map(h => (
+diff --git a/mitarbeiter-app/src/pages/Zeiten/DayTimeCard.tsx b/mitarbeiter-app/src/pages/Zeiten/DayTimeCard.tsx
+new file mode 100644
+index 0000000..5a2a81d
+--- /dev/null
++++ b/mitarbeiter-app/src/pages/Zeiten/DayTimeCard.tsx
+@@ -0,0 +1,112 @@
++import { format, parseISO, isWeekend, isToday, differenceInMinutes } from 'date-fns'
++import { de } from 'date-fns/locale'
++import { Clock } from 'lucide-react'
++import type { TimeEntry } from '@shared/types'
++import { cn } from '@/lib/utils'
++
++export interface DayTimeCardProps {
++  day: Date
++  dayEntries: TimeEntry[]
++  sollPerDay: number
++  isHoliday: boolean
++  now: Date
++}
++
++function fmtHHMM(iso: string): string {
++  return format(parseISO(iso), 'HH:mm')
++}
++
++function netMins(entry: TimeEntry, now = new Date()): number {
++  const end = entry.end_time ? parseISO(entry.end_time) : now
++  const gross = differenceInMinutes(end, parseISO(entry.start_time))
++  return Math.max(0, gross - (entry.break_minutes ?? 0))
++}
++
++function fmtDuration(mins: number): string {
++  const h = Math.floor(mins / 60)
++  const m = mins % 60
++  return `${h}:${String(m).padStart(2, '0')} h`
++}
++
++export default function DayTimeCard({ day, dayEntries, sollPerDay, isHoliday, now }: DayTimeCardProps) {
++  const isWE = isWeekend(day)
++  const isCurrent = isToday(day)
++  const runningE = dayEntries.find(e => !e.end_time)
++  const istMins = dayEntries.reduce((s, e) => s + netMins(e, now), 0)
++  const ds = format(day, 'yyyy-MM-dd')
++
++  if (dayEntries.length === 0) {
++    return (
++      <div className={cn(
++        'p-4 rounded-xl border',
++        (isWE || isHoliday) ? 'bg-[#F9FAFB] border-[#E5E7EB]' : 'bg-white border-[#E5E7EB]'
++      )}>
++        <div className="text-sm font-medium text-[#111827] mb-3">
++          <div>{format(day, 'EEE', { locale: de })}</div>
++          <div className="text-xs text-[#6B7280]">{format(day, 'd. MMM', { locale: de })}</div>
++        </div>
++        <div className="text-sm text-[#D1D5DB]">Keine Einträge</div>
++      </div>
++    )
++  }
++
++  return (
++    <div className={cn(
++      'p-4 rounded-xl border space-y-2',
++      isCurrent && !isWE ? 'bg-indigo-50/40 border-indigo-200' : 'bg-white border-[#E5E7EB]'
++    )}>
++      {/* Header */}
++      <div className="flex justify-between items-start">
++        <div>
++          <div className="text-sm font-medium text-[#111827]">
++            {format(day, 'EEE', { locale: de })}
++          </div>
++          <div className="text-xs text-[#6B7280]">
++            {format(day, 'd. MMM', { locale: de })}
++          </div>
++        </div>
++        <div className="text-right">
++          {isWE || isHoliday ? (
++            <span className="text-xs text-[#D1D5DB] font-medium">WE</span>
++          ) : runningE ? (
++            <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium whitespace-nowrap">
++              <Clock size={11} className="animate-pulse" /> läuft
++            </span>
++          ) : istMins >= sollPerDay - 5 ? (
++            <span className="text-xs text-emerald-600 font-bold">✓</span>
++          ) : (
++            <span className="text-xs text-amber-600 font-bold">~</span>
++          )}
++        </div>
++      </div>
++
++      {/* Times */}
++      <div className="grid grid-cols-3 gap-2 text-xs">
++        <div>
++          <span className="text-[#9CA3AF] block text-[10px]">Kommt</span>
++          <span className="font-medium text-[#111827]">{fmtHHMM(dayEntries[0].start_time)}</span>
++        </div>
++        <div>
++          <span className="text-[#9CA3AF] block text-[10px]">Geht</span>
++          <span className={cn('font-medium', runningE ? 'text-emerald-600' : 'text-[#111827]')}>
++            {runningE ? 'läuft…' : fmtHHMM(dayEntries[dayEntries.length - 1].end_time!)}
++          </span>
++        </div>
++        <div>
++          <span className="text-[#9CA3AF] block text-[10px]">Pause</span>
++          <span className="font-medium text-[#111827]">
++            {dayEntries[0].break_minutes ? `${dayEntries[0].break_minutes}m` : '—'}
++          </span>
++        </div>
++      </div>
++
++      {/* Summary */}
++      <div className="border-t border-[#F3F4F6] pt-2 flex justify-between items-center">
++        <span className="text-[#9CA3AF] text-xs">Ist</span>
++        <span className={cn('font-bold text-sm tabular-nums', runningE ? 'text-emerald-600' : 'text-[#111827]')}>
++          {fmtDuration(istMins)}
++        </span>
++      </div>
++    </div>
++  )
++}
+diff --git a/mitarbeiter-app/src/pages/Zeiten/Zeiten.tsx b/mitarbeiter-app/src/pages/Zeiten/Zeiten.tsx
+index 925e0cf..59aefac 100644
+--- a/mitarbeiter-app/src/pages/Zeiten/Zeiten.tsx
++++ b/mitarbeiter-app/src/pages/Zeiten/Zeiten.tsx
+@@ -11,6 +11,7 @@ import { useAuthStore } from '../../stores/auth'
+ import { getHolidayDates } from '../../lib/holidays'
+ import type { TimeEntry, Employee } from '@shared/types'
+ import { cn } from '@/lib/utils'
++import DayTimeCard from './DayTimeCard'
+ 
+ // ── Hilfsfunktionen ───────────────────────────────────────────────────────────
+ 
+@@ -57,7 +58,7 @@ export default function Zeiten() {
+ 
+   // Live-Timer für laufende Session
+   useEffect(() => {
+-    timerRef.current = setInterval(() => setNow(new Date()), 10_000)
++    timerRef.current = setInterval(() => setNow(new Date()), 1_000)
+     return () => { if (timerRef.current) clearInterval(timerRef.current) }
+   }, [])
+ 
+@@ -125,7 +126,6 @@ export default function Zeiten() {
+   }, 0)
+ 
+   // Wochen-Ist inkl. laufender Session
+-  const openEntry   = entries.find(e => !e.end_time)
+   const weekIstMins = entries.reduce((sum, e) => sum + netMins(e, now), 0)
+ 
+   // Überstunden (Jahr): Ist − Soll aller abgeschlossenen Arbeitstage
+@@ -202,8 +202,26 @@ export default function Zeiten() {
+         </button>
+       </div>
+ 
+-      {/* Wochen-Tabelle */}
+-      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
++      {/* Mobile Card-Liste (<768px) */}
++      <div className="md:hidden space-y-3">
++        {loading ? (
++          <div className="py-8 text-center text-sm text-[#6B7280]">Lade…</div>
++        ) : (
++          weekDays.map(day => (
++            <DayTimeCard
++              key={format(day, 'yyyy-MM-dd')}
++              day={day}
++              dayEntries={entriesForDay(day)}
++              sollPerDay={sollPerDay}
++              isHoliday={holidays.has(format(day, 'yyyy-MM-dd'))}
++              now={now}
++            />
++          ))
++        )}
++      </div>
++
++      {/* Desktop Wochen-Tabelle (≥768px) */}
++      <div className="hidden md:block overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+       <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden min-w-[480px]">
+         {/* Tabellen-Header */}
+         <div className="grid grid-cols-[80px_1fr_1fr_80px_80px_90px] px-4 py-2.5 border-b border-[#E5E7EB] bg-[#F9FAFB]">

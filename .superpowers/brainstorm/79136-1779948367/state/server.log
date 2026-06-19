@@ -1,0 +1,6 @@
+{"type":"server-started","port":50532,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:50532","screen_dir":"/Users/ronnybeckmann/Projects/times/.superpowers/brainstorm/79136-1779948367/content","state_dir":"/Users/ronnybeckmann/Projects/times/.superpowers/brainstorm/79136-1779948367/state"}
+{"type":"screen-added","file":"/Users/ronnybeckmann/Projects/times/.superpowers/brainstorm/79136-1779948367/content/welcome.html"}
+{"type":"screen-added","file":"/Users/ronnybeckmann/Projects/times/.superpowers/brainstorm/79136-1779948367/content/stunden-spalte-optionen.html"}
+{"source":"user-event","type":"click","text":"A · ~80px\n    \n    \n    \n      Σ h\n    \n    \n    \n      \n        38:30\n        +0:30\n      \n      \n        \n      \n    \n    \n    \n      \n        32:00\n        −8:00\n      \n      \n        \n      \n    \n    \n    \n      \n        40:00\n        ±0\n      \n      \n        \n      \n    \n    \n      Zeit + Saldo nebeneinanderBalken dünner (3px), alles in einer Zeile","choice":"a","id":null,"timestamp":1779948827570}
+{"type":"screen-added","file":"/Users/ronnybeckmann/Projects/times/.superpowers/brainstorm/79136-1779948367/content/zellen-hoehe-problem.html"}
+{"type":"server-stopped","reason":"idle timeout"}

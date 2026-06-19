@@ -150,7 +150,7 @@ export default function Dashboard() {
   const canApprove = user?.role === 'gf'
   const today      = format(new Date(), 'yyyy-MM-dd')
 
-  const { order, hidden, reorder, remove, add } = useDashboardWidgets()
+  const { order, reorder, remove, add } = useDashboardWidgets()
   const [editMode,  setEditMode]  = useState(false)
   const [activeId,  setActiveId]  = useState<WidgetId | null>(null)
 

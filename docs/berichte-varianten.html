@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Berichte — 3 Varianten</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F9FAFB; color: #111827; font-size: 13px; }
+
+/* ── Varianten-Tabs (ganz oben) ─────────────────── */
+.var-bar { display: flex; background: #1E1B4B; padding: 0 24px; gap: 4px; align-items: flex-end; }
+.var-tab { padding: 10px 20px; font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.55); cursor: pointer; border-radius: 6px 6px 0 0; margin-bottom: 0; transition: all 0.15s; border: 1px solid transparent; border-bottom: none; }
+.var-tab:hover { color: rgba(255,255,255,0.85); }
+.var-tab.active { background: #F9FAFB; color: #111827; }
+.var-label { padding: 12px 24px 0; font-size: 11px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ── App shell ──────────────────────────────────── */
+.app { display: flex; height: calc(100vh - 42px); }
+.sidebar { width: 200px; background: #1E1B4B; flex-shrink: 0; padding: 16px 0; }
+.sidebar-logo { padding: 0 14px 16px; font-size: 15px; font-weight: 700; color: white; border-bottom: 1px solid rgba(255,255,255,0.1); }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 14px; color: rgba(255,255,255,0.6); cursor: pointer; font-size: 12px; margin: 1px 6px; border-radius: 6px; }
+.nav-item.active { background: rgba(255,255,255,0.15); color: white; font-weight: 500; }
+
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── Controls bar ───────────────────────────────── */
+.controls { background: white; border-bottom: 1px solid #E5E7EB; padding: 10px 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ctrl-group { display: flex; align-items: center; gap: 8px; }
+.ctrl-label { font-size: 11px; color: #6B7280; font-weight: 500; }
+select, input[type=month] { border: 1px solid #E5E7EB; border-radius: 6px; padding: 5px 10px; font-size: 12px; color: #374151; background: white; font-family: inherit; }
+.ml-auto { margin-left: auto; }
+.flex-gap { display: flex; align-items: center; gap: 8px; }
+.btn { padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+.btn-primary { background: #4F46E5; color: white; }
+.btn-primary:hover { background: #4338CA; }
+.btn-ghost { background: white; border: 1px solid #E5E7EB; color: #374151; }
+.btn-ghost:hover { background: #F9FAFB; }
+.btn-green { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
+.btn-green:hover { background: #A7F3D0; }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+
+/* ── Content area ───────────────────────────────── */
+.content { flex: 1; overflow: auto; padding: 16px 20px 24px; }
+
+/* ── Variant screens ────────────────────────────── */
+.screen { display: none; }
+.screen.show { display: block; }
+
+/* ═══════════════════════════════════════════════════
+   VARIANTE A — Klassische Übersichtstabelle
+═══════════════════════════════════════════════════ */
+.summary-row { display: flex; gap: 12px; margin-bottom: 16px; }
+.sum-card { flex: 1; background: white; border-radius: 8px; padding: 14px 16px; border: 1px solid #E5E7EB; }
+.sum-card .sc-label { font-size: 11px; color: #6B7280; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+.sum-card .sc-val { font-size: 22px; font-weight: 700; color: #111827; line-height: 1.2; }
+.sum-card .sc-sub { font-size: 11px; color: #9CA3AF; margin-top: 2px; }
+.sum-card.green .sc-val { color: #059669; }
+.sum-card.red   .sc-val { color: #DC2626; }
+.sum-card.amber .sc-val { color: #D97706; }
+
+.rep-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); overflow: hidden; font-size: 12px; }
+.rep-table thead th { background: #F8F9FF; padding: 9px 12px; text-align: right; font-size: 10px; font-weight: 700; color: #6B7280; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid #E5E7EB; white-space: nowrap; }
+.rep-table thead th:first-child { text-align: left; }
+.rep-table tbody td { padding: 9px 12px; border-bottom: 1px solid #F3F4F6; text-align: right; vertical-align: middle; }
+.rep-table tbody td:first-child { text-align: left; font-weight: 500; }
+.rep-table tbody tr:hover td { background: #FAFAFA; }
+.rep-table tfoot td { padding: 9px 12px; text-align: right; font-weight: 700; background: #F8F9FF; border-top: 2px solid #E5E7EB; font-size: 12px; }
+.rep-table tfoot td:first-child { text-align: left; }
+
+.diff-pos { color: #059669; font-weight: 600; }
+.diff-neg { color: #DC2626; font-weight: 600; }
+.diff-zero { color: #9CA3AF; }
+.emp-info { display: flex; align-items: center; gap: 8px; }
+.av { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: white; flex-shrink: 0; }
+.dept-badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; background: #F3F4F6; color: #6B7280; margin-left: 4px; }
+.icon-btn { background: none; border: none; cursor: pointer; color: #9CA3AF; font-size: 14px; padding: 2px 5px; border-radius: 4px; }
+.icon-btn:hover { background: #F3F4F6; color: #374151; }
+
+/* ═══════════════════════════════════════════════════
+   VARIANTE B — Kachel-Dashboard
+═══════════════════════════════════════════════════ */
+.kpi-row { display: flex; gap: 12px; margin-bottom: 20px; }
+.kpi-card { flex: 1; background: white; border-radius: 10px; padding: 16px 18px; border: 1px solid #E5E7EB; position: relative; overflow: hidden; }
+.kpi-card::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; }
+.kpi-card.kpi-blue::before { background: #4F46E5; }
+.kpi-card.kpi-green::before { background: #059669; }
+.kpi-card.kpi-red::before { background: #DC2626; }
+.kpi-card.kpi-amber::before { background: #D97706; }
+.kpi-icon { font-size: 18px; margin-bottom: 8px; }
+.kpi-label { font-size: 11px; color: #6B7280; font-weight: 500; margin-bottom: 4px; }
+.kpi-val { font-size: 26px; font-weight: 800; color: #111827; line-height: 1; }
+.kpi-sub { font-size: 11px; color: #9CA3AF; margin-top: 4px; }
+
+.dept-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+.dept-tab { padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #E5E7EB; background: white; color: #6B7280; font-weight: 500; transition: all 0.15s; }
+.dept-tab.active { background: #EEF2FF; border-color: #C7D2FE; color: #4338CA; }
+
+.emp-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.emp-card { background: white; border-radius: 10px; border: 1px solid #E5E7EB; padding: 14px 16px; cursor: pointer; transition: all 0.2s; }
+.emp-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); border-color: #C7D2FE; }
+.emp-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.emp-card-name { font-size: 13px; font-weight: 600; color: #111827; }
+.emp-card-role { font-size: 11px; color: #9CA3AF; }
+.emp-card-dept { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: #EEF2FF; color: #4338CA; font-weight: 500; margin-left: auto; }
+.av-lg { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
+
+.metrics-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.metric-box { text-align: center; background: #F9FAFB; border-radius: 6px; padding: 7px 4px; }
+.metric-val { font-size: 14px; font-weight: 700; color: #111827; }
+.metric-lbl { font-size: 9px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 1px; }
+.metric-val.pos { color: #059669; }
+.metric-val.neg { color: #DC2626; }
+
+.prog-wrap { margin-bottom: 4px; }
+.prog-label { display: flex; justify-content: space-between; font-size: 10px; color: #6B7280; margin-bottom: 3px; }
+.prog-bar { height: 5px; background: #F3F4F6; border-radius: 3px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+.pf-blue { background: #4F46E5; }
+.pf-green { background: #059669; }
+.pf-red { background: #DC2626; }
+.pf-amber { background: #D97706; }
+
+.emp-card-actions { display: flex; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #F3F4F6; }
+
+/* ═══════════════════════════════════════════════════
+   VARIANTE C — Abteilungs-Auswertung mit Jahresverlauf
+═══════════════════════════════════════════════════ */
+.year-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.year-title { font-size: 15px; font-weight: 700; color: #111827; }
+.year-sub { font-size: 12px; color: #9CA3AF; }
+
+.c-layout { display: flex; gap: 16px; align-items: flex-start; }
+.c-left { flex: 1; min-width: 0; }
+.c-right { width: 280px; flex-shrink: 0; }
+
+.dept-section { background: white; border-radius: 10px; border: 1px solid #E5E7EB; margin-bottom: 16px; overflow: hidden; }
+.dept-section-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: #F8F9FF; border-bottom: 1px solid #E5E7EB; cursor: pointer; }
+.dept-section-head:hover { background: #F0F0FF; }
+.ds-name { font-size: 13px; font-weight: 700; color: #4338CA; }
+.ds-stats { margin-left: auto; display: flex; gap: 16px; font-size: 11px; color: #6B7280; }
+.ds-stat strong { color: #111827; }
+
+.c-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.c-table th { padding: 7px 12px; text-align: right; font-size: 10px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #F3F4F6; }
+.c-table th:first-child { text-align: left; }
+.c-table td { padding: 8px 12px; border-bottom: 1px solid #F9FAFB; text-align: right; vertical-align: middle; }
+.c-table td:first-child { text-align: left; }
+.c-table tr:last-child td { border-bottom: none; }
+.c-table tr:hover td { background: #FAFAFA; cursor: pointer; }
+
+/* Sparkline */
+.spark { display: inline-flex; align-items: flex-end; gap: 1px; height: 20px; }
+.spark-bar { width: 5px; border-radius: 1px; }
+.spark-pos { background: #A7F3D0; }
+.spark-neg { background: #FECACA; }
+
+/* Detail panel */
+.detail-panel { background: white; border-radius: 10px; border: 1px solid #E5E7EB; padding: 18px; position: sticky; top: 0; }
+.dp-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid #F3F4F6; }
+.dp-name { font-size: 14px; font-weight: 700; color: #111827; }
+.dp-role { font-size: 11px; color: #9CA3AF; }
+
+.dp-section { margin-bottom: 14px; }
+.dp-sec-title { font-size: 10px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.dp-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #F9FAFB; font-size: 12px; }
+.dp-row:last-child { border-bottom: none; }
+.dp-row-label { color: #6B7280; }
+.dp-row-val { font-weight: 600; color: #111827; }
+.dp-row-val.pos { color: #059669; }
+.dp-row-val.neg { color: #DC2626; }
+
+/* Year chart (simple bar) */
+.year-chart { margin-top: 10px; }
+.yc-bars { display: flex; align-items: flex-end; gap: 3px; height: 60px; }
+.yc-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; justify-content: flex-end; }
+.yc-bar { width: 100%; border-radius: 2px 2px 0 0; min-height: 2px; }
+.yc-bar.pos { background: #C7D2FE; }
+.yc-bar.neg { background: #FECACA; }
+.yc-bar.cur { background: #4F46E5; }
+.yc-month { font-size: 8px; color: #9CA3AF; text-align: center; }
+.yc-labels { display: flex; gap: 3px; margin-top: 4px; }
+
+/* ── Export indicator tooltip ───────────────────── */
+.export-hint { font-size: 11px; color: #6B7280; background: white; border: 1px solid #E5E7EB; border-radius: 6px; padding: 6px 12px; }
+</style>
+</head>
+<body>
+
+<!-- Varianten-Tabs -->
+<div class="var-bar">
+  <div style="color:rgba(255,255,255,0.4);font-size:11px;padding:10px 0;margin-right:8px;align-self:center">Variante:</div>
+  <div class="var-tab active" onclick="showVar('a',this)">A — Übersichtstabelle</div>
+  <div class="var-tab"        onclick="showVar('b',this)">B — Kachel-Dashboard</div>
+  <div class="var-tab"        onclick="showVar('c',this)">C — Abteilungs-Jahresverlauf</div>
+</div>
+
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">⏱ Schicht &amp; Plan</div>
+    <div style="margin-top:12px">
+      <div class="nav-item">📊 Dashboard</div>
+      <div class="nav-item">👥 Mitarbeiter</div>
+      <div class="nav-item">📅 Abwesenheiten</div>
+      <div class="nav-item">📋 Dienstplan</div>
+      <div class="nav-item">🕐 Zeiterfassung</div>
+      <div class="nav-item active">📈 Berichte</div>
+      <div class="nav-item">⚙️ Einstellungen</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Controls (shared) -->
+    <div class="controls">
+      <div class="ctrl-group">
+        <span class="ctrl-label">Zeitraum</span>
+        <input type="month" value="2026-05">
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label">Abteilung</span>
+        <select>
+          <option>Alle</option>
+          <option>Küche</option>
+          <option>Service</option>
+          <option>Bar</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <span class="ctrl-label">Mitarbeiter</span>
+        <select>
+          <option>Alle</option>
+          <option>Mustermann, Max</option>
+          <option>Schmidt, Anna</option>
+          <option>Müller, Lisa</option>
+        </select>
+      </div>
+      <div class="flex-gap ml-auto">
+        <span class="export-hint">Export:</span>
+        <button class="btn btn-ghost btn-sm">📄 PDF</button>
+        <button class="btn btn-green btn-sm">📊 Excel</button>
+        <button class="btn btn-ghost btn-sm">📋 CSV</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- ══ VARIANTE A ══════════════════════════════ -->
+      <div id="screen-a" class="screen show">
+
+        <!-- Summary cards -->
+        <div class="summary-row">
+          <div class="sum-card">
+            <div class="sc-label">Soll-Stunden gesamt</div>
+            <div class="sc-val">1.456 h</div>
+            <div class="sc-sub">8 Mitarbeiter · Mai 2026</div>
+          </div>
+          <div class="sum-card green">
+            <div class="sc-label">Ist-Stunden gesamt</div>
+            <div class="sc-val">1.498 h</div>
+            <div class="sc-sub">+42 h gegenüber Soll</div>
+          </div>
+          <div class="sum-card amber">
+            <div class="sc-label">Offene Überstunden</div>
+            <div class="sc-val">42 h</div>
+            <div class="sc-sub">Kumuliert alle MA</div>
+          </div>
+          <div class="sum-card red">
+            <div class="sc-label">Fehltage (Krank)</div>
+            <div class="sc-val">7</div>
+            <div class="sc-sub">3 Mitarbeiter betroffen</div>
+          </div>
+          <div class="sum-card">
+            <div class="sc-label">Urlaubstage</div>
+            <div class="sc-val">18</div>
+            <div class="sc-sub">von 120 verplant (15 %)</div>
+          </div>
+        </div>
+
+        <!-- Main table -->
+        <table class="rep-table">
+          <thead>
+            <tr>
+              <th style="min-width:200px">Mitarbeiter</th>
+              <th>Soll</th>
+              <th>Ist</th>
+              <th>Differenz</th>
+              <th>Überstd. kumuliert</th>
+              <th>Urlaub (gen./ges.)</th>
+              <th>Krank</th>
+              <th style="min-width:80px">Aktionen</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="emp-info">
+                  <div class="av" style="background:#4F46E5">MM</div>
+                  <div>
+                    <div>Mustermann, Max</div>
+                    <span class="dept-badge">Küche</span>
+                  </div>
+                </div>
+              </td>
+              <td>182 h</td><td>196 h</td>
+              <td><span class="diff-pos">+14 h</span></td>
+              <td><span class="diff-pos">+22 h</span></td>
+              <td>3 / 28</td><td>—</td>
+              <td>
+                <button class="icon-btn" title="PDF exportieren">📄</button>
+                <button class="icon-btn" title="Details anzeigen">🔍</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="emp-info">
+                  <div class="av" style="background:#059669">SA</div>
+                  <div>
+                    <div>Schmidt, Anna</div>
+                    <span class="dept-badge">Küche</span>
+                  </div>
+                </div>
+              </td>
+              <td>168 h</td><td>162 h</td>
+              <td><span class="diff-neg">−6 h</span></td>
+              <td><span class="diff-neg">−6 h</span></td>
+              <td>5 / 28</td><td>—</td>
+              <td>
+                <button class="icon-btn">📄</button>
+                <button class="icon-btn">🔍</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="emp-info">
+                  <div class="av" style="background:#D97706">FK</div>
+                  <div>
+                    <div>Fischer, Klaus</div>
+                    <span class="dept-badge">Küche</span>
+                  </div>
+                </div>
+              </td>
+              <td>140 h</td><td>140 h</td>
+              <td><span class="diff-zero">± 0 h</span></td>
+              <td><span class="diff-zero">± 0 h</span></td>
+              <td>0 / 20</td><td>3 Tage</td>
+              <td>
+                <button class="icon-btn">📄</button>
+                <button class="icon-btn">🔍</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="emp-info">
+                  <div class="av" style="background:#7C3AED">ML</div>
+                  <div>
+                    <div>Müller, Lisa</div>
+                    <span class="dept-badge">Service</span>
+                  </div>
+                </div>
+              </td>
+              <td>182 h</td><td>190 h</td>
+              <td><span class="diff-pos">+8 h</span></td>
+              <td><span class="diff-pos">+14 h</span></td>
+              <td>2 / 28</td><td>—</td>
+              <td>
+                <button class="icon-btn">📄</button>
+                <button class="icon-btn">🔍</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="emp-info">
+                  <div class="av" style="background:#0891B2">WT</div>
+                  <div>
+                    <div>Weber, Tom</div>
+                    <span class="dept-badge">Service</span>
+                  </div>
+                </div>
+              </td>
+              <td>168 h</td><td>155 h</td>
+              <td><span class="diff-neg">−13 h</span></td>
+              <td><span class="diff-neg">−13 h</span></td>
+              <td>7 / 28</td><td>—</td>
+              <td>
+                <button class="icon-btn">📄</button>
+                <button class="icon-btn">🔍</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="emp-info">
+                  <div class="av" style="background:#DC2626">BS</div>
+                  <div>
+                    <div>Braun, Sarah</div>
+                    <span class="dept-badge">Service</span>
+                  </div>
+                </div>
+              </td>
+              <td>140 h</td><td>148 h</td>
+              <td><span class="diff-pos">+8 h</span></td>
+              <td><span class="diff-pos">+8 h</span></td>
+              <td>1 / 20</td><td>4 Tage</td>
+              <td>
+                <button class="icon-btn">📄</button>
+                <button class="icon-btn">🔍</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="emp-info">
+                  <div class="av" style="background:#059669">KJ</div>
+                  <div>
+                    <div>Klein, Jonas</div>
+                    <span class="dept-badge">Bar</span>
+                  </div>
+                </div>
+              </td>
+              <td>140 h</td><td>147 h</td>
+              <td><span class="diff-pos">+7 h</span></td>
+              <td><span class="diff-pos">+7 h</span></td>
+              <td>0 / 20</td><td>—</td>
+              <td>
+                <button class="icon-btn">📄</button>
+                <button class="icon-btn">🔍</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="emp-info">
+                  <div class="av" style="background:#9D174D">HM</div>
+                  <div>
+                    <div>Hoffmann, Maria</div>
+                    <span class="dept-badge">Bar</span>
+                  </div>
+                </div>
+              </td>
+              <td>140 h</td><td>154 h</td>
+              <td><span class="diff-pos">+14 h</span></td>
+              <td><span class="diff-pos">+28 h</span></td>
+              <td>0 / 20</td><td>—</td>
+              <td>
+                <button class="icon-btn">📄</button>
+                <button class="icon-btn">🔍</button>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td>Gesamt</td>
+              <td>1.260 h</td>
+              <td>1.292 h</td>
+              <td><span class="diff-pos">+32 h</span></td>
+              <td><span class="diff-pos">+60 h</span></td>
+              <td>18 / 172</td>
+              <td>7 Tage</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- ══ VARIANTE B ══════════════════════════════ -->
+      <div id="screen-b" class="screen">
+        <div class="kpi-row">
+          <div class="kpi-card kpi-blue">
+            <div class="kpi-icon">⏱</div>
+            <div class="kpi-label">Ist-Stunden gesamt</div>
+            <div class="kpi-val">1.292 h</div>
+            <div class="kpi-sub">von 1.260 h Soll</div>
+          </div>
+          <div class="kpi-card kpi-green">
+            <div class="kpi-icon">📈</div>
+            <div class="kpi-label">Überstunden gesamt</div>
+            <div class="kpi-val">+60 h</div>
+            <div class="kpi-sub">kumuliert alle MA</div>
+          </div>
+          <div class="kpi-card kpi-red">
+            <div class="kpi-icon">🤒</div>
+            <div class="kpi-label">Krankentage</div>
+            <div class="kpi-val">7</div>
+            <div class="kpi-sub">3 Mitarbeiter betroffen</div>
+          </div>
+          <div class="kpi-card kpi-amber">
+            <div class="kpi-icon">🏖</div>
+            <div class="kpi-label">Urlaubstage</div>
+            <div class="kpi-val">18</div>
+            <div class="kpi-sub">von 172 gesamt (10 %)</div>
+          </div>
+        </div>
+
+        <div class="dept-tabs">
+          <div class="dept-tab active" onclick="filterDept(event,'all')">Alle</div>
+          <div class="dept-tab" onclick="filterDept(event,'kueche')">Küche</div>
+          <div class="dept-tab" onclick="filterDept(event,'service')">Service</div>
+          <div class="dept-tab" onclick="filterDept(event,'bar')">Bar</div>
+        </div>
+
+        <div class="emp-cards">
+          <!-- Card 1 -->
+          <div class="emp-card" data-dept="kueche">
+            <div class="emp-card-head">
+              <div class="av-lg" style="background:#4F46E5">MM</div>
+              <div>
+                <div class="emp-card-name">Mustermann, Max</div>
+                <div class="emp-card-role">Küchenchef</div>
+              </div>
+              <span class="emp-card-dept">Küche</span>
+            </div>
+            <div class="metrics-grid">
+              <div class="metric-box"><div class="metric-val">196 h</div><div class="metric-lbl">Ist</div></div>
+              <div class="metric-box"><div class="metric-val pos">+14 h</div><div class="metric-lbl">Diff.</div></div>
+              <div class="metric-box"><div class="metric-val">3 T</div><div class="metric-lbl">Urlaub</div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Stunden (Soll 182 h)</span><span>108 %</span></div>
+              <div class="prog-bar"><div class="prog-fill pf-blue" style="width:100%"></div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Urlaub (3 von 28)</span><span>11 %</span></div>
+              <div class="prog-bar"><div class="prog-fill pf-amber" style="width:11%"></div></div>
+            </div>
+            <div class="emp-card-actions">
+              <button class="btn btn-ghost btn-sm" style="flex:1">📄 PDF</button>
+              <button class="btn btn-ghost btn-sm" style="flex:1">📊 Detail</button>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="emp-card" data-dept="kueche">
+            <div class="emp-card-head">
+              <div class="av-lg" style="background:#059669">SA</div>
+              <div>
+                <div class="emp-card-name">Schmidt, Anna</div>
+                <div class="emp-card-role">Köchin</div>
+              </div>
+              <span class="emp-card-dept">Küche</span>
+            </div>
+            <div class="metrics-grid">
+              <div class="metric-box"><div class="metric-val">162 h</div><div class="metric-lbl">Ist</div></div>
+              <div class="metric-box"><div class="metric-val neg">−6 h</div><div class="metric-lbl">Diff.</div></div>
+              <div class="metric-box"><div class="metric-val">5 T</div><div class="metric-lbl">Urlaub</div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Stunden (Soll 168 h)</span><span>96 %</span></div>
+              <div class="prog-bar"><div class="prog-fill pf-red" style="width:96%"></div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Urlaub (5 von 28)</span><span>18 %</span></div>
+              <div class="prog-bar"><div class="prog-fill pf-amber" style="width:18%"></div></div>
+            </div>
+            <div class="emp-card-actions">
+              <button class="btn btn-ghost btn-sm" style="flex:1">📄 PDF</button>
+              <button class="btn btn-ghost btn-sm" style="flex:1">📊 Detail</button>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="emp-card" data-dept="kueche">
+            <div class="emp-card-head">
+              <div class="av-lg" style="background:#D97706">FK</div>
+              <div>
+                <div class="emp-card-name">Fischer, Klaus</div>
+                <div class="emp-card-role">Spüler</div>
+              </div>
+              <span class="emp-card-dept">Küche</span>
+            </div>
+            <div class="metrics-grid">
+              <div class="metric-box"><div class="metric-val">140 h</div><div class="metric-lbl">Ist</div></div>
+              <div class="metric-box"><div class="metric-val" style="color:#9CA3AF">± 0 h</div><div class="metric-lbl">Diff.</div></div>
+              <div class="metric-box"><div class="metric-val neg">3 Krank</div><div class="metric-lbl">Fehltage</div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Stunden (Soll 140 h)</span><span>100 %</span></div>
+              <div class="prog-bar"><div class="prog-fill pf-green" style="width:100%"></div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Urlaub (0 von 20)</span><span>0 %</span></div>
+              <div class="prog-bar"><div class="prog-fill pf-amber" style="width:0%"></div></div>
+            </div>
+            <div class="emp-card-actions">
+              <button class="btn btn-ghost btn-sm" style="flex:1">📄 PDF</button>
+              <button class="btn btn-ghost btn-sm" style="flex:1">📊 Detail</button>
+            </div>
+          </div>
+
+          <!-- Card 4 -->
+          <div class="emp-card" data-dept="service">
+            <div class="emp-card-head">
+              <div class="av-lg" style="background:#7C3AED">ML</div>
+              <div>
+                <div class="emp-card-name">Müller, Lisa</div>
+                <div class="emp-card-role">Serviceleitung</div>
+              </div>
+              <span class="emp-card-dept" style="background:#F0FDF4;color:#065F46">Service</span>
+            </div>
+            <div class="metrics-grid">
+              <div class="metric-box"><div class="metric-val">190 h</div><div class="metric-lbl">Ist</div></div>
+              <div class="metric-box"><div class="metric-val pos">+8 h</div><div class="metric-lbl">Diff.</div></div>
+              <div class="metric-box"><div class="metric-val">2 T</div><div class="metric-lbl">Urlaub</div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Stunden (Soll 182 h)</span><span>104 %</span></div>
+              <div class="prog-bar"><div class="prog-fill pf-blue" style="width:100%"></div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Urlaub (2 von 28)</span><span>7 %</span></div>
+              <div class="prog-bar"><div class="prog-fill pf-amber" style="width:7%"></div></div>
+            </div>
+            <div class="emp-card-actions">
+              <button class="btn btn-ghost btn-sm" style="flex:1">📄 PDF</button>
+              <button class="btn btn-ghost btn-sm" style="flex:1">📊 Detail</button>
+            </div>
+          </div>
+
+          <!-- Card 5 -->
+          <div class="emp-card" data-dept="service">
+            <div class="emp-card-head">
+              <div class="av-lg" style="background:#0891B2">WT</div>
+              <div>
+                <div class="emp-card-name">Weber, Tom</div>
+                <div class="emp-card-role">Kellner</div>
+              </div>
+              <span class="emp-card-dept" style="background:#F0FDF4;color:#065F46">Service</span>
+            </div>
+            <div class="metrics-grid">
+              <div class="metric-box"><div class="metric-val">155 h</div><div class="metric-lbl">Ist</div></div>
+              <div class="metric-box"><div class="metric-val neg">−13 h</div><div class="metric-lbl">Diff.</div></div>
+              <div class="metric-box"><div class="metric-val">7 T</div><div class="metric-lbl">Urlaub</div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Stunden (Soll 168 h)</span><span>92 %</span></div>
+              <div class="prog-bar"><div class="prog-fill pf-red" style="width:92%"></div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Urlaub (7 von 28)</span><span>25 %</span></div>
+              <div class="prog-bar"><div class="prog-fill pf-amber" style="width:25%"></div></div>
+            </div>
+            <div class="emp-card-actions">
+              <button class="btn btn-ghost btn-sm" style="flex:1">📄 PDF</button>
+              <button class="btn btn-ghost btn-sm" style="flex:1">📊 Detail</button>
+            </div>
+          </div>
+
+          <!-- Card 6 -->
+          <div class="emp-card" data-dept="bar">
+            <div class="emp-card-head">
+              <div class="av-lg" style="background:#059669">KJ</div>
+              <div>
+                <div class="emp-card-name">Klein, Jonas</div>
+                <div class="emp-card-role">Barkeeper</div>
+              </div>
+              <span class="emp-card-dept" style="background:#FEF3C7;color:#92400E">Bar</span>
+            </div>
+            <div class="metrics-grid">
+              <div class="metric-box"><div class="metric-val">147 h</div><div class="metric-lbl">Ist</div></div>
+              <div class="metric-box"><div class="metric-val pos">+7 h</div><div class="metric-lbl">Diff.</div></div>
+              <div class="metric-box"><div class="metric-val">0 T</div><div class="metric-lbl">Urlaub</div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Stunden (Soll 140 h)</span><span>105 %</span></div>
+              <div class="prog-bar"><div class="prog-fill pf-blue" style="width:100%"></div></div>
+            </div>
+            <div class="prog-wrap">
+              <div class="prog-label"><span>Urlaub (0 von 20)</span><span>0 %</span></div>
+              <div class="prog-bar"><div class="prog-fill pf-amber" style="width:0%"></div></div>
+            </div>
+            <div class="emp-card-actions">
+              <button class="btn btn-ghost btn-sm" style="flex:1">📄 PDF</button>
+              <button class="btn btn-ghost btn-sm" style="flex:1">📊 Detail</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ VARIANTE C ══════════════════════════════ -->
+      <div id="screen-c" class="screen">
+        <div class="year-header">
+          <div>
+            <div class="year-title">Jahresauswertung 2026</div>
+            <div class="year-sub">Alle Abteilungen · Jan – Mai 2026 · Klick auf Mitarbeiter für Details</div>
+          </div>
+          <div class="flex-gap ml-auto">
+            <select style="border:1px solid #E5E7EB;border-radius:6px;padding:5px 10px;font-size:12px">
+              <option>2026</option><option>2025</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="c-layout">
+          <div class="c-left">
+
+            <!-- Küche -->
+            <div class="dept-section">
+              <div class="dept-section-head">
+                <span style="font-size:16px">🍳</span>
+                <span class="ds-name">Küche</span>
+                <div class="ds-stats">
+                  <span>Soll <strong>2.450 h</strong></span>
+                  <span>Ist <strong>2.498 h</strong></span>
+                  <span style="color:#059669">Δ <strong>+48 h</strong></span>
+                </div>
+              </div>
+              <table class="c-table">
+                <thead>
+                  <tr>
+                    <th style="min-width:180px">Mitarbeiter</th>
+                    <th>Soll YTD</th>
+                    <th>Ist YTD</th>
+                    <th>Δ gesamt</th>
+                    <th>Urlaub</th>
+                    <th>Krank</th>
+                    <th>Verlauf Jan–Mai</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr onclick="showDetail('Mustermann, Max','Küchenchef','#4F46E5')">
+                    <td><div class="emp-info"><div class="av" style="background:#4F46E5">MM</div>Mustermann, Max</div></td>
+                    <td>910 h</td><td>924 h</td>
+                    <td><span class="diff-pos">+14 h</span></td>
+                    <td>3 / 28</td><td>—</td>
+                    <td>
+                      <div class="spark">
+                        <div class="spark-bar spark-pos" style="height:12px"></div>
+                        <div class="spark-bar spark-pos" style="height:16px"></div>
+                        <div class="spark-bar spark-neg" style="height:8px"></div>
+                        <div class="spark-bar spark-pos" style="height:14px"></div>
+                        <div class="spark-bar spark-pos" style="height:18px" style="background:#4F46E5"></div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr onclick="showDetail('Schmidt, Anna','Köchin','#059669')">
+                    <td><div class="emp-info"><div class="av" style="background:#059669">SA</div>Schmidt, Anna</div></td>
+                    <td>840 h</td><td>834 h</td>
+                    <td><span class="diff-neg">−6 h</span></td>
+                    <td>5 / 28</td><td>—</td>
+                    <td>
+                      <div class="spark">
+                        <div class="spark-bar spark-pos" style="height:10px"></div>
+                        <div class="spark-bar spark-neg" style="height:14px"></div>
+                        <div class="spark-bar spark-neg" style="height:8px"></div>
+                        <div class="spark-bar spark-pos" style="height:12px"></div>
+                        <div class="spark-bar spark-neg" style="height:10px"></div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr onclick="showDetail('Fischer, Klaus','Spüler','#D97706')">
+                    <td><div class="emp-info"><div class="av" style="background:#D97706">FK</div>Fischer, Klaus</div></td>
+                    <td>700 h</td><td>740 h</td>
+                    <td><span class="diff-pos">+40 h</span></td>
+                    <td>0 / 20</td><td>7 Tage</td>
+                    <td>
+                      <div class="spark">
+                        <div class="spark-bar spark-pos" style="height:14px"></div>
+                        <div class="spark-bar spark-pos" style="height:16px"></div>
+                        <div class="spark-bar spark-neg" style="height:6px"></div>
+                        <div class="spark-bar spark-pos" style="height:18px"></div>
+                        <div class="spark-bar spark-pos" style="height:14px"></div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Service -->
+            <div class="dept-section">
+              <div class="dept-section-head">
+                <span style="font-size:16px">🍽</span>
+                <span class="ds-name">Service</span>
+                <div class="ds-stats">
+                  <span>Soll <strong>2.450 h</strong></span>
+                  <span>Ist <strong>2.432 h</strong></span>
+                  <span style="color:#DC2626">Δ <strong>−18 h</strong></span>
+                </div>
+              </div>
+              <table class="c-table">
+                <thead>
+                  <tr>
+                    <th style="min-width:180px">Mitarbeiter</th>
+                    <th>Soll YTD</th><th>Ist YTD</th><th>Δ gesamt</th><th>Urlaub</th><th>Krank</th><th>Verlauf Jan–Mai</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr onclick="showDetail('Müller, Lisa','Serviceleitung','#7C3AED')">
+                    <td><div class="emp-info"><div class="av" style="background:#7C3AED">ML</div>Müller, Lisa</div></td>
+                    <td>910 h</td><td>918 h</td>
+                    <td><span class="diff-pos">+8 h</span></td>
+                    <td>2 / 28</td><td>—</td>
+                    <td>
+                      <div class="spark">
+                        <div class="spark-bar spark-pos" style="height:10px"></div>
+                        <div class="spark-bar spark-pos" style="height:14px"></div>
+                        <div class="spark-bar spark-pos" style="height:18px"></div>
+                        <div class="spark-bar spark-neg" style="height:8px"></div>
+                        <div class="spark-bar spark-pos" style="height:16px"></div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr onclick="showDetail('Weber, Tom','Kellner','#0891B2')">
+                    <td><div class="emp-info"><div class="av" style="background:#0891B2">WT</div>Weber, Tom</div></td>
+                    <td>840 h</td><td>827 h</td>
+                    <td><span class="diff-neg">−13 h</span></td>
+                    <td>7 / 28</td><td>—</td>
+                    <td>
+                      <div class="spark">
+                        <div class="spark-bar spark-neg" style="height:14px"></div>
+                        <div class="spark-bar spark-neg" style="height:10px"></div>
+                        <div class="spark-bar spark-neg" style="height:16px"></div>
+                        <div class="spark-bar spark-neg" style="height:8px"></div>
+                        <div class="spark-bar spark-neg" style="height:12px"></div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr onclick="showDetail('Braun, Sarah','Kellnerin','#DC2626')">
+                    <td><div class="emp-info"><div class="av" style="background:#DC2626">BS</div>Braun, Sarah</div></td>
+                    <td>700 h</td><td>687 h</td>
+                    <td><span class="diff-neg">−13 h</span></td>
+                    <td>1 / 20</td><td>9 Tage</td>
+                    <td>
+                      <div class="spark">
+                        <div class="spark-bar spark-pos" style="height:6px"></div>
+                        <div class="spark-bar spark-neg" style="height:16px"></div>
+                        <div class="spark-bar spark-neg" style="height:12px"></div>
+                        <div class="spark-bar spark-neg" style="height:8px"></div>
+                        <div class="spark-bar spark-neg" style="height:10px"></div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Bar -->
+            <div class="dept-section">
+              <div class="dept-section-head">
+                <span style="font-size:16px">🍸</span>
+                <span class="ds-name">Bar</span>
+                <div class="ds-stats">
+                  <span>Soll <strong>1.400 h</strong></span>
+                  <span>Ist <strong>1.435 h</strong></span>
+                  <span style="color:#059669">Δ <strong>+35 h</strong></span>
+                </div>
+              </div>
+              <table class="c-table">
+                <thead>
+                  <tr>
+                    <th style="min-width:180px">Mitarbeiter</th>
+                    <th>Soll YTD</th><th>Ist YTD</th><th>Δ gesamt</th><th>Urlaub</th><th>Krank</th><th>Verlauf Jan–Mai</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr onclick="showDetail('Klein, Jonas','Barkeeper','#059669')">
+                    <td><div class="emp-info"><div class="av" style="background:#059669">KJ</div>Klein, Jonas</div></td>
+                    <td>700 h</td><td>707 h</td>
+                    <td><span class="diff-pos">+7 h</span></td>
+                    <td>0 / 20</td><td>—</td>
+                    <td>
+                      <div class="spark">
+                        <div class="spark-bar spark-pos" style="height:12px"></div>
+                        <div class="spark-bar spark-pos" style="height:10px"></div>
+                        <div class="spark-bar spark-pos" style="height:14px"></div>
+                        <div class="spark-bar spark-pos" style="height:16px"></div>
+                        <div class="spark-bar spark-pos" style="height:12px"></div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr onclick="showDetail('Hoffmann, Maria','Barkeeper','#9D174D')">
+                    <td><div class="emp-info"><div class="av" style="background:#9D174D">HM</div>Hoffmann, Maria</div></td>
+                    <td>700 h</td><td>728 h</td>
+                    <td><span class="diff-pos">+28 h</span></td>
+                    <td>0 / 20</td><td>—</td>
+                    <td>
+                      <div class="spark">
+                        <div class="spark-bar spark-pos" style="height:16px"></div>
+                        <div class="spark-bar spark-pos" style="height:18px"></div>
+                        <div class="spark-bar spark-pos" style="height:14px"></div>
+                        <div class="spark-bar spark-pos" style="height:20px"></div>
+                        <div class="spark-bar spark-pos" style="height:16px"></div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Detail panel -->
+          <div class="c-right">
+            <div class="detail-panel" id="detail-panel">
+              <div class="dp-header">
+                <div class="av-lg" id="dp-av" style="background:#4F46E5">MM</div>
+                <div>
+                  <div class="dp-name" id="dp-name">Mustermann, Max</div>
+                  <div class="dp-role" id="dp-role">Küchenchef</div>
+                </div>
+              </div>
+
+              <div class="dp-section">
+                <div class="dp-sec-title">Mai 2026</div>
+                <div class="dp-row"><span class="dp-row-label">Soll-Stunden</span><span class="dp-row-val">182 h</span></div>
+                <div class="dp-row"><span class="dp-row-label">Ist-Stunden</span><span class="dp-row-val">196 h</span></div>
+                <div class="dp-row"><span class="dp-row-label">Differenz</span><span class="dp-row-val pos">+14 h</span></div>
+                <div class="dp-row"><span class="dp-row-label">Arbeitstage</span><span class="dp-row-val">20</span></div>
+                <div class="dp-row"><span class="dp-row-label">Urlaub</span><span class="dp-row-val">3 Tage</span></div>
+                <div class="dp-row"><span class="dp-row-label">Krank</span><span class="dp-row-val">—</span></div>
+              </div>
+
+              <div class="dp-section">
+                <div class="dp-sec-title">Jahressaldo</div>
+                <div class="dp-row"><span class="dp-row-label">Soll YTD</span><span class="dp-row-val">910 h</span></div>
+                <div class="dp-row"><span class="dp-row-label">Ist YTD</span><span class="dp-row-val">924 h</span></div>
+                <div class="dp-row"><span class="dp-row-label">Überstunden kum.</span><span class="dp-row-val pos">+22 h</span></div>
+                <div class="dp-row"><span class="dp-row-label">Urlaub Rest</span><span class="dp-row-val">25 Tage</span></div>
+              </div>
+
+              <div class="dp-section">
+                <div class="dp-sec-title">Monatsverlauf (Δ Stunden)</div>
+                <div class="year-chart">
+                  <div class="yc-bars" id="yc-bars">
+                    <div class="yc-bar-wrap"><div class="yc-bar pos" style="height:16px"></div></div>
+                    <div class="yc-bar-wrap"><div class="yc-bar pos" style="height:24px"></div></div>
+                    <div class="yc-bar-wrap"><div class="yc-bar neg" style="height:10px"></div></div>
+                    <div class="yc-bar-wrap"><div class="yc-bar pos" style="height:18px"></div></div>
+                    <div class="yc-bar-wrap"><div class="yc-bar cur" style="height:28px"></div></div>
+                  </div>
+                  <div class="yc-labels" id="yc-labels">
+                    <div class="yc-month" style="flex:1">Jan</div>
+                    <div class="yc-month" style="flex:1">Feb</div>
+                    <div class="yc-month" style="flex:1">Mär</div>
+                    <div class="yc-month" style="flex:1">Apr</div>
+                    <div class="yc-month" style="flex:1;color:#4F46E5;font-weight:700">Mai</div>
+                  </div>
+                </div>
+              </div>
+
+              <button class="btn btn-primary" style="width:100%;margin-top:4px;justify-content:center">📄 PDF exportieren</button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /screen-c -->
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+function showVar(v, el) {
+  document.querySelectorAll('.var-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('show'));
+  document.getElementById('screen-'+v).classList.add('show');
+}
+
+function filterDept(e, val) {
+  document.querySelectorAll('.dept-tab').forEach(t => t.classList.remove('active'));
+  e.currentTarget.classList.add('active');
+  document.querySelectorAll('.emp-card').forEach(card => {
+    card.style.display = (val==='all' || card.dataset.dept===val) ? '' : 'none';
+  });
+}
+
+function showDetail(name, role, color) {
+  const initials = (name.split(',')[1].trim()[0] + name.split(',')[0][0]).toUpperCase();
+  document.getElementById('dp-av').textContent = initials;
+  document.getElementById('dp-av').style.background = color;
+  document.getElementById('dp-name').textContent = name;
+  document.getElementById('dp-role').textContent = role;
+  document.querySelectorAll('.c-table tr').forEach(r => r.style.background = '');
+  event.currentTarget.style.background = '#F5F3FF';
+}
+</script>
+</body>
+</html>
