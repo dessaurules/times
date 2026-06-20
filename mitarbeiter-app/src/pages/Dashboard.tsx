@@ -319,7 +319,6 @@ export default function Dashboard() {
             taken={takenDays}
             planned={plannedDays}
             entitlement={entitlement}
-            monthDeltaMins={actualMonthMins - targetMins}
           />
         </div>
       </div>
