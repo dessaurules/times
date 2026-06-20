@@ -264,8 +264,22 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {/* Stempeluhr */}
+      {/* Schnellübersicht — Karten oben, nebeneinander */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <MonatsstundenGauge
+          actualMins={actualMonthMins}
+          targetMins={targetMins}
+          month={viewMonth}
+        />
+        <UrlaubsCard
+          taken={takenDays}
+          planned={plannedDays}
+          entitlement={entitlement}
+        />
+      </div>
+
+      {/* Stempeluhr — volle Breite */}
+      <div className="mb-6">
         <div
           className={cn(
             'rounded-2xl p-6 transition-colors duration-75',
@@ -305,20 +319,6 @@ export default function Dashboard() {
             onSwipeComplete={() => { handleStempel(); setStampProgress(0); }}
             onSwipeFailed={() => setStampProgress(0)}
             onProgress={(p) => setStampProgress(p)}
-          />
-        </div>
-
-        {/* Monatsstunden + Urlaub */}
-        <div className="space-y-3">
-          <MonatsstundenGauge
-            actualMins={actualMonthMins}
-            targetMins={targetMins}
-            month={viewMonth}
-          />
-          <UrlaubsCard
-            taken={takenDays}
-            planned={plannedDays}
-            entitlement={entitlement}
           />
         </div>
       </div>
