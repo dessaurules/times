@@ -28,12 +28,13 @@ describe('MonatsstundenGauge (mini-ring variant B)', () => {
     expect(screen.getByText(/16:00/)).toBeInTheDocument()
   })
 
-  it('renders an SVG gauge element', () => {
+  it('renders an SVG gauge element (3/4 circle)', () => {
     const { container } = render(<MonatsstundenGauge {...baseProps} />)
-    // The Lucide icon SVG has width=11; gauge SVG has width=64
+    // The gauge SVG has width=64, height=56 (3/4 circle)
     const gaugeSvg = container.querySelector('svg[width="64"]')
     expect(gaugeSvg).toBeInTheDocument()
-    expect(gaugeSvg).toHaveAttribute('height', '36')
+    expect(gaugeSvg).toHaveAttribute('height', '56')
+    expect(gaugeSvg).toHaveAttribute('viewBox', '0 0 88 64')
   })
 
   it('renders without onPrev/onNext props (compact interface)', () => {

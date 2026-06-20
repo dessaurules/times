@@ -1,7 +1,6 @@
 // mitarbeiter-app/src/components/UrlaubsCard.tsx
 
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface Props {
   taken: number       // genehmigte Urlaubstage
@@ -75,13 +74,8 @@ export default function UrlaubsCard({ taken, planned, entitlement }: Props) {
       {/* Header + Zahlen rechts */}
       <div className="flex-1">
         {/* Header oben */}
-        <div className="flex items-center justify-between mb-1.5">
+        <div className="mb-1.5">
           <span className="text-xs font-semibold text-[#374151]">Urlaub {year}</span>
-          {mode === 'available' ? (
-            <ChevronRight size={11} className="text-[#9CA3AF]" />
-          ) : (
-            <ChevronLeft size={11} className="text-[#9CA3AF]" />
-          )}
         </div>
         {/* Zahlen unten */}
         <div className="flex flex-col gap-0.5">

@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { X } from 'lucide-react'
 
 interface Props {
   actualMins: number
@@ -20,7 +19,7 @@ function formatHM(mins: number) {
 }
 
 const R_MINI = 32
-const HALF_CIRC = Math.PI * R_MINI
+const THREE_QUARTER_CIRC = Math.PI * 1.5 * R_MINI
 
 export default function MonatsstundenGauge({
   actualMins, targetMins, month,
@@ -35,7 +34,7 @@ export default function MonatsstundenGauge({
     ? `KW ${calendarWeek}`
     : format(month, 'MMMM yyyy', { locale: de })
   const pct = displayTarget > 0 ? Math.min(displayActual / displayTarget, 1) : 0
-  const dashOffset = (1 - pct) * HALF_CIRC
+  const dashOffset = (1 - pct) * THREE_QUARTER_CIRC
 
   return (
     <div
@@ -44,7 +43,7 @@ export default function MonatsstundenGauge({
     >
       {/* Body: Gauge links, Header + Zahlen rechts */}
       <div className="flex items-start gap-3">
-        <svg width={64} height={36} viewBox="0 0 88 52" style={{ overflow: 'visible', flexShrink: 0 }}>
+        <svg width={64} height={56} viewBox="0 0 88 64" style={{ overflow: 'visible', flexShrink: 0 }}>
           <defs>
             <linearGradient id="gaugeGradStunden" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#4F46E5" />
@@ -52,24 +51,23 @@ export default function MonatsstundenGauge({
             </linearGradient>
           </defs>
           <path
-            d={`M ${44 - R_MINI} 44 A ${R_MINI} ${R_MINI} 0 0 1 ${44 + R_MINI} 44`}
+            d="M 76 32 A 32 32 0 1 0 12 32"
             fill="none" stroke="#E5E7EB" strokeWidth="8" strokeLinecap="round"
           />
           <path
-            d={`M ${44 - R_MINI} 44 A ${R_MINI} ${R_MINI} 0 0 1 ${44 + R_MINI} 44`}
+            d="M 76 32 A 32 32 0 1 0 12 32"
             fill="none" stroke="url(#gaugeGradStunden)" strokeWidth="8" strokeLinecap="round"
-            strokeDasharray={HALF_CIRC}
+            strokeDasharray={THREE_QUARTER_CIRC}
             strokeDashoffset={dashOffset}
           />
         </svg>
 
         <div className="flex-1 relative">
-          {/* Header mit Toggle-Icon */}
-          <div className="flex items-center justify-between mb-1.5">
+          {/* Header */}
+          <div className="mb-1.5">
             <span className="text-xs font-semibold text-[#374151] capitalize">
               {headerLabel}
             </span>
-            <X size={11} className="text-[#9CA3AF]" />
           </div>
 
           {/* Stunden */}
