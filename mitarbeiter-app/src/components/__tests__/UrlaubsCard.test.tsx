@@ -1,18 +1,18 @@
 import React from 'react'
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import UrlaubsCard from '../UrlaubsCard'
 
-describe('UrlaubsCard (red/green ring)', () => {
-  it('renders SVG gauge with correct dimensions', () => {
+describe('UrlaubsCard (red/green ring with toggle)', () => {
+  it('renders SVG gauge with correct dimensions (3/4 circle)', () => {
     const { container } = render(
       <UrlaubsCard taken={10} planned={3} entitlement={25} />
     )
     const svg = container.querySelector('svg')
     expect(svg).toBeInTheDocument()
     expect(svg).toHaveAttribute('width', '64')
-    expect(svg).toHaveAttribute('height', '36')
-    expect(svg).toHaveAttribute('viewBox', '0 0 88 52')
+    expect(svg).toHaveAttribute('height', '56')
+    expect(svg).toHaveAttribute('viewBox', '0 0 88 64')
   })
 
   it('shows open days count', () => {
@@ -21,16 +21,15 @@ describe('UrlaubsCard (red/green ring)', () => {
     expect(screen.getByText('12')).toBeInTheDocument()
   })
 
-  it('shows "Tage offen" label', () => {
+  it('shows "verfügbar" label in default mode', () => {
     render(<UrlaubsCard taken={10} planned={3} entitlement={25} />)
-    expect(screen.getByText('Tage offen')).toBeInTheDocument()
+    expect(screen.getByText('verfügbar')).toBeInTheDocument()
   })
 
-  it('shows year header with palm tree emoji', () => {
+  it('shows year header', () => {
     render(<UrlaubsCard taken={10} planned={3} entitlement={25} />)
     const year = new Date().getFullYear()
     expect(screen.getByText(`Urlaub ${year}`)).toBeInTheDocument()
-    expect(screen.getByText('🌴')).toBeInTheDocument()
   })
 
   it('renders red gradient for taken days', () => {
@@ -140,5 +139,45 @@ describe('UrlaubsCard (red/green ring)', () => {
     )
     const oldGradient = container.querySelector('#gaugeGradUrlaub')
     expect(oldGradient).not.toBeInTheDocument()
+  })
+
+  it('shows "verfügbar" in default available mode', () => {
+    render(<UrlaubsCard taken={8} planned={2} entitlement={30} />)
+    expect(screen.getByText('verfügbar')).toBeInTheDocument()
+    expect(screen.getByText('20')).toBeInTheDocument()
+  })
+
+  it('toggles to "genommen" mode on click', async () => {
+    const { container } = render(
+      <UrlaubsCard taken={8} planned={2} entitlement={30} />
+    )
+    const card = container.firstChild as HTMLElement
+    fireEvent.click(card)
+    expect(screen.getByText('genommen')).toBeInTheDocument()
+    expect(screen.getByText('8')).toBeInTheDocument()
+  })
+
+  it('toggles back to "verfügbar" mode on second click', async () => {
+    const { container } = render(
+      <UrlaubsCard taken={8} planned={2} entitlement={30} />
+    )
+    const card = container.firstChild as HTMLElement
+    fireEvent.click(card)
+    fireEvent.click(card)
+    expect(screen.getByText('verfügbar')).toBeInTheDocument()
+    expect(screen.getByText('20')).toBeInTheDocument()
+  })
+
+  it('shows numbers in format "X / Y Tage"', () => {
+    render(<UrlaubsCard taken={8} planned={2} entitlement={30} />)
+    expect(screen.getByText('30 Tage')).toBeInTheDocument()
+  })
+
+  it('is clickable with cursor-pointer styling', () => {
+    const { container } = render(
+      <UrlaubsCard taken={10} planned={3} entitlement={25} />
+    )
+    const card = container.firstChild as HTMLElement
+    expect(card.className).toContain('cursor-pointer')
   })
 })
