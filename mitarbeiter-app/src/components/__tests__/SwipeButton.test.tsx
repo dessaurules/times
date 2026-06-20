@@ -1,5 +1,7 @@
+import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { act } from '@testing-library/react'
 import { SwipeButton } from '../SwipeButton'
 
 describe('SwipeButton', () => {
@@ -108,5 +110,38 @@ describe('SwipeButton', () => {
     const button = container.querySelector('div[role="button"]') as HTMLDivElement
     expect(button).toBeInTheDocument()
     expect(button).toHaveStyle('touch-action: none')
+  })
+
+  it('calls onProgress with fillPercent during pointer move', () => {
+    const onProgress = vi.fn()
+    const { container } = render(
+      <SwipeButton
+        isStamped={false}
+        isLoading={false}
+        onSwipeComplete={vi.fn()}
+        onProgress={onProgress}
+      />
+    )
+
+    const button = container.querySelector('div[role="button"]') as HTMLElement
+
+    // Clear calls from initial render (fillPercent = 0)
+    onProgress.mockClear()
+
+    // Simulate pointer down
+    act(() => {
+      button.dispatchEvent(new PointerEvent('pointerdown', { clientX: 0, pointerId: 1, bubbles: true }))
+    })
+
+    // Simulate pointer move with 100px distance (on 300px button = ~33%)
+    act(() => {
+      button.dispatchEvent(new PointerEvent('pointermove', { clientX: 100, bubbles: true }))
+    })
+
+    // onProgress should have been called with a value > 0
+    expect(onProgress).toHaveBeenCalled()
+    const calls = onProgress.mock.calls
+    const hasNonZeroCall = calls.some(call => call[0] > 0)
+    expect(hasNonZeroCall).toBe(true)
   })
 })
