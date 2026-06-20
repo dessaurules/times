@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { format, differenceInMinutes, parseISO, eachDayOfInterval, isWeekend, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns'
+import { format, differenceInMinutes, parseISO, eachDayOfInterval, isWeekend, startOfMonth, endOfMonth } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { Clock, Plus } from 'lucide-react'
 import { pb } from '../lib/pb'
@@ -81,7 +81,7 @@ export default function Dashboard() {
   const [stampProgress, setStampProgress] = useState(0)
   const [antragDate, setAntragDate] = useState<string | undefined>()
   const [fedState,   setFedState]   = useState('ST')
-  const [viewMonth, setViewMonth] = useState(new Date())
+  const [viewMonth] = useState(new Date())
   const [monthEntries, setMonthEntries] = useState<TimeEntry[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -314,8 +314,6 @@ export default function Dashboard() {
             actualMins={actualMonthMins}
             targetMins={targetMins}
             month={viewMonth}
-            onPrev={() => setViewMonth(m => subMonths(m, 1))}
-            onNext={() => setViewMonth(m => addMonths(m, 1))}
           />
           <UrlaubsCard
             taken={takenDays}
