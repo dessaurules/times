@@ -326,8 +326,8 @@ export default function Dashboard() {
             </span>
           </div>
 
-          <div className="mb-5">
-            <div className={cn('text-3xl font-bold tabular-nums', isStamped ? 'text-white' : 'text-[#111827]')}>
+          <div className="mb-5 text-center">
+            <div className={cn('text-5xl font-bold tabular-nums', isStamped ? 'text-white' : 'text-[#111827]')}>
               {isStamped ? (
                 <>
                   {Math.floor(todayNetMins / 60)}
@@ -336,11 +336,11 @@ export default function Dashboard() {
                 </>
               ) : formatDuration(todayNetMins)}
             </div>
-            <div className={cn('text-sm mt-1', isStamped ? 'text-emerald-100' : 'text-[#6B7280]')}>
-              {isStamped
-                ? `Eingestempelt seit ${format(parseISO(openEntry!.start_time), 'HH:mm')} Uhr`
-                : 'Heute noch nicht eingestempelt'}
-            </div>
+            {isStamped && (
+              <div className={cn('text-sm mt-1', 'text-emerald-100')}>
+                {`Eingestempelt seit ${format(parseISO(openEntry!.start_time), 'HH:mm')} Uhr`}
+              </div>
+            )}
           </div>
 
           <SwipeButton
