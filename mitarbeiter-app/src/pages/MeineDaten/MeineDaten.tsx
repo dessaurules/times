@@ -121,6 +121,8 @@ export default function MeineDaten() {
           <button
             key={id}
             onClick={() => setTab(id)}
+            aria-label={label}
+            aria-current={tab === id ? 'page' : undefined}
             className={cn(
               'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all',
               tab === id
@@ -128,8 +130,8 @@ export default function MeineDaten() {
                 : 'text-[#6B7280] hover:text-[#374151]'
             )}
           >
-            <Icon size={15} />
-            <span className="hidden sm:inline">{label}</span>
+            <Icon size={15} aria-hidden="true" />
+            <span className="hidden sm:inline" aria-hidden="true">{label}</span>
           </button>
         ))}
       </div>
@@ -227,10 +229,11 @@ export default function MeineDaten() {
                           href={getFileUrl(doc)}
                           target="_blank"
                           rel="noopener noreferrer"
+                          aria-label={`${doc.name} öffnen`}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 transition-colors"
                         >
-                          <Download size={12} />
-                          <span className="hidden md:inline">Öffnen</span>
+                          <Download size={12} aria-hidden="true" />
+                          <span className="hidden md:inline" aria-hidden="true">Öffnen</span>
                         </a>
                       )}
                     </div>
