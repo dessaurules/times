@@ -10,6 +10,7 @@ import { useAuthStore } from '../stores/auth'
 import { getHolidayMap } from '../lib/holidays'
 import { cn } from '@/lib/utils'
 import type { PBRecord, Department } from '@shared/types'
+import DienstplanMobileCard, { type DayCardData } from './Dienstplan/DienstplanMobileCard'
 
 interface ShiftPlan extends PBRecord {
   status: 'draft' | 'published'
@@ -22,6 +23,11 @@ interface ShiftEntry extends PBRecord {
   date: string
   start_time: string
   end_time: string
+  start_time2?: string
+  end_time2?: string
+  color: string
+  color2?: string
+  is_free_day?: boolean
   is_open: boolean
   note: string
   expand?: { plan_id?: ShiftPlan; department?: Department }
@@ -79,6 +85,19 @@ export default function Dienstplan() {
     return `${h}:${String(m).padStart(2, '0')} h`
   }
 
+  const dayCardData: DayCardData[] = weekDays.map(day => {
+    const ds = format(day, 'yyyy-MM-dd')
+    return {
+      date:        ds,
+      day,
+      isWeekend:   isWeekend(day),
+      isHoliday:   holidays.has(ds),
+      holidayName: holidays.get(ds),
+      isToday:     isToday(day),
+      entry:       entries.find(e => e.date === ds) ?? null,
+    }
+  })
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -110,8 +129,21 @@ export default function Dienstplan() {
         </button>
       </div>
 
-      {/* Tabelle */}
-      <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+      {/* Mobile Card View */}
+      {loading ? (
+        <div className="md:hidden space-y-2 mb-4">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="h-16 bg-[#F3F4F6] rounded-xl animate-pulse" />
+          ))}
+        </div>
+      ) : (
+        <div className="md:hidden mb-4">
+          <DienstplanMobileCard days={dayCardData} />
+        </div>
+      )}
+
+      {/* Desktop Tabelle */}
+      <div className="hidden md:block overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
         <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden min-w-[400px]">
           <div className="grid grid-cols-[80px_1fr_1fr_1fr_80px] px-4 py-2.5 border-b border-[#E5E7EB] bg-[#F9FAFB]">
             {['Tag', 'Kommt', 'Geht', 'Bereich', 'Std.'].map(h => (
