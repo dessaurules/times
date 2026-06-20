@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { format, differenceInMinutes, parseISO, eachDayOfInterval, isWeekend, startOfMonth, endOfMonth } from 'date-fns'
+import { format, differenceInMinutes, parseISO, eachDayOfInterval, isWeekend, startOfMonth, endOfMonth, startOfWeek, endOfWeek, getISOWeek } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { Clock, Plus } from 'lucide-react'
 import { pb } from '../lib/pb'
@@ -212,6 +212,33 @@ export default function Dashboard() {
     }, 0)
   }, [monthEntries])
 
+  const actualWeekMins = useMemo(() => {
+    const wStart = startOfWeek(now, { weekStartsOn: 1 })
+    const wEnd   = endOfWeek(now, { weekStartsOn: 1 })
+    return entries
+      .filter(e => {
+        const s = parseISO(e.start_time)
+        return s >= wStart && s <= wEnd
+      })
+      .reduce((sum, e) => {
+        const gross = differenceInMinutes(
+          e.end_time ? parseISO(e.end_time) : new Date(),
+          parseISO(e.start_time)
+        )
+        return sum + Math.max(0, gross - (e.break_minutes ?? 0))
+      }, 0)
+  }, [entries, now])
+
+  const targetWeekMins = useMemo(() => {
+    const wStart = startOfWeek(now, { weekStartsOn: 1 })
+    const wEnd   = endOfWeek(now, { weekStartsOn: 1 })
+    const workdays = eachDayOfInterval({ start: wStart, end: wEnd })
+      .filter(d => !isWeekend(d) && !holidays.has(format(d, 'yyyy-MM-dd')))
+    return Math.round((emp?.weekly_hours ?? 0) / 5 * workdays.length * 60)
+  }, [now, emp, holidays])
+
+  const calendarWeek = getISOWeek(now)
+
   const plannedDays = useMemo(() => absences
     .filter(a => VACATION_TYPES.includes(a.type) && a.status === 'pending')
     .reduce((sum, a) => {
@@ -270,6 +297,9 @@ export default function Dashboard() {
           actualMins={actualMonthMins}
           targetMins={targetMins}
           month={viewMonth}
+          actualWeekMins={actualWeekMins}
+          targetWeekMins={targetWeekMins}
+          calendarWeek={calendarWeek}
         />
         <UrlaubsCard
           taken={takenDays}
