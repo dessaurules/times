@@ -78,6 +78,7 @@ export default function Dashboard() {
   const [stamping, setStamping] = useState(false)
   const [error,   setError]   = useState<string | null>(null)
   const [showAntrag, setShowAntrag] = useState(false)
+  const [stampProgress, setStampProgress] = useState(0)
   const [antragDate, setAntragDate] = useState<string | undefined>()
   const [fedState,   setFedState]   = useState('ST')
   const [viewMonth, setViewMonth] = useState(new Date())
@@ -234,6 +235,19 @@ export default function Dashboard() {
   const greeting = now.getHours() < 12 ? 'Guten Morgen' : now.getHours() < 18 ? 'Guten Tag' : 'Guten Abend'
   const dayLabel  = format(now, 'EEEE, dd. MMMM yyyy', { locale: de })
 
+  function getStampCardStyle(): React.CSSProperties {
+    if (isStamped || stampProgress === 0) return {}
+    const p = stampProgress / 100
+    return {
+      background: `linear-gradient(135deg,
+        rgba(16,185,129,${p * 0.12}) 0%,
+        rgba(5,150,105,${p * 0.08}) 100%),
+        #ffffff`,
+      borderColor: `rgba(16,185,129,${0.1 + p * 0.25})`,
+      boxShadow: `0 ${Math.round(p * 4)}px ${Math.round(p * 16)}px rgba(16,185,129,${p * 0.12})`,
+    }
+  }
+
   return (
     <div>
       {/* Header */}
@@ -252,12 +266,15 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* Stempeluhr */}
-        <div className={cn(
-          'rounded-2xl p-6 transition-all',
-          isStamped
-            ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200'
-            : 'bg-white border border-[#E5E7EB] shadow-sm'
-        )}>
+        <div
+          className={cn(
+            'rounded-2xl p-6 transition-colors duration-75',
+            isStamped
+              ? 'bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200'
+              : 'bg-white border border-[#E5E7EB] shadow-sm'
+          )}
+          style={getStampCardStyle()}
+        >
           <div className="flex items-center gap-2 mb-4">
             <Clock size={16} className={isStamped ? 'text-emerald-100' : 'text-[#6B7280]'} />
             <span className={cn('text-sm font-medium', isStamped ? 'text-emerald-100' : 'text-[#6B7280]')}>
@@ -286,6 +303,8 @@ export default function Dashboard() {
             isStamped={isStamped}
             isLoading={stamping}
             onSwipeComplete={handleStempel}
+            onSwipeFailed={() => setStampProgress(0)}
+            onProgress={(p) => setStampProgress(p)}
           />
         </div>
 
