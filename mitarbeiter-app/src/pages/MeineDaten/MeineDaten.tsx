@@ -266,7 +266,7 @@ export default function MeineDaten() {
                   const isAvail  = avail?.available ?? false
 
                   return (
-                    <div key={day} className="flex items-center gap-3 px-5 py-3.5">
+                    <div key={day} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3.5">
                       {/* Wochentag */}
                       <div className="w-24 shrink-0 text-sm font-medium text-[#374151]">
                         {WEEKDAY_LABELS[day]}
@@ -291,21 +291,21 @@ export default function MeineDaten() {
 
                       {/* Zeitraum */}
                       {isAvail && avail ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
                           <input
                             type="time"
                             value={avail.from_time}
                             onChange={e => handleAvailTimeChange(day, 'from_time', e.target.value)}
                             disabled={saving}
-                            className="h-8 px-2 rounded-lg border border-[#E5E7EB] text-sm text-[#111827] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-50"
+                            className="h-8 px-2 rounded-lg border border-[#E5E7EB] text-sm text-[#111827] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-50 min-w-[80px] flex-1"
                           />
-                          <span className="text-[#9CA3AF] text-sm">–</span>
+                          <span className="text-[#9CA3AF] text-sm shrink-0">–</span>
                           <input
                             type="time"
                             value={avail.to_time}
                             onChange={e => handleAvailTimeChange(day, 'to_time', e.target.value)}
                             disabled={saving}
-                            className="h-8 px-2 rounded-lg border border-[#E5E7EB] text-sm text-[#111827] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-50"
+                            className="h-8 px-2 rounded-lg border border-[#E5E7EB] text-sm text-[#111827] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-50 min-w-[80px] flex-1"
                           />
                         </div>
                       ) : (
