@@ -309,7 +309,7 @@ export default function Dashboard() {
 
       {/* Meine Anträge */}
       <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-[#E5E7EB] flex items-center justify-between">
+        <div className="px-5 py-4 border-b border-[#E5E7EB] flex flex-wrap items-center justify-between gap-y-2">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold text-[#111827]">Meine Anträge</h2>
             {pendingCount > 0 && (
