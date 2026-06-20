@@ -1,3 +1,4 @@
+import { useRef, useCallback } from 'react'
 import { useSwipeGesture } from '@/hooks/useSwipeGesture'
 import { LogIn, LogOut, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -15,12 +16,18 @@ export function SwipeButton({
   onSwipeComplete,
   onSwipeFailed,
 }: SwipeButtonProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const getWidth = useCallback(() => {
+    return containerRef.current?.getBoundingClientRect().width ?? 280
+  }, [])
+
   const { fillPercent, pointerHandlers, reset } = useSwipeGesture({
     onSwipeComplete,
     onSwipeFailed,
+    getWidth,
   })
 
-  const buttonWidth = 280
   const thumbPosition = Math.max(0, fillPercent - 20)
 
   const isDisabled = isLoading
@@ -35,11 +42,13 @@ export function SwipeButton({
 
   return (
     <div
+      ref={containerRef}
       role="button"
       tabIndex={isDisabled ? -1 : 0}
       style={{
         touchAction: 'none',
-        width: `${buttonWidth}px`,
+        width: '100%',
+        maxWidth: '280px',
         height: '60px',
         cursor: isDisabled ? 'not-allowed' : 'grab',
         '--fill-percent': `${fillPercent}%`,

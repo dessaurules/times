@@ -1,12 +1,12 @@
 import { useState, useRef, useCallback } from 'react'
 
-const BUTTON_WIDTH = 280
 const TRIGGER_THRESHOLD = 200
 const MAX_VELOCITY_FOR_CALC = 1500
 
 interface UseSwipeGestureOptions {
   onSwipeComplete?: () => void
   onSwipeFailed?: () => void
+  getWidth?: () => number
 }
 
 interface PointerHandlers {
@@ -64,9 +64,10 @@ export function useSwipeGesture(options: UseSwipeGestureOptions = {}) {
     const distance = e.clientX - pointerStartX.current
     if (distance < 0) return
 
-    const percent = Math.min((distance / BUTTON_WIDTH) * 100, 100)
+    const width = options.getWidth?.() ?? 280
+    const percent = Math.min((distance / width) * 100, 100)
     setFillPercent(percent)
-  }, [])
+  }, [options])
 
   const onPointerUp = useCallback(
     (e: PointerEvent) => {
