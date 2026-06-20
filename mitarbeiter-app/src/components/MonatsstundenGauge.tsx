@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { ArrowLeftRight } from 'lucide-react'
+import { X } from 'lucide-react'
 
 interface Props {
   actualMins: number
@@ -69,7 +69,7 @@ export default function MonatsstundenGauge({
             <span className="text-xs font-semibold text-[#374151] capitalize">
               {headerLabel}
             </span>
-            <ArrowLeftRight size={11} className="text-[#9CA3AF]" />
+            <X size={11} className="text-[#9CA3AF]" />
           </div>
 
           {/* Stunden */}
