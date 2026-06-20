@@ -42,16 +42,8 @@ export default function MonatsstundenGauge({
       className="rounded-xl bg-white border border-[#E5E7EB] shadow-sm p-3 cursor-pointer select-none active:border-indigo-300"
       onClick={() => setMode(m => m === 'month' ? 'week' : 'month')}
     >
-      {/* Header */}
-      <div className="flex items-center justify-center mb-3 relative">
-        <span className="text-xs font-semibold text-[#374151] capitalize">
-          {headerLabel}
-        </span>
-        <ArrowLeftRight size={11} className="text-[#9CA3AF] absolute right-0" />
-      </div>
-
-      {/* Body: Gauge links, Zahlen rechts */}
-      <div className="flex items-center gap-3">
+      {/* Body: Gauge links, Header + Zahlen rechts */}
+      <div className="flex items-start gap-3">
         <svg width={64} height={36} viewBox="0 0 88 52" style={{ overflow: 'visible', flexShrink: 0 }}>
           <defs>
             <linearGradient id="gaugeGradStunden" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -71,7 +63,16 @@ export default function MonatsstundenGauge({
           />
         </svg>
 
-        <div>
+        <div className="flex-1 relative">
+          {/* Header mit Toggle-Icon */}
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs font-semibold text-[#374151] capitalize">
+              {headerLabel}
+            </span>
+            <ArrowLeftRight size={11} className="text-[#9CA3AF]" />
+          </div>
+
+          {/* Stunden */}
           <div className="flex items-center gap-1">
             <div className="text-sm font-bold text-[#111827] tabular-nums">{formatHM(displayActual)}</div>
             <span className="text-sm font-bold text-[#111827]">/</span>
