@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useSwipeGesture } from '../useSwipeGesture'
 
@@ -31,7 +31,7 @@ describe('useSwipeGesture', () => {
         result.current.pointerHandlers.onPointerDown(mockEvent)
       })
 
-      expect(result.current.isAnimating).toBe(true)
+      expect(result.current.isSnapBack).toBe(false)
     })
   })
 
@@ -116,8 +116,11 @@ describe('useSwipeGesture', () => {
       expect(onSuccess).toHaveBeenCalled()
     })
 
-    it('should not trigger on incomplete swipe (~150px)', () => {
+    it('should not trigger on incomplete swipe (~100px)', () => {
       const onSuccess = vi.fn()
+      let currentTime = 1000
+      vi.spyOn(Date, 'now').mockImplementation(() => currentTime)
+
       const { result } = renderHook(() =>
         useSwipeGesture({ onSwipeComplete: onSuccess })
       )
@@ -130,8 +133,11 @@ describe('useSwipeGesture', () => {
         result.current.pointerHandlers.onPointerDown(downEvent)
       })
 
+      // Advance time by 1000ms to simulate slow swipe (velocity = 100px/s, too slow to trigger at 100px)
+      currentTime += 1000
+
       const moveEvent = new PointerEvent('pointermove', {
-        clientX: 150,
+        clientX: 100,
         pointerId: 1,
       })
       act(() => {
@@ -139,7 +145,7 @@ describe('useSwipeGesture', () => {
       })
 
       const upEvent = new PointerEvent('pointerup', {
-        clientX: 150,
+        clientX: 100,
         pointerId: 1,
       })
       act(() => {
@@ -280,7 +286,37 @@ describe('useSwipeGesture', () => {
       })
 
       expect(result.current.fillPercent).toBe(0)
-      expect(result.current.isAnimating).toBe(false)
+      expect(result.current.isSnapBack).toBe(false)
+    })
+  })
+
+  describe('Snap-back animation signal', () => {
+    it('should set isSnapBack to true after failed swipe, then false after reset', () => {
+      const { result } = renderHook(() => useSwipeGesture({ getWidth: () => 300 }))
+
+      act(() => {
+        result.current.pointerHandlers.onPointerDown(
+          { clientX: 0, pointerId: 1 } as PointerEvent
+        )
+      })
+      act(() => {
+        result.current.pointerHandlers.onPointerMove(
+          { clientX: 50 } as PointerEvent  // 50px von 300 = 16% — kein Trigger
+        )
+      })
+      act(() => {
+        result.current.pointerHandlers.onPointerUp(
+          { clientX: 50 } as PointerEvent
+        )
+      })
+
+      expect(result.current.isSnapBack).toBe(true)
+
+      act(() => {
+        result.current.reset()
+      })
+
+      expect(result.current.isSnapBack).toBe(false)
     })
   })
 })

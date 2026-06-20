@@ -17,7 +17,7 @@ interface PointerHandlers {
 
 export function useSwipeGesture(options: UseSwipeGestureOptions = {}) {
   const [fillPercent, setFillPercent] = useState(0)
-  const [isAnimating, setIsAnimating] = useState(false)
+  const [isSnapBack, setIsSnapBack] = useState(false)
 
   const pointerStartX = useRef<number | null>(null)
   const pointerStartTime = useRef<number | null>(null)
@@ -54,7 +54,7 @@ export function useSwipeGesture(options: UseSwipeGestureOptions = {}) {
     pointerStartX.current = e.clientX
     pointerStartTime.current = Date.now()
     isTracking.current = true
-    setIsAnimating(true)
+    setIsSnapBack(false)
     setFillPercent(0)
   }, [])
 
@@ -83,12 +83,12 @@ export function useSwipeGesture(options: UseSwipeGestureOptions = {}) {
 
       if (distance >= 0 && shouldTrigger(distance, velocity)) {
         setFillPercent(100)
-        setIsAnimating(false)
+        setIsSnapBack(false)
         vibrate(15)
         options.onSwipeComplete?.()
       } else {
+        setIsSnapBack(true)
         setFillPercent(0)
-        setIsAnimating(false)
         options.onSwipeFailed?.()
       }
 
@@ -100,7 +100,7 @@ export function useSwipeGesture(options: UseSwipeGestureOptions = {}) {
 
   const reset = useCallback(() => {
     setFillPercent(0)
-    setIsAnimating(false)
+    setIsSnapBack(false)
     isTracking.current = false
     pointerStartX.current = null
     pointerStartTime.current = null
@@ -114,7 +114,7 @@ export function useSwipeGesture(options: UseSwipeGestureOptions = {}) {
 
   return {
     fillPercent,
-    isAnimating,
+    isSnapBack,
     pointerHandlers,
     reset,
   }
