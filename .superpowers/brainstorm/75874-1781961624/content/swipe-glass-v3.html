@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwipeButton — Glassmorphism v3</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Heller App-Hintergrund wie die echte Mitarbeiter-App */
+  background: #F3F4F6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 20px;
+  color: #111827;
+}
+
+h1 {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #6B7280;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.subtitle {
+  font-size: 13px;
+  color: #9CA3AF;
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+/* ─── Handy-Rahmen (hell, wie echtes iPhone) ──── */
+.phone-frame {
+  width: 100%;
+  max-width: 390px;
+  background: #F3F4F6;
+  border-radius: 44px;
+  border: 8px solid #E5E7EB;
+  box-shadow:
+    0 0 0 1px #D1D5DB,
+    0 30px 80px rgba(0,0,0,0.18),
+    inset 0 0 0 1px rgba(255,255,255,0.8);
+  overflow: hidden;
+  padding: 20px 0 32px;
+}
+
+/* ─── Status-Bar ─────────────────────────────── */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 28px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* ─── App-Header ──────────────────────────────── */
+.app-header {
+  padding: 8px 20px 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.app-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.4px;
+}
+.app-bell {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* ─── Content-Bereich ─────────────────────────── */
+.scroll-content {
+  padding: 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ─── Mini-Kacheln ────────────────────────────── */
+.mini-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.mini-card {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.mc-label {
+  font-size: 10px; color: #9CA3AF;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.mc-value {
+  font-size: 24px; font-weight: 800;
+  color: #111827; letter-spacing: -0.5px;
+}
+.mc-sub {
+  font-size: 11px; color: #9CA3AF;
+  margin-top: 2px;
+}
+
+/* ─── Stempeluhr-Widget ──────────────────────── */
+/*
+  Das Glas-Widget sitzt auf dem hellgrauen Hintergrund.
+  Backdrop-blur erzeugt den Frosted-Glass-Effekt.
+  Beim Swipen wechselt die Farbe live von Indigo-Glas zu Grün-Glas.
+*/
+.stamp-widget {
+  position: relative;
+  border-radius: 24px;
+  padding: 18px;
+  overflow: hidden;
+
+  /* Frosted Glass Basis — Indigo-Tönung */
+  background: rgba(238, 242, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  box-shadow:
+    0 4px 24px rgba(79, 70, 229, 0.10),
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    inset 0 -1px 0 rgba(99,102,241,0.08);
+
+  transition:
+    background 0.5s ease,
+    border-color 0.5s ease,
+    box-shadow 0.5s ease;
+}
+
+/* Hintergrund-Blob oben rechts (indigo, wird grün) */
+.widget-blob {
+  position: absolute;
+  top: -30px; right: -20px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.12);
+  filter: blur(24px);
+  pointer-events: none;
+  transition: background 0.5s ease;
+}
+
+/* Glow-Overlay für Grün-Transition */
+.widget-green-overlay {
+  position: absolute; inset: 0;
+  border-radius: 24px;
+  background: rgba(240, 253, 244, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  opacity: 0;
+  pointer-events: none;
+  transition: none;
+}
+
+/* Widget-Inhalt */
+.widget-top {
+  position: relative; z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.widget-icon-wrap {
+  display: flex; align-items: center; gap: 10px;
+}
+.widget-icon {
+  width: 38px; height: 38px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.15);
+  transition: background 0.4s, border-color 0.4s;
+}
+.widget-title {
+  font-size: 14px; font-weight: 700; color: #1E1B4B;
+  transition: color 0.4s;
+}
+.widget-sub {
+  font-size: 11px; color: #6B7280;
+  margin-top: 2px;
+  transition: color 0.4s;
+}
+.widget-badge {
+  font-size: 11px; font-weight: 600;
+  color: #4F46E5;
+  background: rgba(99,102,241,0.1);
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 8px;
+  padding: 4px 9px;
+  transition: all 0.4s;
+}
+
+/* Divider */
+.widget-divider {
+  position: relative; z-index: 2;
+  height: 1px;
+  background: rgba(99,102,241,0.1);
+  margin: 0 -2px 14px;
+  transition: background 0.4s;
+}
+
+/* ─── SwipeButton ─────────────────────────────── */
+.swipe-btn {
+  position: relative; z-index: 2;
+  width: 100%;
+  height: 56px;
+  border-radius: 15px;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+
+  /* Glas-Track: halbtransparent weiss */
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(99,102,241,0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.8),
+    0 2px 8px rgba(99,102,241,0.08);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.swipe-btn:active { cursor: grabbing; }
+
+/* Fill — grüner Schimmer wächst von links */
+.swipe-fill {
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg,
+    rgba(16,185,129,0.2) 0%,
+    rgba(52,211,153,0.35) 100%
+  );
+  transform-origin: left;
+  transform: scaleX(0);
+  border-radius: 15px;
+  pointer-events: none;
+}
+
+/* Glanz-Linie oben (bleibt immer sichtbar, wird grüner) */
+.swipe-shine {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(99,102,241,0.4) 0%,
+    rgba(16,185,129,0.4) 100%
+  );
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Hint-Chevrons rechts */
+.swipe-hints {
+  position: absolute; right: 14px; top: 50%;
+  transform: translateY(-50%);
+  display: flex; gap: 3px;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.hint-arrow {
+  width: 6px; height: 6px;
+  border-right: 1.5px solid rgba(99,102,241,0.35);
+  border-top: 1.5px solid rgba(99,102,241,0.35);
+  transform: rotate(45deg);
+}
+.hint-arrow:nth-child(1) { opacity: 0.3; }
+.hint-arrow:nth-child(2) { opacity: 0.6; }
+.hint-arrow:nth-child(3) { opacity: 1.0; }
+
+/* Thumb */
+.swipe-thumb {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  left: 5px;
+  width: 46px; height: 46px;
+  border-radius: 12px;
+
+  /* Glas-Thumb mit Indigo-Gradient */
+  background: linear-gradient(145deg, #6366F1, #4F46E5);
+  border: 1px solid rgba(255,255,255,0.3);
+  box-shadow:
+    0 2px 12px rgba(79,70,229,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+  will-change: left;
+  transition: box-shadow 0.2s;
+}
+
+.thumb-icon {
+  font-size: 18px;
+  color: white;
+  font-weight: 300;
+  display: block;
+  transition: transform 0.1s;
+}
+.thumb-check {
+  position: absolute;
+  font-size: 20px;
+  opacity: 0;
+  transform: scale(0.5) rotate(-15deg);
+  transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  color: white;
+}
+
+/* Text */
+.swipe-text {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 600;
+  color: #4F46E5;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  transition: opacity 0.2s, color 0.3s;
+}
+
+/* ─── Success State ───────────────────────────── */
+.swipe-btn.done {
+  background: rgba(240,253,244,0.8);
+  border-color: rgba(16,185,129,0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.9),
+    0 2px 16px rgba(16,185,129,0.15);
+  cursor: default;
+}
+.swipe-btn.done .swipe-text  { opacity: 0; }
+.swipe-btn.done .swipe-hints { opacity: 0; }
+.swipe-btn.done .thumb-icon  { opacity: 0; }
+.swipe-btn.done .thumb-check {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+.swipe-btn.done .swipe-thumb {
+  background: linear-gradient(145deg, #34D399, #10B981);
+  border-color: rgba(255,255,255,0.4);
+  box-shadow:
+    0 0 0 6px rgba(16,185,129,0.12),
+    0 4px 20px rgba(16,185,129,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+/* Ripple */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(16,185,129,0.2);
+  transform: scale(0);
+  animation: ripple-out 0.65s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes ripple-out {
+  to { transform: scale(5); opacity: 0; }
+}
+
+/* Widget Success-Pulse */
+@keyframes widget-pulse {
+  0%   { box-shadow: 0 4px 24px rgba(16,185,129,0.0), inset 0 1px 0 rgba(255,255,255,0.9); }
+  40%  { box-shadow: 0 0 0 8px rgba(16,185,129,0.08), inset 0 1px 0 rgba(255,255,255,0.9); }
+  100% { box-shadow: 0 4px 24px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.9); }
+}
+
+/* ─── Reset ───────────────────────────────────── */
+.reset-row {
+  display: flex; justify-content: center; margin-top: 14px;
+  padding: 0 14px;
+}
+.reset-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 12px; color: #9CA3AF;
+  padding: 8px 16px; border-radius: 8px;
+  transition: color 0.2s, background 0.2s;
+}
+.reset-btn:hover { color: #4F46E5; background: #EEF2FF; }
+
+/* Weitere Kachel */
+.plain-card {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.plain-card .pc-label {
+  font-size: 10px; color: #9CA3AF;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.plain-card .pc-title {
+  font-size: 15px; font-weight: 700; color: #111827;
+}
+.plain-card .pc-sub {
+  font-size: 12px; color: #6B7280; margin-top: 2px;
+}
+
+/* ─── Info ────────────────────────────────────── */
+.info-box {
+  max-width: 390px; width: 100%;
+  margin-top: 24px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.info-box h3 {
+  font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 10px;
+}
+.info-list { list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.info-list li {
+  font-size: 12px; color: #6B7280;
+  display: flex; gap: 8px; align-items: flex-start; line-height: 1.5;
+}
+.info-list li span:first-child { color: #10B981; }
+</style>
+</head>
+<body>
+
+<h1>Glassmorphism — Variante 3</h1>
+<p class="subtitle">Hell wie die echte App · Frosted Glass · Live Farb-Transition</p>
+
+<!-- Handy-Rahmen -->
+<div class="phone-frame">
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span>09:41</span>
+    <span>⚡ 87%</span>
+  </div>
+
+  <!-- Header -->
+  <div class="app-header">
+    <div class="app-title">Guten Morgen 👋</div>
+    <div class="app-bell">🔔</div>
+  </div>
+
+  <div class="scroll-content">
+
+    <!-- Mini-Kacheln -->
+    <div class="mini-row">
+      <div class="mini-card">
+        <div class="mc-label">Urlaub</div>
+        <div class="mc-value">14</div>
+        <div class="mc-sub">verbleibend</div>
+      </div>
+      <div class="mini-card">
+        <div class="mc-label">Diese Woche</div>
+        <div class="mc-value">32h</div>
+        <div class="mc-sub">von 40h</div>
+      </div>
+    </div>
+
+    <!-- Stempeluhr Widget -->
+    <div class="stamp-widget" id="stampWidget">
+
+      <!-- Farbiger Blob Hintergrund -->
+      <div class="widget-blob" id="widgetBlob"></div>
+
+      <!-- Grün-Overlay (opacity durch JS) -->
+      <div class="widget-green-overlay" id="greenOverlay"></div>
+
+      <div class="widget-top">
+        <div class="widget-icon-wrap">
+          <div class="widget-icon" id="wIcon">🕐</div>
+          <div>
+            <div class="widget-title">Stempeluhr</div>
+            <div class="widget-sub" id="wSub">Noch nicht eingestempelt</div>
+          </div>
+        </div>
+        <div class="widget-badge" id="wBadge">Offen</div>
+      </div>
+
+      <div class="widget-divider" id="wDivider"></div>
+
+      <!-- SwipeButton -->
+      <div class="swipe-btn" id="swipeBtn">
+        <div class="swipe-fill" id="swipeFill"></div>
+        <div class="swipe-shine"></div>
+        <div class="swipe-hints">
+          <div class="hint-arrow"></div>
+          <div class="hint-arrow"></div>
+          <div class="hint-arrow"></div>
+        </div>
+        <div class="swipe-thumb" id="swipeThumb">
+          <span class="thumb-icon" id="thumbIcon">›</span>
+          <span class="thumb-check" id="thumbCheck">✓</span>
+        </div>
+        <div class="swipe-text" id="swipeText">Einstempeln</div>
+      </div>
+
+    </div><!-- /stamp-widget -->
+
+    <!-- Weitere Kachel -->
+    <div class="plain-card">
+      <div class="pc-label">Nächste Schicht</div>
+      <div class="pc-title">Freitag, 27. Jun</div>
+      <div class="pc-sub">08:00 – 16:30 · Küche</div>
+    </div>
+
+  </div><!-- /scroll-content -->
+
+  <div class="reset-row">
+    <button class="reset-btn" id="resetBtn">↺ Zurücksetzen</button>
+  </div>
+
+</div><!-- /phone-frame -->
+
+<div class="info-box">
+  <h3>✨ Glassmorphism-Effekte</h3>
+  <ul class="info-list">
+    <li><span>→</span><span>Widget: Frosted-Glass (backdrop-filter blur) über hellem App-Hintergrund</span></li>
+    <li><span>→</span><span>Beim Swipen: Widget interpoliert live von Indigo-Glas zu Grün-Glas</span></li>
+    <li><span>→</span><span>Snap-Back mit elastischer Federkurve</span></li>
+    <li><span>→</span><span>Erfolg: Thumb wird grün leuchtend + Ripple-Welle + Widget komplett hellgrün</span></li>
+    <li><span>→</span><span>Passt nahtlos zur bestehenden hellen Mitarbeiter-App</span></li>
+  </ul>
+</div>
+
+<script>
+const btn        = document.getElementById('swipeBtn');
+const thumb      = document.getElementById('swipeThumb');
+const fill       = document.getElementById('swipeFill');
+const hints      = btn.querySelector('.swipe-hints');
+const thumbIcon  = document.getElementById('thumbIcon');
+const widget     = document.getElementById('stampWidget');
+const greenOverlay = document.getElementById('greenOverlay');
+const widgetBlob = document.getElementById('widgetBlob');
+const wIcon      = document.getElementById('wIcon');
+const wSub       = document.getElementById('wSub');
+const wBadge     = document.getElementById('wBadge');
+const wDivider   = document.getElementById('wDivider');
+const resetBtn   = document.getElementById('resetBtn');
+
+const THUMB_W  = 46;
+const THUMB_PAD = 5;
+const TRIGGER  = 0.65;
+
+let startX     = null;
+let isDragging = false;
+let succeeded  = false;
+let currentPct = 0;
+
+function getMax() {
+  return btn.getBoundingClientRect().width - THUMB_W - THUMB_PAD * 2;
+}
+
+function lerpColor(r1,g1,b1, r2,g2,b2, t) {
+  return [
+    Math.round(r1 + (r2-r1)*t),
+    Math.round(g1 + (g2-g1)*t),
+    Math.round(b1 + (b2-b1)*t),
+  ];
+}
+
+function setProgress(pct) {
+  currentPct = Math.max(0, Math.min(1, pct));
+  const px   = currentPct * getMax();
+
+  // Thumb + Fill
+  thumb.style.left     = (THUMB_PAD + px) + 'px';
+  fill.style.transform = `scaleX(${currentPct})`;
+
+  // Thumb-Pfeil leicht rotieren + wachsen
+  thumbIcon.style.transform = `rotate(${currentPct * 50}deg) scale(${1 + currentPct * 0.15})`;
+
+  // Thumb-Farbe: Indigo → Grün
+  const [r,g,b] = lerpColor(99,102,241, 52,211,153, currentPct);
+  thumb.style.background = `linear-gradient(145deg, rgb(${r+30},${g+20},${b}), rgb(${r},${g},${b}))`;
+
+  // Thumb-Glow
+  const glowR = Math.round(currentPct * 20);
+  const indGlow = 1 - currentPct;
+  const grnGlow = currentPct;
+  thumb.style.boxShadow = `
+    0 2px 12px rgba(${r},${g},${b},${0.3 + currentPct * 0.4}),
+    0 0 ${glowR}px rgba(${r},${g},${b},${0.3 + currentPct * 0.3}),
+    inset 0 1px 0 rgba(255,255,255,0.25)
+  `;
+
+  // Widget-Overlay Opacity
+  greenOverlay.style.opacity = currentPct * 0.9;
+  greenOverlay.style.transition = isDragging ? 'none' : 'opacity 0.5s ease';
+
+  // Blob Farbe
+  const blobOpacity = 0.12 + currentPct * 0.18;
+  widgetBlob.style.background = `rgba(${r},${g},${b},${blobOpacity})`;
+  widgetBlob.style.transition = isDragging ? 'none' : 'background 0.5s ease';
+
+  // Widget-Border Farbe
+  widget.style.borderColor = `rgba(${r},${g},${b},0.25)`;
+  widget.style.transition  = isDragging ? 'none' : 'border-color 0.4s ease';
+
+  // Badge
+  wBadge.style.color       = `rgb(${r},${g},${b})`;
+  wBadge.style.background  = `rgba(${r},${g},${b},0.1)`;
+  wBadge.style.borderColor = `rgba(${r},${g},${b},0.2)`;
+  wBadge.style.transition  = isDragging ? 'none' : 'all 0.4s ease';
+
+  // Divider
+  wDivider.style.background   = `rgba(${r},${g},${b},0.15)`;
+  wDivider.style.transition   = isDragging ? 'none' : 'background 0.4s ease';
+
+  // Button-Glow
+  const btnGlow = Math.round(currentPct * 16);
+  btn.style.boxShadow = `inset 0 1px 0 rgba(255,255,255,0.8), 0 2px ${8+btnGlow}px rgba(${r},${g},${b},${0.05 + currentPct * 0.15})`;
+  btn.style.borderColor = `rgba(${r},${g},${b},${0.2 + currentPct * 0.2})`;
+  btn.style.transition = isDragging ? 'none' : 'all 0.3s ease';
+
+  // Hints ausblenden
+  hints.style.opacity = Math.max(0, 1 - currentPct * 3);
+}
+
+function triggerSuccess() {
+  succeeded = true;
+  setProgress(1);
+  btn.classList.add('done');
+  btn.style.pointerEvents = 'none';
+
+  // Ripple
+  const ripple = document.createElement('div');
+  ripple.className = 'ripple';
+  const bRect   = thumb.getBoundingClientRect();
+  const btnRect = btn.getBoundingClientRect();
+  const size    = 56;
+  ripple.style.cssText = `
+    width:${size}px; height:${size}px;
+    left:${bRect.left - btnRect.left + THUMB_W/2 - size/2}px;
+    top:${bRect.top  - btnRect.top  + THUMB_W/2 - size/2}px;
+  `;
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 700);
+
+  // Widget-Pulse
+  widget.style.animation  = 'widget-pulse 0.9s ease-out forwards';
+  widget.style.borderColor = 'rgba(16,185,129,0.35)';
+
+  // Text-Update
+  const now = new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+  setTimeout(() => {
+    wSub.style.color  = '#059669';
+    wSub.textContent  = `Eingestempelt · ${now} Uhr`;
+    wBadge.textContent = 'Aktiv';
+    wBadge.style.color = '#059669';
+    wBadge.style.background  = 'rgba(16,185,129,0.1)';
+    wBadge.style.borderColor = 'rgba(16,185,129,0.25)';
+    wIcon.textContent = '✅';
+    wIcon.style.background  = 'rgba(16,185,129,0.12)';
+    wIcon.style.borderColor = 'rgba(16,185,129,0.2)';
+  }, 250);
+}
+
+function snapBack() {
+  isDragging = false;
+  btn.style.pointerEvents = '';
+
+  // Federartige Kurve
+  const easing = 'cubic-bezier(0.34,1.56,0.64,1)';
+  const dur     = '0.5s';
+  thumb.style.transition    = `left ${dur} ${easing}`;
+  fill.style.transition     = `transform ${dur} ${easing}`;
+  thumbIcon.style.transition = `transform ${dur} ${easing}`;
+
+  setProgress(0);
+
+  setTimeout(() => {
+    thumb.style.transition     = '';
+    fill.style.transition      = '';
+    thumbIcon.style.transition = '';
+    thumb.style.boxShadow      = '';
+    thumb.style.background     = '';
+  }, 550);
+}
+
+// ─── Pointer Events ──────────────────────────
+btn.addEventListener('pointerdown', (e) => {
+  if (succeeded) return;
+  isDragging = true;
+  startX     = e.clientX;
+  btn.style.pointerEvents = 'none';
+  e.currentTarget.setPointerCapture(e.pointerId);
+  e.preventDefault();
+}, { passive: false });
+
+btn.addEventListener('pointermove', (e) => {
+  if (!isDragging) return;
+  const dx  = e.clientX - startX;
+  const pct = dx / getMax();
+  setProgress(pct);
+  e.preventDefault();
+}, { passive: false });
+
+function endDrag() {
+  if (!isDragging) return;
+  isDragging = false;
+  btn.style.pointerEvents = '';
+  if (currentPct >= TRIGGER) {
+    triggerSuccess();
+  } else {
+    snapBack();
+  }
+}
+
+btn.addEventListener('pointerup',     endDrag);
+btn.addEventListener('pointercancel', endDrag);
+
+// ─── Reset ───────────────────────────────────
+resetBtn.addEventListener('click', () => {
+  succeeded  = false;
+  currentPct = 0;
+  btn.classList.remove('done');
+  btn.style.cssText        = '';
+  thumb.style.left         = THUMB_PAD + 'px';
+  thumb.style.transition   = '';
+  thumb.style.boxShadow    = '';
+  thumb.style.background   = '';
+  fill.style.transform     = 'scaleX(0)';
+  hints.style.opacity      = '1';
+  thumbIcon.style.transform = '';
+  greenOverlay.style.opacity = '0';
+  widgetBlob.style.background = '';
+  widget.style.animation   = '';
+  widget.style.borderColor = '';
+  widget.style.transition  = '';
+  wSub.style.color  = '';
+  wSub.textContent  = 'Noch nicht eingestempelt';
+  wBadge.textContent = 'Offen';
+  wBadge.style.cssText = '';
+  wIcon.textContent = '🕐';
+  wIcon.style.cssText = '';
+  wDivider.style.background = '';
+  setProgress(0);
+});
+
+setProgress(0);
+</script>
+</body>
+</html>

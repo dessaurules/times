@@ -14,6 +14,10 @@ describe('useSwipeGesture', () => {
     })
   })
 
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   describe('Pointer event tracking', () => {
     it('should initialize with fillPercent = 0', () => {
       const { result } = renderHook(() => useSwipeGesture())

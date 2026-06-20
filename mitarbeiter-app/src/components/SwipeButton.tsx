@@ -41,7 +41,8 @@ export function SwipeButton({
     handleProgress(fillPercent)
   }, [fillPercent, handleProgress])
 
-  // Snap-Back: Transition aktivieren wenn isSnapBack wechselt
+  // Snap-Back: Transition aktivieren BEVOR fillPercent auf 0 fällt
+  // Setze Transition-Klasse auf mount von isSnapBack, dann triggert React die fillPercent-Änderung
   useEffect(() => {
     const fill = fillRef.current
     const thumb = thumbRef.current

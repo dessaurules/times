@@ -302,7 +302,7 @@ export default function Dashboard() {
           <SwipeButton
             isStamped={isStamped}
             isLoading={stamping}
-            onSwipeComplete={handleStempel}
+            onSwipeComplete={() => { handleStempel(); setStampProgress(0); }}
             onSwipeFailed={() => setStampProgress(0)}
             onProgress={(p) => setStampProgress(p)}
           />

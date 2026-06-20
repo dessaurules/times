@@ -87,6 +87,12 @@ export function useSwipeGesture(options: UseSwipeGestureOptions = {}) {
         vibrate(15)
         options.onSwipeComplete?.()
       } else {
+        // Leftward drag: no callback, no state change
+        if (distance < 0) {
+          pointerStartX.current = null
+          pointerStartTime.current = null
+          return
+        }
         setIsSnapBack(true)
         setFillPercent(0)
         options.onSwipeFailed?.()

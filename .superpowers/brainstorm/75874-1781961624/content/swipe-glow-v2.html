@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwipeButton — Premium Glow v2</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0F0F1A;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 20px;
+  color: #fff;
+}
+
+h1 {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.subtitle {
+  font-size: 13px;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 36px;
+  text-align: center;
+}
+
+/* ─── Handy-Rahmen ──────────────────────────────── */
+.phone-frame {
+  width: 100%;
+  max-width: 390px;
+  background: #1C1C2E;
+  border-radius: 40px;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 40px 80px rgba(0,0,0,0.6),
+    0 0 120px rgba(79,70,229,0.08);
+  overflow: hidden;
+  padding: 20px 0 32px;
+}
+
+/* ─── Status-Bar ────────────────────────────────── */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 28px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.5);
+}
+
+/* ─── App-Header ────────────────────────────────── */
+.app-header {
+  padding: 0 20px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  margin-bottom: 20px;
+}
+.app-header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.app-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.9);
+  letter-spacing: -0.3px;
+}
+.app-bell {
+  width: 34px; height: 34px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px;
+}
+
+/* ─── Scroll-Content ────────────────────────────── */
+.scroll-content {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ─── Generic Card ──────────────────────────────── */
+.card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+/* ─── Stempeluhr-Widget ─────────────────────────── */
+.stamp-widget {
+  position: relative;
+  border-radius: 24px;
+  padding: 20px;
+  overflow: hidden;
+  /* Startzustand: dunkel */
+  background: radial-gradient(ellipse at 70% 30%, rgba(79,70,229,0.25) 0%, transparent 70%),
+              linear-gradient(145deg, #1E1B4B 0%, #12103A 100%);
+  border: 1px solid rgba(99,102,241,0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 8px 32px rgba(0,0,0,0.4);
+  transition: box-shadow 0.6s ease;
+}
+
+/* Hintergrund-Gradient der durch JS interpoliert wird */
+.stamp-widget::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 70%, rgba(16,185,129,0.4) 0%, transparent 60%),
+              linear-gradient(145deg, #022C22 0%, #064E3B 100%);
+  opacity: 0;
+  transition: opacity 0s; /* wird durch JS gesteuert */
+  pointer-events: none;
+  border-radius: 24px;
+}
+
+/* Shimmer-Effekt auf dem Widget */
+.stamp-widget::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -75%;
+  width: 50%; height: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255,255,255,0.04) 50%,
+    transparent 60%
+  );
+  transform: skewX(-15deg);
+  pointer-events: none;
+  opacity: 0;
+}
+.stamp-widget.shimmering::after {
+  animation: shimmer 0.7s ease forwards;
+}
+@keyframes shimmer {
+  0%   { left: -75%; opacity: 1; }
+  100% { left: 125%; opacity: 1; }
+}
+
+.widget-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.widget-icon-wrap {
+  display: flex; align-items: center; gap: 10px;
+}
+.widget-icon {
+  width: 38px; height: 38px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  background: rgba(99,102,241,0.2);
+  border: 1px solid rgba(99,102,241,0.3);
+  transition: background 0.4s, border-color 0.4s;
+}
+.widget-label {
+  font-size: 14px; font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  letter-spacing: -0.2px;
+}
+.widget-sub {
+  font-size: 11px; color: rgba(255,255,255,0.4);
+  margin-top: 2px;
+  transition: color 0.4s;
+}
+.widget-badge {
+  font-size: 11px; font-weight: 600;
+  color: rgba(99,102,241,0.9);
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 8px;
+  padding: 4px 8px;
+  transition: color 0.4s, background 0.4s, border-color 0.4s;
+}
+
+/* ─── Divider ───────────────────────────────────── */
+.widget-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 0 -4px 16px;
+  transition: background 0.4s;
+}
+
+/* ─── Der eigentliche Swipe-Button ─────────────── */
+.swipe-btn {
+  position: relative;
+  width: 100%;
+  height: 58px;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  /* Track: dunkel, mit Glow */
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(99,102,241,0.25);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 0 0 0 rgba(99,102,241,0);
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.swipe-btn:active { cursor: grabbing; }
+
+/* Fill — der grüne Balken von links */
+.swipe-fill {
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg,
+    rgba(16,185,129,0.15) 0%,
+    rgba(16,185,129,0.35) 100%
+  );
+  transform-origin: left;
+  transform: scaleX(0);
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+/* Track-Glow: Leuchtlinie oben */
+.swipe-glow-line {
+  position: absolute;
+  top: 0; left: 4px;
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(99,102,241,0.8) 0%,
+    rgba(16,185,129,0.8) 100%
+  );
+  width: 0%;
+  transition: none;
+  pointer-events: none;
+  border-radius: 1px;
+}
+
+/* Hint-Arrows (verschwinden beim Drag) */
+.swipe-hints {
+  position: absolute; right: 14px; top: 50%;
+  transform: translateY(-50%);
+  display: flex; gap: 3px;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.hint-arrow {
+  width: 6px; height: 6px;
+  border-right: 1.5px solid rgba(255,255,255,0.2);
+  border-top: 1.5px solid rgba(255,255,255,0.2);
+  transform: rotate(45deg);
+}
+.hint-arrow:nth-child(1) { opacity: 0.3; }
+.hint-arrow:nth-child(2) { opacity: 0.6; }
+.hint-arrow:nth-child(3) { opacity: 1; }
+
+/* Thumb */
+.swipe-thumb {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  left: 5px;
+  width: 48px; height: 48px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #818CF8, #6366F1);
+  box-shadow:
+    0 0 0 0 rgba(99,102,241,0),
+    0 2px 12px rgba(99,102,241,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.2);
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+  will-change: left;
+  transition: box-shadow 0.3s ease;
+}
+
+.thumb-arrow {
+  font-size: 16px;
+  color: white;
+  transition: transform 0.1s ease;
+  display: block;
+}
+
+/* Erfolgs-Check */
+.thumb-check {
+  position: absolute;
+  font-size: 22px;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* Text */
+.swipe-text {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 600;
+  color: rgba(255,255,255,0.5);
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  transition: opacity 0.2s, color 0.3s;
+}
+
+/* ─── Success-State ─────────────────────────────── */
+.swipe-btn.done {
+  border-color: rgba(16,185,129,0.4);
+  background: rgba(16,185,129,0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(16,185,129,0.15),
+    0 0 24px rgba(16,185,129,0.2);
+  cursor: default;
+}
+.swipe-btn.done .swipe-hints { opacity: 0; }
+.swipe-btn.done .swipe-text { opacity: 0; }
+.swipe-btn.done .thumb-arrow { opacity: 0; }
+.swipe-btn.done .thumb-check {
+  opacity: 1;
+  transform: scale(1);
+}
+.swipe-btn.done .swipe-thumb {
+  background: linear-gradient(135deg, #34D399, #10B981);
+  box-shadow:
+    0 0 0 8px rgba(16,185,129,0.1),
+    0 0 32px rgba(16,185,129,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.swipe-btn.done .swipe-fill {
+  background: linear-gradient(90deg,
+    rgba(16,185,129,0.2) 0%,
+    rgba(16,185,129,0.4) 100%
+  );
+}
+
+/* ─── Ripple bei Success ────────────────────────── */
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(16,185,129,0.3);
+  transform: scale(0);
+  animation: ripple-out 0.7s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes ripple-out {
+  to { transform: scale(4); opacity: 0; }
+}
+
+/* ─── Success-Pulse auf dem Widget ─────────────── */
+@keyframes pulse-border {
+  0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.5), 0 8px 32px rgba(0,0,0,0.4); }
+  50%  { box-shadow: 0 0 0 8px rgba(16,185,129,0.0), 0 8px 48px rgba(16,185,129,0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0), 0 12px 48px rgba(16,185,129,0.15); }
+}
+
+/* ─── Reset ─────────────────────────────────────── */
+.reset-row {
+  display: flex; justify-content: center; margin-top: 12px;
+}
+.reset-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 12px; color: rgba(255,255,255,0.25);
+  padding: 6px 12px; border-radius: 8px;
+  transition: color 0.2s, background 0.2s;
+}
+.reset-btn:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.06); }
+
+/* ─── Dekorative Mini-Widgets ───────────────────── */
+.mini-row {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.mini-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  padding: 14px;
+}
+.mini-card .mc-label {
+  font-size: 10px; color: rgba(255,255,255,0.3);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.mini-card .mc-value {
+  font-size: 22px; font-weight: 800;
+  color: rgba(255,255,255,0.85);
+  letter-spacing: -0.5px;
+}
+.mini-card .mc-sub {
+  font-size: 11px; color: rgba(255,255,255,0.3);
+  margin-top: 2px;
+}
+
+/* ─── Info-Box unten ────────────────────────────── */
+.info-box {
+  max-width: 390px; width: 100%;
+  margin-top: 24px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+.info-box h3 {
+  font-size: 13px; font-weight: 700;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 10px;
+}
+.info-list {
+  list-style: none;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.info-list li {
+  font-size: 12px; color: rgba(255,255,255,0.4);
+  display: flex; gap: 8px; align-items: flex-start; line-height: 1.5;
+}
+.info-list li span:first-child { color: #10B981; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>Premium Glow — v2</h1>
+<p class="subtitle">Ziehe den Button. Widget + Card ändern Farbe live beim Swipen.</p>
+
+<!-- ─── Handy-Rahmen ─────────────────────────────── -->
+<div class="phone-frame">
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span>09:41</span>
+    <span>⚡ 87%</span>
+  </div>
+
+  <!-- App Header -->
+  <div class="app-header">
+    <div class="app-header-inner">
+      <div class="app-title">Guten Morgen 👋</div>
+      <div class="app-bell">🔔</div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="scroll-content">
+
+    <!-- Mini-Kacheln oben -->
+    <div class="mini-row">
+      <div class="mini-card">
+        <div class="mc-label">Urlaubstage</div>
+        <div class="mc-value">14</div>
+        <div class="mc-sub">verbleibend</div>
+      </div>
+      <div class="mini-card">
+        <div class="mc-label">Diese Woche</div>
+        <div class="mc-value">32h</div>
+        <div class="mc-sub">von 40h</div>
+      </div>
+    </div>
+
+    <!-- ─── Stempeluhr-Widget ─────────────────── -->
+    <div class="stamp-widget" id="stampWidget">
+
+      <!-- Live-Glow-Overlay (interpoliert durch JS) -->
+      <div id="glowOverlay" style="
+        position:absolute; inset:0; pointer-events:none; border-radius:24px;
+        background: radial-gradient(ellipse at 30% 70%, rgba(16,185,129,0.5) 0%, transparent 60%),
+                    linear-gradient(145deg, #022C22 0%, #064E3B 100%);
+        opacity:0; transition:opacity 0s;
+      "></div>
+
+      <div class="widget-top">
+        <div class="widget-icon-wrap">
+          <div class="widget-icon" id="wIcon">🕐</div>
+          <div>
+            <div class="widget-label">Stempeluhr</div>
+            <div class="widget-sub" id="wSub">Noch nicht eingestempelt</div>
+          </div>
+        </div>
+        <div class="widget-badge" id="wBadge">Abwesend</div>
+      </div>
+
+      <div class="widget-divider" id="wDivider"></div>
+
+      <!-- SwipeButton -->
+      <div class="swipe-btn" id="swipeBtn">
+        <div class="swipe-fill" id="swipeFill"></div>
+        <div class="swipe-glow-line" id="glowLine"></div>
+        <div class="swipe-hints">
+          <div class="hint-arrow"></div>
+          <div class="hint-arrow"></div>
+          <div class="hint-arrow"></div>
+        </div>
+        <div class="swipe-thumb" id="swipeThumb">
+          <span class="thumb-arrow" id="thumbArrow">›</span>
+          <span class="thumb-check" id="thumbCheck">✓</span>
+        </div>
+        <div class="swipe-text" id="swipeText">Einstempeln</div>
+      </div>
+
+    </div><!-- /stamp-widget -->
+
+    <!-- Weitere Kachel für Kontext -->
+    <div class="card">
+      <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.05em;">Nächste Schicht</div>
+      <div style="font-size:16px;font-weight:700;color:rgba(255,255,255,0.8);">Freitag, 27. Jun</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:3px;">08:00 – 16:30 · Küche</div>
+    </div>
+
+  </div><!-- /scroll-content -->
+
+  <div class="reset-row">
+    <button class="reset-btn" id="resetBtn">↺ Zurücksetzen</button>
+  </div>
+
+</div><!-- /phone-frame -->
+
+<!-- Info-Box -->
+<div class="info-box">
+  <h3>✨ Was du siehst</h3>
+  <ul class="info-list">
+    <li><span>→</span><span>Widget-Hintergrund interpoliert <strong style="color:rgba(255,255,255,0.6)">live</strong> von Dunkel-Indigo zu Dunkel-Grün während du schiebst</span></li>
+    <li><span>→</span><span>Leuchtlinie oben am Button wächst mit dem Thumb mit</span></li>
+    <li><span>→</span><span>Thumb-Glow verstärkt sich proportional zur Swipe-Distanz</span></li>
+    <li><span>→</span><span>Snap-Back: sanfte Federkurve zurück zur Startposition</span></li>
+    <li><span>→</span><span>Success: Ripple-Welle + Thumb wird grün leuchtend + Widget komplett grün</span></li>
+  </ul>
+</div>
+
+<script>
+const btn        = document.getElementById('swipeBtn');
+const thumb      = document.getElementById('swipeThumb');
+const fill       = document.getElementById('swipeFill');
+const glowLine   = document.getElementById('glowLine');
+const hints      = btn.querySelector('.swipe-hints');
+const arrow      = document.getElementById('thumbArrow');
+const widget     = document.getElementById('stampWidget');
+const overlay    = document.getElementById('glowOverlay');
+const wIcon      = document.getElementById('wIcon');
+const wSub       = document.getElementById('wSub');
+const wBadge     = document.getElementById('wBadge');
+const wDivider   = document.getElementById('wDivider');
+const resetBtn   = document.getElementById('resetBtn');
+const text       = document.getElementById('swipeText');
+
+const THUMB_W    = 48;
+const THUMB_PAD  = 5;
+const TRIGGER    = 0.65;
+
+let startX     = null;
+let isDragging = false;
+let succeeded  = false;
+let currentPct = 0;
+
+function getMax() {
+  return btn.getBoundingClientRect().width - THUMB_W - THUMB_PAD * 2;
+}
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function setProgress(pct) {
+  currentPct = Math.max(0, Math.min(1, pct));
+  const px   = currentPct * getMax();
+
+  // Thumb + Fill
+  thumb.style.left     = (THUMB_PAD + px) + 'px';
+  fill.style.transform = `scaleX(${currentPct})`;
+
+  // Glow-Linie oben
+  glowLine.style.width = (currentPct * 100) + '%';
+
+  // Thumb-Pfeil rotiert leicht
+  arrow.style.transform = `rotate(${currentPct * 60}deg) scale(${1 + currentPct * 0.3})`;
+
+  // Thumb-Glow stärker
+  const glow = Math.round(currentPct * 24);
+  const spread = Math.round(currentPct * 16);
+  thumb.style.boxShadow = `
+    0 0 ${glow}px rgba(99,102,241,${0.3 + currentPct * 0.5}),
+    0 0 ${spread}px rgba(99,102,241,${0.2 + currentPct * 0.3}),
+    0 2px 12px rgba(99,102,241,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.2)
+  `;
+
+  // Widget-Hintergrund interpolieren: indigo → green
+  overlay.style.opacity = currentPct;
+  overlay.style.transition = isDragging ? 'none' : 'opacity 0.4s ease';
+
+  // Badge + Icon leicht einfärben
+  const greenAlpha = Math.round(currentPct * 12);
+  wBadge.style.color        = `rgba(${lerp(99,16,currentPct)},${lerp(102,185,currentPct)},${lerp(241,129,currentPct)},0.9)`;
+  wBadge.style.background   = `rgba(${lerp(99,16,currentPct)},${lerp(102,185,currentPct)},${lerp(241,129,currentPct)},0.12)`;
+  wBadge.style.borderColor  = `rgba(${lerp(99,16,currentPct)},${lerp(102,185,currentPct)},${lerp(241,129,currentPct)},0.25)`;
+
+  // Hints ausblenden beim Drag
+  hints.style.opacity = Math.max(0, 1 - currentPct * 3);
+}
+
+function triggerSuccess() {
+  succeeded = true;
+
+  // Button: sofort auf 100%
+  setProgress(1);
+
+  // Button-State
+  btn.classList.add('done');
+  btn.style.pointerEvents = 'none';
+
+  // Ripple
+  const ripple = document.createElement('div');
+  ripple.className = 'ripple';
+  const bRect = thumb.getBoundingClientRect();
+  const btnRect = btn.getBoundingClientRect();
+  const size = 60;
+  ripple.style.cssText = `
+    width:${size}px; height:${size}px;
+    left:${bRect.left - btnRect.left + THUMB_W/2 - size/2}px;
+    top:${bRect.top  - btnRect.top  + THUMB_W/2 - size/2}px;
+  `;
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 800);
+
+  // Widget: Shimmer-Effekt
+  widget.classList.add('shimmering');
+  setTimeout(() => widget.classList.remove('shimmering'), 800);
+
+  // Widget-Border pulsiert
+  widget.style.animation = 'pulse-border 0.8s ease-out forwards';
+  widget.style.borderColor = 'rgba(16,185,129,0.5)';
+
+  // Sub-Text + Badge aktualisieren
+  const now = new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+  setTimeout(() => {
+    wSub.style.color = 'rgba(16,185,129,0.8)';
+    wSub.textContent = `Eingestempelt um ${now} Uhr ✓`;
+    wBadge.textContent = 'Aktiv';
+    wIcon.textContent = '✅';
+  }, 300);
+}
+
+function snapBack() {
+  // Transition aktivieren, auf 0 setzen
+  isDragging = false;
+  btn.style.pointerEvents = '';
+  thumb.style.transition   = 'left 0.55s cubic-bezier(0.34,1.56,0.64,1)';
+  fill.style.transition    = 'transform 0.55s cubic-bezier(0.34,1.56,0.64,1)';
+  glowLine.style.transition = 'width 0.55s cubic-bezier(0.34,1.56,0.64,1)';
+  arrow.style.transition    = 'transform 0.55s cubic-bezier(0.34,1.56,0.64,1)';
+  setProgress(0);
+  setTimeout(() => {
+    thumb.style.transition = '';
+    fill.style.transition  = '';
+    glowLine.style.transition = '';
+    arrow.style.transition = '';
+    thumb.style.boxShadow  = '';
+  }, 600);
+}
+
+// ─── Pointer Events ──────────────────────────────
+btn.addEventListener('pointerdown', (e) => {
+  if (succeeded) return;
+  isDragging = true;
+  startX = e.clientX;
+  btn.style.pointerEvents = 'none';
+  e.currentTarget.setPointerCapture(e.pointerId);
+  e.preventDefault();
+}, { passive: false });
+
+btn.addEventListener('pointermove', (e) => {
+  if (!isDragging) return;
+  const dx  = e.clientX - startX;
+  const pct = dx / getMax();
+  setProgress(pct);
+  e.preventDefault();
+}, { passive: false });
+
+function endDrag(e) {
+  if (!isDragging) return;
+  isDragging = false;
+  btn.style.pointerEvents = '';
+
+  if (currentPct >= TRIGGER) {
+    triggerSuccess();
+  } else {
+    snapBack();
+  }
+}
+
+btn.addEventListener('pointerup',     endDrag);
+btn.addEventListener('pointercancel', endDrag);
+
+// ─── Reset ───────────────────────────────────────
+resetBtn.addEventListener('click', () => {
+  succeeded  = false;
+  currentPct = 0;
+
+  btn.classList.remove('done');
+  btn.style.pointerEvents = '';
+  btn.style.borderColor   = '';
+  btn.style.background    = '';
+  btn.style.boxShadow     = '';
+
+  thumb.style.left       = THUMB_PAD + 'px';
+  thumb.style.transition = '';
+  thumb.style.boxShadow  = '';
+  fill.style.transform   = 'scaleX(0)';
+  fill.style.transition  = '';
+  glowLine.style.width   = '0%';
+  arrow.style.transform  = '';
+  hints.style.opacity    = '1';
+  overlay.style.opacity  = '0';
+
+  widget.style.animation   = '';
+  widget.style.borderColor = '';
+
+  wSub.style.color   = '';
+  wSub.textContent   = 'Noch nicht eingestempelt';
+  wBadge.textContent = 'Abwesend';
+  wBadge.style.cssText = '';
+  wIcon.textContent  = '🕐';
+});
+
+// Initialisierung
+setProgress(0);
+</script>
+
+</body>
+</html>
