@@ -10,6 +10,7 @@ import Abwesenheiten      from './pages/Abwesenheiten'
 import Zeiterfassung     from './pages/Zeiterfassung'
 import Berichte          from './pages/Berichte'
 import Dienstplan        from './pages/Dienstplan'
+import ShiftTemplatesPage from '@/pages/Admin/ShiftTemplates'
 
 export default function App() {
   return (
@@ -25,8 +26,9 @@ export default function App() {
             <Route path="/dienstplan"         element={<Dienstplan />} />
             {/* Nur GF */}
             <Route element={<GFRoute />}>
-              <Route path="/mitarbeiter"      element={<Mitarbeiterliste />} />
-              <Route path="/einstellungen"    element={<Einstellungen />} />
+              <Route path="/mitarbeiter"              element={<Mitarbeiterliste />} />
+              <Route path="/einstellungen"            element={<Einstellungen />} />
+              <Route path="/admin/shift-templates"    element={<ShiftTemplatesPage />} />
             </Route>
           </Route>
         </Route>

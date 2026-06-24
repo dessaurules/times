@@ -8,6 +8,7 @@ interface UseShiftTemplatesReturn {
   error: Error | null
   refetch: () => Promise<void>
   save: (template: Omit<ShiftTemplate, 'id' | 'created' | 'updated'>) => Promise<void>
+  update: (id: string, template: Partial<Omit<ShiftTemplate, 'id' | 'created' | 'updated'>>) => Promise<void>
   deleteTemplate: (id: string) => Promise<void>
 }
 
@@ -45,6 +46,14 @@ export function useShiftTemplates(deptId: string): UseShiftTemplatesReturn {
     [refetch]
   )
 
+  const update = useCallback(
+    async (id: string, template: Partial<Omit<ShiftTemplate, 'id' | 'created' | 'updated'>>) => {
+      await pb.collection('shift_templates').update(id, template)
+      await refetch()
+    },
+    [refetch]
+  )
+
   const deleteTemplate = useCallback(
     async (id: string) => {
       await pb.collection('shift_templates').delete(id)
@@ -59,6 +68,7 @@ export function useShiftTemplates(deptId: string): UseShiftTemplatesReturn {
     error,
     refetch,
     save,
+    update,
     deleteTemplate,
   }
 }
