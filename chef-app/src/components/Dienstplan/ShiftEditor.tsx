@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { SHIFT_COLOR_BG, ABSENCE_LABELS, ABSENCE_COLORS, type ShiftColor, type AbsenceType } from '@shared/types'
 import type { Absence } from '@shared/types'
 import ShiftTemplateQuickButtons, { type QuickSelectData } from './ShiftTemplateQuickButtons'
+import ShiftTemplateManager from './ShiftTemplateManager'
 import { useShiftTemplates } from '@/hooks/useShiftTemplates'
 
 const SHIFT_COLORS: ShiftColor[] = ['blue', 'green', 'amber', 'purple', 'rose']
@@ -54,8 +55,9 @@ export default function ShiftEditor({
   const [note2,      setNote2]      = useState(initial?.note2        ?? '')
   const [autoEnd,    setAutoEnd]    = useState(false)
   const [jobModel,   setJobModel]   = useState<'40h' | '30h'>('40h')
+  const [showTemplateManager, setShowTemplateManager] = useState(false)
 
-  const { templates, loading: templatesLoading, error: templatesError } = useShiftTemplates(department ?? 'dept_default')
+  const { templates, loading: templatesLoading, error: templatesError, save: saveTemplate, update: updateTemplate, deleteTemplate } = useShiftTemplates(department ?? 'dept_default')
 
   function handleTemplateSelect(_id: string, data: QuickSelectData) {
     if (data.is_free_day) {
@@ -67,6 +69,27 @@ export default function ShiftEditor({
       onSave({ start_time: data.start_time ?? '08:00', end_time: data.end_time ?? '16:00', color: data.color ?? 'blue', is_free_day: false })
     }
     onClose()
+  }
+
+  async function handleManageTemplates() {
+    setShowTemplateManager(true)
+  }
+
+  async function handleSaveTemplate(data: { name: string; start_time: string; end_time: string; color: ShiftColor; id?: string }) {
+    const deptId = department ?? 'dept_default'
+    if (data.id) {
+      // Update existing template
+      const { id, ...updateData } = data
+      await updateTemplate(id, { ...updateData, department: deptId } as any)
+    } else {
+      // Create new template
+      const { id, ...createData } = data
+      await saveTemplate({ ...createData, department: deptId } as any)
+    }
+  }
+
+  async function handleDeleteTemplate(id: string) {
+    await deleteTemplate(id)
   }
 
   function calcEndTime(start: string, hoursPerDay: number): string {
@@ -106,6 +129,7 @@ export default function ShiftEditor({
   }
 
   return (
+    <>
     <Dialog open={open} onClose={onClose}>
       <DialogHeader>
         <DialogTitle>{isEdit ? 'Schicht bearbeiten' : 'Schicht eintragen'}</DialogTitle>
@@ -132,9 +156,7 @@ export default function ShiftEditor({
           <ShiftTemplateQuickButtons
             templates={templates}
             onSelect={handleTemplateSelect}
-            onManage={() => {
-              // TODO: Admin-Panel öffnen (Task 5)
-            }}
+            onManage={handleManageTemplates}
           />
         )}
 
@@ -328,5 +350,32 @@ export default function ShiftEditor({
         </div>
       </DialogBody>
     </Dialog>
+
+    {/* ShiftTemplateManager Modal */}
+    {showTemplateManager && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto">
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
+            <h2 className="text-lg font-semibold text-gray-900">Schicht-Vorlagen verwalten</h2>
+            <button
+              onClick={() => setShowTemplateManager(false)}
+              className="p-1 rounded hover:bg-gray-100 text-gray-500"
+              aria-label="Schließen"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="px-6 py-4">
+            <ShiftTemplateManager
+              templates={templates}
+              onSave={handleSaveTemplate}
+              onDelete={handleDeleteTemplate}
+              departmentId={department ?? 'dept_default'}
+            />
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   )
 }
