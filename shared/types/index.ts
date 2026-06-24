@@ -30,6 +30,16 @@ export interface Department extends PBRecord {
   sort_order: number
 }
 
+export interface ShiftTemplate extends PBRecord {
+  department: string      // relation ID
+  name: string
+  start_time: string      // "HH:mm"
+  end_time: string        // "HH:mm"
+  color: ShiftColor
+  sort_order?: number
+  expand?: { department?: Department }
+}
+
 export interface Employee extends PBRecord {
   first_name: string
   last_name: string
