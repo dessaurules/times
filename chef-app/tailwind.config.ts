@@ -26,6 +26,9 @@ export default {
         md: '6px',
         sm: '4px',
       },
+      height: {
+        'cell': '50px',  // Zellenhöhe für Dienstplan Kacheln (Schichten, Abwesenheiten, etc.)
+      },
     },
   },
   plugins: [],

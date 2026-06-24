@@ -2,12 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+.react-grid-item {
+  transition: none !important;
+}
+
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0; }
 }
 .blink {
   animation: blink 1.6s step-start infinite;
+}
+
+@keyframes cell-pop {
+  0%   { transform: scale(0.55); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes cell-clear {
+  0%   { opacity: 1; }
+  40%  { opacity: 0.25; }
+  100% { opacity: 1; }
+}
+
+@keyframes pulse-cell {
+  0%   { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.35); }
+  70%  { box-shadow: 0 0 0 5px rgba(79, 70, 229, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+.just-filled    { animation: cell-pop   280ms ease-out forwards; }
+.just-cleared   { animation: cell-clear 200ms ease-out forwards; }
+.drag-over-anim { animation: pulse-cell 400ms ease-out infinite; }
+.drag-src {
+  outline: 2px dashed #4F46E5 !important;
+  outline-offset: -2px;
 }
 
 @layer base {

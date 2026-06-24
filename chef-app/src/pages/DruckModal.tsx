@@ -292,20 +292,20 @@ export default function DruckModal({
   // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
-    <div id="druck-root" className="fixed inset-0 z-50 bg-[#F5F2EE] overflow-y-auto">
+    <div id="druck-root" className="fixed inset-0 z-50 bg-[#F3F4F6] overflow-y-auto">
 
       {/* Toolbar */}
-      <div className="no-print sticky top-0 z-10 flex items-center justify-between bg-white border-b border-[#EDE7DC] px-6 py-3 shadow-sm">
-        <button onClick={onClose} className="flex items-center gap-2 text-sm text-[#706D6A] hover:text-[#1A1917] transition-colors">
+      <div className="no-print sticky top-0 z-10 flex items-center justify-between bg-white border-b border-[#E5E7EB] px-6 py-3 shadow-sm">
+        <button onClick={onClose} className="flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#111827] transition-colors">
           <X size={16} />
           Schließen
         </button>
-        <span className="text-sm font-medium text-[#1A1917] capitalize">
+        <span className="text-sm font-medium text-[#111827] capitalize">
           {emp.last_name}, {emp.first_name} — {periodLabel}
         </span>
         <button
           onClick={() => window.print()}
-          className="flex items-center gap-2 bg-[#BA7517] text-white text-sm px-4 py-1.5 rounded-md hover:bg-[#9D6213] transition-colors"
+          className="flex items-center gap-2 bg-[#4F46E5] text-white text-sm px-4 py-1.5 rounded-md hover:bg-[#4338CA] transition-colors"
         >
           <Printer size={14} />
           Drucken / PDF
@@ -317,48 +317,34 @@ export default function DruckModal({
         <div className="p-[18mm]">
 
           {/* Dokumentkopf */}
-          <div className="flex justify-between items-baseline mb-5">
-            <span className="text-[11px] text-[#706D6A]">{companyName} · Schicht & Plan</span>
-            <span className="text-[11px] text-[#706D6A] capitalize">{periodLabel}</span>
+          <div className="flex justify-between items-baseline pb-2 mb-3 border-b border-[#CCCCCC]">
+            <span className="text-[10px] text-[#6B7280]">{companyName} · Schicht & Plan</span>
+            <span className="text-[10px] text-[#6B7280] capitalize">{periodLabel}</span>
           </div>
 
-          <h2 className="text-[15px] font-bold text-[#1A1917] uppercase tracking-widest mb-4">Zeitnachweis</h2>
-
-          <div className="grid grid-cols-2 gap-x-8 gap-y-1 mb-6 text-[12px]">
-            <div>
-              <span className="text-[#706D6A]">Mitarbeiter: </span>
-              <span className="font-semibold">{emp.last_name}, {emp.first_name}</span>
-            </div>
-            <div>
-              <span className="text-[#706D6A]">Zeitraum: </span>
-              <span>{format(periodFrom, 'dd.MM.yyyy')} – {format(periodTo, 'dd.MM.yyyy')}</span>
-            </div>
-            <div>
-              <span className="text-[#706D6A]">Abteilung: </span>
-              <span>{dept?.name ?? '–'}</span>
-            </div>
-            <div>
-              <span className="text-[#706D6A]">Soll-Stunden: </span>
-              <span>{fmtH(totalSollH)} ({arbeitstage} Arbeitstage)</span>
-            </div>
+          <div className="text-[14px] font-bold text-[#111827] mb-1">
+            {emp.last_name}, {emp.first_name}
+          </div>
+          <div className="text-[10px] text-[#6B7280] mb-5">
+            {dept?.name ?? '–'} · {format(periodFrom, 'dd.MM.yyyy')} – {format(periodTo, 'dd.MM.yyyy')} · Soll: {fmtH(totalSollH)} ({arbeitstage} Arbeitstage)
           </div>
 
           {/* ── Stundentabelle ── */}
-          <h3 className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#706D6A] mb-1.5 mt-4">Stunden</h3>
+          <h3 className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#6B7280] mb-1.5 mt-4">Stunden</h3>
 
           {stundenRows.length === 0 ? (
-            <p className="text-[11px] text-[#AAAAAA] italic mb-4">Keine Zeiteinträge im Zeitraum.</p>
+            <p className="text-[11px] text-[#9CA3AF] italic mb-4">Keine Zeiteinträge im Zeitraum.</p>
           ) : (
-            <table className="w-full border-collapse text-[10px] border border-[#C0BAB0]">
+            <table className="w-full border-collapse text-[10px] border-t border-[#E5E7EB]">
               <thead>
-                <tr className="bg-[#F5F2EE]">
-                  <th className="border border-[#C0BAB0] px-2 py-1.5 text-left font-semibold text-[#706D6A] w-9">Tag</th>
-                  <th className="border border-[#C0BAB0] px-2 py-1.5 text-left font-semibold text-[#706D6A] w-24">Datum</th>
-                  <th className="border border-[#C0BAB0] px-2 py-1.5 text-center font-semibold text-[#706D6A] w-12">Von</th>
-                  <th className="border border-[#C0BAB0] px-2 py-1.5 text-center font-semibold text-[#706D6A] w-12">Bis</th>
-                  <th className="border border-[#C0BAB0] px-2 py-1.5 text-center font-semibold text-[#706D6A] w-14">Pause</th>
-                  <th className="border border-[#C0BAB0] px-2 py-1.5 text-center font-semibold text-[#706D6A] w-14">Netto</th>
-                  <th className="border border-[#C0BAB0] px-2 py-1.5 text-left font-semibold text-[#706D6A]">Notiz</th>
+                <tr className="bg-[#FAFAFA]">
+                  <th className="border-b border-[#E5E7EB] px-2 py-1.5 text-left font-semibold text-[#6B7280] w-9">Tag</th>
+                  <th className="border-b border-[#E5E7EB] px-2 py-1.5 text-left font-semibold text-[#6B7280] w-24">Datum</th>
+                  <th className="border-b border-[#E5E7EB] px-2 py-1.5 text-center font-semibold text-[#6B7280] w-12">Von</th>
+                  <th className="border-b border-[#E5E7EB] px-2 py-1.5 text-center font-semibold text-[#6B7280] w-12">Bis</th>
+                  <th className="border-b border-[#E5E7EB] px-2 py-1.5 text-center font-semibold text-[#6B7280] w-14">Pause</th>
+                  <th className="border-b border-[#E5E7EB] px-2 py-1.5 text-center font-semibold text-[#6B7280] w-14">Netto</th>
+                  <th className="border-b border-[#E5E7EB] px-2 py-1.5 text-left font-semibold text-[#6B7280]">Notiz</th>
                 </tr>
               </thead>
               <tbody>
@@ -366,44 +352,44 @@ export default function DruckModal({
 
                   if (row.type === 'month-header') return (
                     <tr key={idx}>
-                      <td colSpan={7} className="border border-[#C0BAB0] px-2 py-1.5 font-bold text-[#BA7517] bg-[#FEF9F0] capitalize text-[10px]">
+                      <td colSpan={7} className="border-b border-[#E5E7EB] px-2 py-1.5 font-bold text-[#4F46E5] bg-[#F5F5FF] capitalize text-[10px]">
                         {format(row.month, 'MMMM yyyy', { locale: de })}
                       </td>
                     </tr>
                   )
 
                   if (row.type === 'month-total') return (
-                    <tr key={idx} className="bg-[#F5F2EE]">
-                      <td colSpan={5} className="border border-[#C0BAB0] px-2 py-1 text-right text-[#706D6A] font-semibold text-[9px] uppercase tracking-wide">
+                    <tr key={idx} className="bg-[#FAFAFA]">
+                      <td colSpan={5} className="border-t border-b border-[#E5E7EB] px-2 py-1 text-right text-[#6B7280] font-semibold text-[9px] uppercase tracking-wide">
                         Monats-Summe {format(row.month, 'MMMM', { locale: de })}
                       </td>
-                      <td className="border border-[#C0BAB0] px-2 py-1 text-center tabular-nums font-semibold text-[#1A1917]">
+                      <td className="border-t border-b border-[#E5E7EB] px-2 py-1 text-center tabular-nums font-semibold text-[#111827]">
                         {fmtH(row.mins / 60)}
                       </td>
-                      <td className="border border-[#C0BAB0]" />
+                      <td className="border-t border-b border-[#E5E7EB]" />
                     </tr>
                   )
 
                   // Eintrag-Zeile (ggf. mehrere pro Tag)
                   const { date, isWeekend, holidayName, entries: dayEntries } = row
-                  const rowClass = (isWeekend || holidayName) ? 'bg-[#FFFBF5]' : ''
+                  const rowClass = (isWeekend || holidayName) ? 'bg-[#FAFAFA]' : ''
                   const dayStr  = format(date, 'EEE', { locale: de })
                   const dateStr = format(date, 'dd.MM.yyyy')
                   const notizSuffix = holidayName ? `(Feiertag: ${holidayName})` : ''
 
                   return dayEntries.map((entry, ei) => (
                     <tr key={`${idx}-${ei}`} className={rowClass}>
-                      <td className={cn('border border-[#C0BAB0] px-2 py-1 capitalize', (isWeekend || holidayName) && 'text-[#BA7517]')}>
+                      <td className={cn('border-b border-[#F3F4F6] px-2 py-1 capitalize', (isWeekend || holidayName) && 'text-[#4F46E5]')}>
                         {ei === 0 ? dayStr : ''}
                       </td>
-                      <td className="border border-[#C0BAB0] px-2 py-1">{ei === 0 ? dateStr : ''}</td>
-                      <td className="border border-[#C0BAB0] px-2 py-1 text-center tabular-nums">{toLocalHHMM(entry.start_time)}</td>
-                      <td className="border border-[#C0BAB0] px-2 py-1 text-center tabular-nums">{entry.end_time ? toLocalHHMM(entry.end_time) : '–'}</td>
-                      <td className="border border-[#C0BAB0] px-2 py-1 text-center tabular-nums">{entry.break_minutes} min</td>
-                      <td className="border border-[#C0BAB0] px-2 py-1 text-center tabular-nums font-semibold">{fmtH(netMinutes(entry) / 60)}</td>
-                      <td className="border border-[#C0BAB0] px-2 py-1 text-[#706D6A]">
+                      <td className="border-b border-[#F3F4F6] px-2 py-1">{ei === 0 ? dateStr : ''}</td>
+                      <td className="border-b border-[#F3F4F6] px-2 py-1 text-center tabular-nums">{toLocalHHMM(entry.start_time)}</td>
+                      <td className="border-b border-[#F3F4F6] px-2 py-1 text-center tabular-nums">{entry.end_time ? toLocalHHMM(entry.end_time) : '–'}</td>
+                      <td className="border-b border-[#F3F4F6] px-2 py-1 text-center tabular-nums">{entry.break_minutes} min</td>
+                      <td className="border-b border-[#F3F4F6] px-2 py-1 text-center tabular-nums font-semibold">{fmtH(netMinutes(entry) / 60)}</td>
+                      <td className="border-b border-[#F3F4F6] px-2 py-1 text-[#6B7280]">
                         {ei === 0 && notizSuffix
-                          ? <span className="italic text-[#BA7517]">{notizSuffix}{entry.note ? ` · ${entry.note}` : ''}</span>
+                          ? <span className="italic text-[#4F46E5]">{notizSuffix}{entry.note ? ` · ${entry.note}` : ''}</span>
                           : (entry.note ?? '')}
                       </td>
                     </tr>
@@ -411,14 +397,14 @@ export default function DruckModal({
                 })}
 
                 {/* Gesamt */}
-                <tr className="bg-[#F5F2EE]">
-                  <td colSpan={5} className="border border-[#C0BAB0] px-2 py-1.5 text-right font-semibold text-[#706D6A] text-[9px] uppercase tracking-wide">
+                <tr>
+                  <td colSpan={5} className="border-t border-[#D1D5DB] px-2 py-1.5 text-right font-semibold text-[#6B7280] text-[9px] uppercase tracking-wide">
                     Gesamt Ist-Stunden
                   </td>
-                  <td className="border border-[#C0BAB0] px-2 py-1.5 text-center tabular-nums font-bold text-[#1A1917]">
+                  <td className="border-t border-[#D1D5DB] px-2 py-1.5 text-center tabular-nums font-bold text-[#111827]">
                     {fmtH(totalIstMins / 60)}
                   </td>
-                  <td className="border border-[#C0BAB0]" />
+                  <td className="border-t border-[#D1D5DB]" />
                 </tr>
               </tbody>
             </table>
@@ -427,23 +413,23 @@ export default function DruckModal({
           {/* ── Abwesenheiten (wöchentlich) ── */}
           {weekSummaries.length > 0 && (
             <>
-              <h3 className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#706D6A] mb-1.5 mt-6">Abwesenheiten</h3>
-              <table className="w-full border-collapse text-[10px] border border-[#C0BAB0]">
+              <h3 className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#6B7280] mb-1.5 mt-6">Abwesenheiten</h3>
+              <table className="w-full border-collapse text-[10px] border-t border-[#E5E7EB]">
                 <thead>
-                  <tr className="bg-[#F5F2EE]">
-                    <th className="border border-[#C0BAB0] px-2 py-1.5 text-center font-semibold text-[#706D6A] w-10">KW</th>
-                    <th className="border border-[#C0BAB0] px-2 py-1.5 text-left font-semibold text-[#706D6A] w-28">Zeitraum</th>
+                  <tr className="bg-[#FAFAFA]">
+                    <th className="border-b border-[#E5E7EB] px-2 py-1.5 text-center font-semibold text-[#6B7280] w-10">KW</th>
+                    <th className="border-b border-[#E5E7EB] px-2 py-1.5 text-left font-semibold text-[#6B7280] w-28">Zeitraum</th>
                     {activeAbsTypes.map(t => (
                       <th
                         key={t}
-                        className="border border-[#C0BAB0] px-2 py-1.5 text-center font-semibold text-[9px] whitespace-nowrap"
+                        className="border-b border-[#E5E7EB] px-2 py-1.5 text-center font-semibold text-[9px] whitespace-nowrap"
                         style={{ color: ABSENCE_COLORS[t].text, backgroundColor: ABSENCE_COLORS[t].bg }}
                         title={ABSENCE_LABELS[t]}
                       >
                         {t}
                       </th>
                     ))}
-                    <th className="border border-[#C0BAB0] px-2 py-1.5 text-center font-semibold text-[#706D6A] w-10">Σ</th>
+                    <th className="border-b border-[#E5E7EB] px-2 py-1.5 text-center font-semibold text-[#6B7280] w-10">Σ</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -452,35 +438,35 @@ export default function DruckModal({
                     const fromStr = format(w.weekFrom, 'dd.MM.')
                     const toStr   = format(w.weekTo,   'dd.MM.yyyy')
                     return (
-                      <tr key={i} className={i % 2 === 1 ? 'bg-[#FAFAF8]' : ''}>
-                        <td className="border border-[#C0BAB0] px-2 py-1 text-center font-semibold text-[#706D6A]">{w.kw}</td>
-                        <td className="border border-[#C0BAB0] px-2 py-1 whitespace-nowrap">{fromStr} – {toStr}</td>
+                      <tr key={i} className={i % 2 === 1 ? 'bg-[#FAFAFA]' : ''}>
+                        <td className="border-b border-[#F3F4F6] px-2 py-1 text-center font-semibold text-[#6B7280]">{w.kw}</td>
+                        <td className="border-b border-[#F3F4F6] px-2 py-1 whitespace-nowrap">{fromStr} – {toStr}</td>
                         {activeAbsTypes.map(t => (
-                          <td key={t} className="border border-[#C0BAB0] px-2 py-1 text-center tabular-nums">
+                          <td key={t} className="border-b border-[#F3F4F6] px-2 py-1 text-center tabular-nums">
                             {w.byType[t]
                               ? <span className="font-semibold" style={{ color: ABSENCE_COLORS[t].text }}>{w.byType[t]}</span>
-                              : <span className="text-[#D0CBC2]">–</span>}
+                              : <span className="text-[#D1D5DB]">–</span>}
                           </td>
                         ))}
-                        <td className="border border-[#C0BAB0] px-2 py-1 text-center tabular-nums font-semibold text-[#1A1917]">{total}</td>
+                        <td className="border-b border-[#F3F4F6] px-2 py-1 text-center tabular-nums font-semibold text-[#111827]">{total}</td>
                       </tr>
                     )
                   })}
                   {/* Abwesenheits-Summe */}
                   {weekSummaries.length > 1 && (
-                    <tr className="bg-[#F5F2EE] font-semibold">
-                      <td colSpan={2} className="border border-[#C0BAB0] px-2 py-1 text-right text-[#706D6A] text-[9px] uppercase tracking-wide">Gesamt</td>
+                    <tr className="bg-[#FAFAFA] font-semibold">
+                      <td colSpan={2} className="border-t border-[#D1D5DB] px-2 py-1 text-right text-[#6B7280] text-[9px] uppercase tracking-wide">Gesamt</td>
                       {activeAbsTypes.map(t => {
                         const sum = weekSummaries.reduce((s, w) => s + (w.byType[t] ?? 0), 0)
                         return (
-                          <td key={t} className="border border-[#C0BAB0] px-2 py-1 text-center tabular-nums">
+                          <td key={t} className="border-t border-[#D1D5DB] px-2 py-1 text-center tabular-nums">
                             {sum > 0
                               ? <span style={{ color: ABSENCE_COLORS[t].text }}>{sum}</span>
-                              : <span className="text-[#D0CBC2]">–</span>}
+                              : <span className="text-[#D1D5DB]">–</span>}
                           </td>
                         )
                       })}
-                      <td className="border border-[#C0BAB0] px-2 py-1 text-center tabular-nums text-[#1A1917]">
+                      <td className="border-t border-[#D1D5DB] px-2 py-1 text-center tabular-nums text-[#111827]">
                         {weekSummaries.reduce((s, w) => s + activeAbsTypes.reduce((ss, t) => ss + (w.byType[t] ?? 0), 0), 0)}
                       </td>
                     </tr>
@@ -491,90 +477,70 @@ export default function DruckModal({
           )}
 
           {/* ── Zusammenfassung ── */}
-          <h3 className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#706D6A] mb-1.5 mt-6">Zusammenfassung</h3>
-          <table className="border-collapse text-[10px] border border-[#C0BAB0]">
-            <tbody>
-              <tr>
-                <td className="border border-[#C0BAB0] px-3 py-1.5 text-[#706D6A] w-64">Soll-Stunden</td>
-                <td className="border border-[#C0BAB0] px-3 py-1.5 tabular-nums font-semibold w-32">{fmtH(totalSollH)}</td>
-              </tr>
-              <tr>
-                <td className="border border-[#C0BAB0] px-3 py-1.5 text-[#706D6A]">Ist-Stunden</td>
-                <td className="border border-[#C0BAB0] px-3 py-1.5 tabular-nums font-semibold">{fmtH(totalIstMins / 60)}</td>
-              </tr>
-              <tr>
-                <td className="border border-[#C0BAB0] px-3 py-1.5 text-[#706D6A]">Differenz</td>
-                <td className={cn(
-                  'border border-[#C0BAB0] px-3 py-1.5 tabular-nums font-semibold',
-                  totalDeltaH > 0.02 ? 'text-emerald-600' : totalDeltaH < -0.02 ? 'text-red-500' : 'text-[#AAAAAA]',
-                )}>
-                  {fmtDelta(totalDeltaH)}
-                </td>
-              </tr>
+          <h3 className="text-[9px] font-bold uppercase tracking-[0.15em] text-[#6B7280] mb-2 mt-6">Zusammenfassung</h3>
+
+          {/* Haupt-KPIs */}
+          <div className="grid grid-cols-3 gap-4 border-t border-[#E5E7EB] pt-3 mb-3">
+            <div>
+              <div className="text-[8px] text-[#9CA3AF] uppercase tracking-wide mb-0.5">Soll</div>
+              <div className="text-[13px] font-bold tabular-nums">{fmtH(totalSollH)}</div>
+            </div>
+            <div>
+              <div className="text-[8px] text-[#9CA3AF] uppercase tracking-wide mb-0.5">Ist</div>
+              <div className="text-[13px] font-bold tabular-nums">{fmtH(totalIstMins / 60)}</div>
+            </div>
+            <div>
+              <div className="text-[8px] text-[#9CA3AF] uppercase tracking-wide mb-0.5">Differenz</div>
+              <div className={cn(
+                'text-[13px] font-bold tabular-nums',
+                totalDeltaH > 0.02 ? 'text-emerald-600' : totalDeltaH < -0.02 ? 'text-red-500' : 'text-[#9CA3AF]',
+              )}>
+                {fmtDelta(totalDeltaH)}
+              </div>
+            </div>
+          </div>
+
+          {/* Sekundäre Infos einzeilig */}
+          {(vacDays > 0 || sickDays > 0 || otherDays > 0 || resturlaub !== null) && (
+            <div className="text-[9px] text-[#6B7280] border-t border-[#F3F4F6] pt-2 flex flex-wrap gap-x-4 gap-y-1">
               {vacDays > 0 && (
-                <tr>
-                  <td className="border border-[#C0BAB0] px-3 py-1.5 text-[#706D6A]">Urlaubstage genommen (U / RU / U3 / SU)</td>
-                  <td className="border border-[#C0BAB0] px-3 py-1.5 tabular-nums">{vacDays} {vacDays === 1 ? 'Tag' : 'Tage'}</td>
-                </tr>
+                <span>Urlaub: <span className="font-semibold text-[#111827]">{vacDays} {vacDays === 1 ? 'Tag' : 'Tage'}</span></span>
               )}
               {sickDays > 0 && (
-                <tr>
-                  <td className="border border-[#C0BAB0] px-3 py-1.5 text-[#706D6A]">Krankheitstage (K / KK)</td>
-                  <td className="border border-[#C0BAB0] px-3 py-1.5 tabular-nums">{sickDays} {sickDays === 1 ? 'Tag' : 'Tage'}</td>
-                </tr>
+                <span>Krank: <span className="font-semibold text-[#111827]">{sickDays} {sickDays === 1 ? 'Tag' : 'Tage'}</span></span>
               )}
               {otherDays > 0 && (
-                <tr>
-                  <td className="border border-[#C0BAB0] px-3 py-1.5 text-[#706D6A]">Sonstige (AT / S / ÜA)</td>
-                  <td className="border border-[#C0BAB0] px-3 py-1.5 tabular-nums">{otherDays} {otherDays === 1 ? 'Tag' : 'Tage'}</td>
-                </tr>
+                <span>Sonstige: <span className="font-semibold text-[#111827]">{otherDays} {otherDays === 1 ? 'Tag' : 'Tage'}</span></span>
+              )}
+              {vacAcc && yearVacTaken !== null && (
+                <span>Urlaub genommen {periodFrom.getFullYear()}: <span className="font-semibold text-[#111827]">{yearVacTaken} Tage</span></span>
               )}
               {vacAcc && (
-                <>
-                  <tr>
-                    <td className="border border-[#C0BAB0] px-3 py-1.5 text-[#706D6A]">
-                      Urlaubsanspruch {periodFrom.getFullYear()} (inkl. Übertrag)
-                    </td>
-                    <td className="border border-[#C0BAB0] px-3 py-1.5 tabular-nums">
-                      {vacAcc.entitlement + vacAcc.carry_over} Tage
-                      {vacAcc.carry_over > 0 && (
-                        <span className="text-[#706D6A] ml-1">({vacAcc.entitlement} + {vacAcc.carry_over} Übertrag)</span>
-                      )}
-                    </td>
-                  </tr>
-                  {yearVacTaken !== null && (
-                    <tr>
-                      <td className="border border-[#C0BAB0] px-3 py-1.5 text-[#706D6A]">
-                        Genommen gesamt {periodFrom.getFullYear()}
-                      </td>
-                      <td className="border border-[#C0BAB0] px-3 py-1.5 tabular-nums">{yearVacTaken} Tage</td>
-                    </tr>
-                  )}
-                  {resturlaub !== null && (
-                    <tr>
-                      <td className="border border-[#C0BAB0] px-3 py-1.5 font-semibold text-[#1A1917]">Resturlaub</td>
-                      <td className={cn(
-                        'border border-[#C0BAB0] px-3 py-1.5 tabular-nums font-bold',
-                        resturlaub <= 0 ? 'text-red-500' : resturlaub <= 3 ? 'text-amber-600' : 'text-emerald-600',
-                      )}>
-                        {resturlaub} {resturlaub === 1 ? 'Tag' : 'Tage'}
-                      </td>
-                    </tr>
-                  )}
-                </>
+                <span>
+                  Anspruch: <span className="font-semibold text-[#111827]">
+                    {vacAcc.entitlement + vacAcc.carry_over} Tage
+                    {vacAcc.carry_over > 0 && <span className="text-[#9CA3AF]"> ({vacAcc.entitlement}+{vacAcc.carry_over})</span>}
+                  </span>
+                </span>
               )}
-            </tbody>
-          </table>
+              {resturlaub !== null && (
+                <span>Resturlaub: <span className={cn(
+                  'font-bold',
+                  resturlaub <= 0 ? 'text-red-500' : resturlaub <= 3 ? 'text-amber-600' : 'text-emerald-600',
+                )}>{resturlaub} {resturlaub === 1 ? 'Tag' : 'Tage'}</span></span>
+              )}
+            </div>
+          )}
 
           {/* Unterschriften */}
-          <div className="mt-16 grid grid-cols-2 gap-x-14 text-[10px] text-[#706D6A]">
+          <div className="mt-16 grid grid-cols-2 gap-x-14 text-[10px] text-[#6B7280]">
             <div>
               <div className="h-10" />
-              <div className="border-t border-[#706D6A] pt-1">Ort, Datum &nbsp;&nbsp;&nbsp; Unterschrift Mitarbeiter</div>
+              <div className="border-t border-[#6B7280] pt-1">Ort, Datum &nbsp;&nbsp;&nbsp; Unterschrift Mitarbeiter</div>
             </div>
             <div>
               <div className="h-10" />
-              <div className="border-t border-[#706D6A] pt-1">Ort, Datum &nbsp;&nbsp;&nbsp; Unterschrift Leitung</div>
+              <div className="border-t border-[#6B7280] pt-1">Ort, Datum &nbsp;&nbsp;&nbsp; Unterschrift Leitung</div>
             </div>
           </div>
 

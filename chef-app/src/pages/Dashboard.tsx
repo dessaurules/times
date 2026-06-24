@@ -1,125 +1,119 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { format, parseISO, differenceInMinutes } from 'date-fns'
 import { de } from 'date-fns/locale'
-import { Check, XCircle, Plus, X, LogOut, GripVertical, SlidersHorizontal } from 'lucide-react'
-import {
-  DndContext, DragOverlay, closestCenter,
-  type DragEndEvent, type DragStartEvent,
-  useSensor, useSensors, PointerSensor,
-} from '@dnd-kit/core'
-import {
-  SortableContext, verticalListSortingStrategy, rectSortingStrategy, useSortable, arrayMove,
-} from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
+import { Check, XCircle, Plus, X, LogOut, SlidersHorizontal, UserCheck, UserX, Bell, CalendarX, type LucideIcon } from 'lucide-react'
+import GridLayout, { WidthProvider } from 'react-grid-layout/legacy'
+import type { Layout, LayoutItem } from 'react-grid-layout/legacy'
 import { pb } from '../lib/pb'
 import { useAuthStore } from '../stores/auth'
 import type { Employee, Absence, TimeEntry } from '@shared/types'
 import { ABSENCE_COLORS } from '@shared/types'
 import { cn } from '@/lib/utils'
 import { notifyEmployee } from '../lib/notifications'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+
+const RGL = WidthProvider(GridLayout)
 
 // ── Widget-Definitionen ────────────────────────────────────────────────────
 const WIDGET_IDS = [
-  'stat-eingestempelt',
-  'stat-abwesend',
-  'stat-genehmigungen',
-  'stat-resturlaub',
-  'antraege',
-  'abwesend',
-  'arbeitszeiten',
+  'stat-eingestempelt', 'stat-abwesend', 'stat-genehmigungen', 'stat-resturlaub',
+  'antraege', 'abwesend', 'arbeitszeiten',
+  'stat-ueberstunden', 'stat-krankmeldungen', 'geburtstage', 'dokumente-ablauf',
 ] as const
 type WidgetId = typeof WIDGET_IDS[number]
 
 const WIDGET_META: Record<WidgetId, { label: string }> = {
-  'stat-eingestempelt': { label: 'Eingestempelt heute' },
-  'stat-abwesend':      { label: 'Abwesend heute' },
-  'stat-genehmigungen': { label: 'Offene Genehmigungen' },
-  'stat-resturlaub':    { label: 'Resturlaub-Verfall' },
-  antraege:             { label: 'Anträge' },
-  abwesend:             { label: 'Heute abwesend' },
-  arbeitszeiten:        { label: 'Arbeitszeiten heute' },
+  'stat-eingestempelt':  { label: 'Eingestempelt heute' },
+  'stat-abwesend':       { label: 'Abwesend heute' },
+  'stat-genehmigungen':  { label: 'Offene Genehmigungen' },
+  'stat-resturlaub':     { label: 'Resturlaub-Verfall' },
+  'antraege':            { label: 'Anträge' },
+  'abwesend':            { label: 'Heute abwesend' },
+  'arbeitszeiten':       { label: 'Arbeitszeiten heute' },
+  'stat-ueberstunden':   { label: 'Überstunden diese Woche' },
+  'stat-krankmeldungen': { label: 'Krankmeldungen' },
+  'geburtstage':         { label: 'Geburtstage im Monat' },
+  'dokumente-ablauf':    { label: 'Ablaufende Verträge' },
 }
 
-const STAT_IDS:  readonly WidgetId[] = ['stat-eingestempelt', 'stat-abwesend', 'stat-genehmigungen', 'stat-resturlaub']
-const PANEL_IDS: readonly WidgetId[] = ['antraege', 'abwesend', 'arbeitszeiten']
+const DEFAULT_LAYOUT: LayoutItem[] = [
+  { i: 'stat-eingestempelt',  x: 0, y: 0, w: 1, h: 1 },
+  { i: 'stat-abwesend',       x: 1, y: 0, w: 1, h: 1 },
+  { i: 'stat-genehmigungen',  x: 2, y: 0, w: 1, h: 1 },
+  { i: 'stat-resturlaub',     x: 3, y: 0, w: 1, h: 1 },
+  { i: 'antraege',            x: 0, y: 1, w: 2, h: 2 },
+  { i: 'abwesend',            x: 2, y: 1, w: 2, h: 2 },
+  { i: 'arbeitszeiten',       x: 0, y: 4, w: 4, h: 2 },
+]
 
-const LS_KEY = 'chef-dashboard-widgets'
+const LS_KEY        = 'chef-dashboard-layout-v3'
+const LS_MANUAL_KEY = 'chef-dashboard-manual-resize-v2'
 
-function useDashboardWidgets() {
-  const [order, setOrder] = useState<WidgetId[]>(() => {
+const AUTO_RESIZE_IDS = new Set(['antraege', 'abwesend', 'arbeitszeiten'])
+const ROW_H = 160, MAR_Y = 16
+
+function pxToRows(px: number, min: number): number {
+  return Math.max(min, Math.ceil((px + MAR_Y) / (ROW_H + MAR_Y)))
+}
+
+function useGridLayout() {
+  const [manualResized, setManualResized] = useState<Set<string>>(() => {
+    try {
+      const s = localStorage.getItem(LS_MANUAL_KEY)
+      return s ? new Set(JSON.parse(s) as string[]) : new Set()
+    } catch { return new Set() }
+  })
+
+  function markManualResize(id: string) {
+    setManualResized(prev => {
+      const next = new Set(prev).add(id)
+      localStorage.setItem(LS_MANUAL_KEY, JSON.stringify([...next]))
+      return next
+    })
+  }
+
+  const [layout, setLayout] = useState<LayoutItem[]>(() => {
     try {
       const saved = localStorage.getItem(LS_KEY)
       if (saved) {
-        const parsed: string[] = JSON.parse(saved)
-        const valid = parsed.filter((id): id is WidgetId => WIDGET_IDS.includes(id as WidgetId))
-        // fehlende Widgets ans Ende anhängen
-        const missing = WIDGET_IDS.filter(id => !valid.includes(id))
+        const parsed = JSON.parse(saved) as LayoutItem[]
+        const valid = parsed.filter(l => (WIDGET_IDS as readonly string[]).includes(l.i))
+        const missing = DEFAULT_LAYOUT.filter(d => !valid.some(v => v.i === d.i))
         return [...valid, ...missing]
       }
     } catch {}
-    return [...WIDGET_IDS]
+    return DEFAULT_LAYOUT
   })
 
-  function save(next: WidgetId[]) {
-    setOrder(next)
-    localStorage.setItem(LS_KEY, JSON.stringify(next))
+  const visible = layout.map(l => l.i as WidgetId).filter(id => (WIDGET_IDS as readonly string[]).includes(id))
+  const hidden = WIDGET_IDS.filter(id => !visible.includes(id))
+
+  function saveLayout(next: LayoutItem[] | Layout) {
+    const arr = Array.isArray(next) ? next : [...next]
+    setLayout(arr as LayoutItem[])
+    localStorage.setItem(LS_KEY, JSON.stringify(arr))
   }
 
-  const hidden = WIDGET_IDS.filter(id => !order.includes(id))
-
-  return {
-    order,
-    hidden,
-    reorder: (ids: WidgetId[]) => save(ids),
-    remove:  (id: WidgetId)    => save(order.filter(x => x !== id)),
-    add:     (id: WidgetId)    => save([...order, id]),
+  function removeWidget(id: WidgetId) {
+    setLayout(prev => {
+      const next = prev.filter(l => l.i !== id)
+      localStorage.setItem(LS_KEY, JSON.stringify(next))
+      return next
+    })
   }
+
+  function addWidget(id: WidgetId) {
+    setLayout(prev => {
+      const stub: LayoutItem = { i: id, x: 0, y: Infinity, w: 2, h: 2 }
+      const next = [...prev, stub]
+      localStorage.setItem(LS_KEY, JSON.stringify(next))
+      return next
+    })
+  }
+
+  return { layout, setLayout, visible, hidden, saveLayout, removeWidget, addWidget, manualResized, markManualResize }
 }
 
-// ── SortableWidget-Wrapper ─────────────────────────────────────────────────
-function SortableWidget({
-  id, editMode, onRemove, children,
-}: {
-  id: WidgetId; editMode: boolean; onRemove: () => void; children: React.ReactNode
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
-  return (
-    <div
-      ref={setNodeRef}
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition,
-        opacity: isDragging ? 0.4 : 1,
-      }}
-    >
-      {editMode && (
-        <div className="flex items-center gap-2 px-3 py-1.5 mb-1 bg-[rgba(186,117,23,0.08)] rounded-t-xl border border-b-0 border-[#EDE7DC]">
-          <button
-            className="cursor-grab active:cursor-grabbing touch-none text-[#BA7517] hover:text-[#9E6312] transition-colors"
-            {...listeners}
-            {...attributes}
-            title="Verschieben"
-          >
-            <GripVertical size={14} />
-          </button>
-          <span className="text-xs font-medium text-[#BA7517] flex-1 select-none">
-            {WIDGET_META[id].label}
-          </span>
-          <button
-            onClick={onRemove}
-            className="text-[#706D6A] hover:text-red-500 transition-colors"
-            title="Widget entfernen"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      )}
-      {children}
-    </div>
-  )
-}
-
-// ── Hilfstypen ─────────────────────────────────────────────────────────────
 type AbsenceExp   = Absence   & { expand?: { employee?: Employee } }
 type TimeEntryExp = TimeEntry & { expand?: { employee?: Employee } }
 
@@ -144,15 +138,13 @@ function fmtMins(mins: number) {
   return `${h}:${String(m).padStart(2, '0')} h`
 }
 
-// ── Dashboard ──────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const user       = useAuthStore(s => s.user)
   const canApprove = user?.role === 'gf'
   const today      = format(new Date(), 'yyyy-MM-dd')
 
-  const { order, hidden, reorder, remove, add } = useDashboardWidgets()
+  const { layout, setLayout, visible, hidden, saveLayout, removeWidget, addWidget, manualResized, markManualResize } = useGridLayout()
   const [editMode,  setEditMode]  = useState(false)
-  const [activeId,  setActiveId]  = useState<WidgetId | null>(null)
 
   const [data,    setData]    = useState<DashData>({ activeTotal: 0, absentToday: [], pending: [], carryOverCount: 0 })
   const [loading, setLoading] = useState(true)
@@ -216,6 +208,28 @@ export default function Dashboard() {
     load()
   }, [today])
 
+  const unsubTimeRef = useRef<(() => void) | null>(null)
+  useEffect(() => {
+    pb.collection('time_entries').subscribe<TimeEntryExp>('*', (e) => {
+      const entryDate = e.record.start_time.slice(0, 10)
+      if (e.action === 'create') {
+        if (entryDate !== today) return
+        pb.collection('time_entries').getOne<TimeEntryExp>(e.record.id, {
+          expand: 'employee', requestKey: null,
+        }).then(full => setTimeEntries(prev => [...prev, full])).catch(() => {
+          setTimeEntries(prev => [...prev, e.record])
+        })
+      } else if (e.action === 'update') {
+        setTimeEntries(prev => prev.map(t =>
+          t.id === e.record.id ? { ...e.record, expand: t.expand } : t
+        ))
+      } else if (e.action === 'delete') {
+        setTimeEntries(prev => prev.filter(t => t.id !== e.record.id))
+      }
+    }, { requestKey: null }).then(fn => { unsubTimeRef.current = fn })
+    return () => { unsubTimeRef.current?.(); pb.collection('time_entries').unsubscribe('*') }
+  }, [today])
+
   useEffect(() => {
     if (antragTab !== 'verlauf') return
     setVerlaufLoading(true)
@@ -261,6 +275,28 @@ export default function Dashboard() {
     })
     return rows
   }, [timeEntries, now])
+
+  useEffect(() => {
+    if (loading) return
+    const ideal: Record<string, number> = {
+      antraege:      pxToRows(42 + 40 + Math.max(38, data.pending.length * 38), 1),
+      abwesend:      pxToRows(42 + 40 + Math.max(30, Math.ceil(data.absentToday.length / 3) * 30), 1),
+      arbeitszeiten: pxToRows(42 + Math.max(38, stempel.length * 38), 1),
+    }
+    setLayout(prev => {
+      let changed = false
+      const next = prev.map(l => {
+        if (!AUTO_RESIZE_IDS.has(l.i) || manualResized.has(l.i)) return l
+        const h = ideal[l.i]
+        if (h === undefined || h === l.h) return l
+        changed = true
+        return { ...l, h }
+      })
+      if (!changed) return prev
+      localStorage.setItem(LS_KEY, JSON.stringify(next))
+      return next
+    })
+  }, [loading, data.pending.length, data.absentToday.length, stempel.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function absDateLabel(abs: Absence) {
     return abs.date_from === abs.date_to
@@ -319,32 +355,6 @@ export default function Dashboard() {
     }
   }
 
-  // ── dnd-kit ───────────────────────────────────────────────────────────────
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
-
-  function handleDragStart(e: DragStartEvent) {
-    setActiveId(e.active.id as WidgetId)
-  }
-
-  function handleDragEnd(e: DragEndEvent) {
-    const { active, over } = e
-    if (!over || active.id === over.id) { setActiveId(null); return }
-    const activeId = active.id as WidgetId
-    const overId   = over.id   as WidgetId
-    // Kein Drag zwischen den zwei Zonen erlaubt
-    if (STAT_IDS.includes(activeId) !== STAT_IDS.includes(overId)) { setActiveId(null); return }
-    const oldIdx = order.indexOf(activeId)
-    const newIdx = order.indexOf(overId)
-    reorder(arrayMove(order, oldIdx, newIdx))
-    setActiveId(null)
-  }
-
-  // ── Abgeleitete Werte ─────────────────────────────────────────────────────
-  const visibleStats  = order.filter(id => STAT_IDS.includes(id))
-  const visiblePanels = order.filter(id => PANEL_IDS.includes(id))
-  const hiddenStats   = STAT_IDS.filter(id => !order.includes(id))
-  const hiddenPanels  = PANEL_IDS.filter(id => !order.includes(id))
-
   const presentToday    = stempel.length
   const absentBreakdown = data.absentToday.reduce((acc, a) => {
     acc[a.type] = (acc[a.type] || 0) + 1; return acc
@@ -356,39 +366,40 @@ export default function Dashboard() {
   ).values()]
   const filteredVerlauf = verlaufFilter ? verlauf.filter(a => a.employee === verlaufFilter) : verlauf
 
-  // ── Widget-Render-Funktionen ───────────────────────────────────────────────
   function renderAntraege() {
     return (
-      <div className="bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
-        <div className="flex border-b border-[#EDE7DC]">
-          <button
-            onClick={() => setAntragTab('pending')}
-            className={cn(
-              'flex-1 py-3 text-[11px] font-semibold uppercase tracking-wider transition-colors',
-              antragTab === 'pending'
-                ? 'text-[#BA7517] border-b-2 border-[#BA7517] bg-[#FFF9F0]'
-                : 'text-[#706D6A] hover:bg-[#FAF7F2]'
-            )}
-          >
-            Ausstehend{data.pending.length > 0 ? ` (${data.pending.length})` : ''}
-          </button>
-          <button
-            onClick={() => setAntragTab('verlauf')}
-            className={cn(
-              'flex-1 py-3 text-[11px] font-semibold uppercase tracking-wider transition-colors',
-              antragTab === 'verlauf'
-                ? 'text-[#BA7517] border-b-2 border-[#BA7517] bg-[#FFF9F0]'
-                : 'text-[#706D6A] hover:bg-[#FAF7F2]'
-            )}
-          >
-            Verlauf
-          </button>
-        </div>
-        <div className="p-5">
+      <Card className="h-full">
+        <CardHeader className="p-0 border-b-0">
+          <div className="flex w-full">
+            <button
+              onClick={() => setAntragTab('pending')}
+              className={cn(
+                'flex-1 py-3 text-[11px] font-semibold uppercase tracking-wider transition-colors',
+                antragTab === 'pending'
+                  ? 'text-[#4F46E5] border-b-2 border-[#4F46E5] bg-[#EEF2FF]'
+                  : 'text-[#6B7280] hover:bg-[#F9FAFB]'
+              )}
+            >
+              Ausstehend{data.pending.length > 0 ? ` (${data.pending.length})` : ''}
+            </button>
+            <button
+              onClick={() => setAntragTab('verlauf')}
+              className={cn(
+                'flex-1 py-3 text-[11px] font-semibold uppercase tracking-wider transition-colors',
+                antragTab === 'verlauf'
+                  ? 'text-[#4F46E5] border-b-2 border-[#4F46E5] bg-[#EEF2FF]'
+                  : 'text-[#6B7280] hover:bg-[#F9FAFB]'
+              )}
+            >
+              Verlauf
+            </button>
+          </div>
+        </CardHeader>
+        <CardContent>
           {antragTab === 'pending' ? (
             <>
               {data.pending.length === 0 ? (
-                <p className="text-sm text-[#706D6A]">Keine offenen Genehmigungen.</p>
+                <p className="text-sm text-[#6B7280]">Keine offenen Genehmigungen.</p>
               ) : data.pending.map(abs => {
                 const emp    = abs.expand?.employee
                 const colors = ABSENCE_COLORS[abs.type]
@@ -397,11 +408,11 @@ export default function Dashboard() {
                   ? format(parseISO(abs.date_from), 'dd.MM.yyyy', { locale: de })
                   : `${format(parseISO(abs.date_from), 'dd.MM.', { locale: de })}–${format(parseISO(abs.date_to), 'dd.MM.yyyy', { locale: de })}`
                 return (
-                  <div key={abs.id} className="flex items-center gap-2 py-2.5 border-b border-[#EDE7DC] last:border-0 text-sm">
-                    <span className="font-semibold text-[#1A1917] min-w-[130px] truncate">
+                  <div key={abs.id} className="flex items-center gap-2 py-2.5 border-b border-[#E5E7EB] last:border-0 text-sm">
+                    <span className="font-semibold text-[#111827] min-w-[130px] truncate">
                       {emp ? `${emp.last_name}, ${emp.first_name}` : '—'}
                     </span>
-                    <span className="text-[#706D6A] flex-1 text-xs whitespace-nowrap">
+                    <span className="text-[#6B7280] flex-1 text-xs whitespace-nowrap">
                       {dateLabel} · {days} T
                     </span>
                     <span className="text-[11px] font-bold px-2 py-0.5 rounded shrink-0"
@@ -427,7 +438,7 @@ export default function Dashboard() {
           ) : (
             <>
               {verlaufLoading ? (
-                <p className="text-sm text-[#706D6A]">Lade…</p>
+                <p className="text-sm text-[#6B7280]">Lade…</p>
               ) : (
                 <>
                   {verlaufEmployees.length > 1 && (
@@ -435,7 +446,7 @@ export default function Dashboard() {
                       <select
                         value={verlaufFilter}
                         onChange={e => setVerlaufFilter(e.target.value)}
-                        className="text-xs border border-[#EDE7DC] rounded px-2 py-1.5 text-[#706D6A] outline-none focus:border-[#BA7517] bg-white"
+                        className="text-xs border border-[#E5E7EB] rounded px-2 py-1.5 text-[#6B7280] outline-none focus:border-[#4F46E5] bg-white"
                       >
                         <option value="">Alle Mitarbeiter</option>
                         {verlaufEmployees.map(e => (
@@ -445,7 +456,7 @@ export default function Dashboard() {
                     </div>
                   )}
                   {filteredVerlauf.length === 0 ? (
-                    <p className="text-sm text-[#706D6A]">Kein Verlauf vorhanden.</p>
+                    <p className="text-sm text-[#6B7280]">Kein Verlauf vorhanden.</p>
                   ) : (
                     <div>
                       {filteredVerlauf.map(abs => {
@@ -456,11 +467,11 @@ export default function Dashboard() {
                           ? format(parseISO(abs.date_from), 'dd.MM.yyyy', { locale: de })
                           : `${format(parseISO(abs.date_from), 'dd.MM.', { locale: de })}–${format(parseISO(abs.date_to), 'dd.MM.yyyy', { locale: de })}`
                         return (
-                          <div key={abs.id} className="flex items-center gap-2 py-2 border-b border-[#F5F0EA] last:border-0">
-                            <span className="font-medium text-[#1A1917] text-xs min-w-[100px] truncate">
+                          <div key={abs.id} className="flex items-center gap-2 py-2 border-b border-[#F3F4F6] last:border-0">
+                            <span className="font-medium text-[#111827] text-xs min-w-[100px] truncate">
                               {emp ? `${emp.last_name}, ${emp.first_name}` : '—'}
                             </span>
-                            <span className="text-[#706D6A] flex-1 text-xs whitespace-nowrap">{dateLabel}</span>
+                            <span className="text-[#6B7280] flex-1 text-xs whitespace-nowrap">{dateLabel}</span>
                             <span className="text-[11px] font-bold px-1.5 py-0.5 rounded shrink-0"
                               style={{ backgroundColor: colors.bg, color: colors.text }}>
                               {abs.type}
@@ -480,69 +491,69 @@ export default function Dashboard() {
               )}
             </>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     )
   }
 
   function renderAbwesend() {
     return (
-      <div className="bg-white border border-[#EDE7DC] rounded-lg p-5">
-        <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[#706D6A] mb-4">
-          Heute abwesend · {format(new Date(), 'dd.MM.yyyy')}
-        </h2>
-        {data.absentToday.length === 0 ? (
-          <p className="text-sm text-[#706D6A]">Alle Mitarbeiter anwesend.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {data.absentToday.map(abs => {
-              const emp    = abs.expand?.employee
-              const colors = ABSENCE_COLORS[abs.type]
-              return (
-                <span key={abs.id}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-                  style={{ backgroundColor: colors.bg, color: colors.text }}>
-                  {emp ? `${emp.first_name} ${emp.last_name}` : '—'} · {abs.type}
-                </span>
-              )
-            })}
-          </div>
-        )}
-      </div>
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle>Heute abwesend · {format(new Date(), 'dd.MM.yyyy')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {data.absentToday.length === 0 ? (
+            <p className="text-sm text-[#6B7280]">Alle Mitarbeiter anwesend.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {data.absentToday.map(abs => {
+                const emp    = abs.expand?.employee
+                const colors = ABSENCE_COLORS[abs.type]
+                return (
+                  <span key={abs.id}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                    style={{ backgroundColor: colors.bg, color: colors.text }}>
+                    {emp ? `${emp.first_name} ${emp.last_name}` : '—'} · {abs.type}
+                  </span>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     )
   }
 
   function renderArbeitszeiten() {
     return (
-      <div className="bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
-        <div className="px-5 py-3 border-b border-[#EDE7DC] bg-[#FAF7F2] flex items-center justify-between">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-[#706D6A]">
-            Arbeitszeiten heute · {format(new Date(), 'dd.MM.yyyy')}
-          </div>
+      <Card className="h-full">
+        <CardHeader>
+          <CardTitle>Arbeitszeiten heute · {format(new Date(), 'dd.MM.yyyy')}</CardTitle>
           <div className="flex items-center gap-3">
             <div className="flex items-baseline gap-1">
-              <span className="text-base font-bold text-[#1A1917]">{stempel.filter(r => r.isActive).length}</span>
-              <span className="text-xs text-[#706D6A]">eingestempelt</span>
+              <span className="text-base font-bold text-[#111827]">{stempel.filter(r => r.isActive).length}</span>
+              <span className="text-xs text-[#6B7280]">eingestempelt</span>
             </div>
             <button
               onClick={() => { setShowClockInForm(v => !v); setClockInEmpId('') }}
               className={cn(
                 'p-1 rounded transition-colors',
-                showClockInForm ? 'bg-[#EDE7DC] text-[#1A1917]' : 'text-[#706D6A] hover:bg-[#EDE7DC]'
+                showClockInForm ? 'bg-[#E5E7EB] text-[#111827]' : 'text-[#6B7280] hover:bg-[#E5E7EB]'
               )}
               title="Mitarbeiter einstempeln"
             >
               <Plus size={15} />
             </button>
           </div>
-        </div>
+        </CardHeader>
 
         {showClockInForm && (
-          <div className="px-5 py-3 border-b border-[#EDE7DC] bg-white flex items-center gap-2">
+          <div className="px-5 py-3 border-b border-[#E5E7EB] bg-white flex items-center gap-2">
             <select
               value={clockInEmpId}
               onChange={e => setClockInEmpId(e.target.value)}
-              className="flex-1 text-sm border border-[#EDE7DC] rounded px-2 py-1.5 text-[#1A1917] outline-none focus:border-[#BA7517] bg-white"
+              className="flex-1 text-sm border border-[#E5E7EB] rounded px-2 py-1.5 text-[#111827] outline-none focus:border-[#4F46E5] bg-white"
             >
               <option value="">Mitarbeiter wählen…</option>
               {allEmployees.map(e => (
@@ -558,66 +569,68 @@ export default function Dashboard() {
             </button>
             <button
               onClick={() => setShowClockInForm(false)}
-              className="p-1.5 rounded text-[#706D6A] hover:bg-[#EDE7DC] transition-colors"
+              className="p-1.5 rounded text-[#6B7280] hover:bg-[#E5E7EB] transition-colors"
             >
               <X size={14} />
             </button>
           </div>
         )}
 
-        {stempel.length === 0 ? (
-          <p className="px-5 py-4 text-sm text-[#706D6A]">Heute noch keine Buchungen.</p>
-        ) : (
-          <div className="divide-y divide-[#F5F0EA]">
-            {stempel.map((row, i) => {
-              const prevWasActive = i > 0 && stempel[i - 1].isActive
-              const showSeparator = !row.isActive && prevWasActive
-              return (
-                <div key={row.employee.id}>
-                  {showSeparator && (
-                    <div className="px-5 py-1.5 bg-[#FAF7F2]">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-[#B0A898]">
-                        Ausgestempelt
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-3 px-5 py-2.5">
-                    <span className={cn(
-                      'w-2 h-2 rounded-full shrink-0',
-                      row.isActive ? 'bg-green-500' : 'bg-[#D1D5DB]'
-                    )} />
-                    <span className="text-sm font-semibold text-[#1A1917] flex-1">
-                      {row.employee.last_name}, {row.employee.first_name}
-                    </span>
-                    <span className="text-xs text-[#706D6A]">{row.sinceLabel}</span>
-                    {row.isActive ? (
-                      <span className="text-xs font-bold tabular-nums w-16 text-right text-green-700">
-                        {Math.floor(row.totalMins / 60)}
-                        <span className="blink">:</span>
-                        {String(row.totalMins % 60).padStart(2, '0')} h
-                      </span>
-                    ) : (
-                      <span className="text-xs font-bold tabular-nums w-16 text-right text-[#706D6A]">
-                        {fmtMins(row.totalMins)}
-                      </span>
+        <CardContent className="p-0">
+          {stempel.length === 0 ? (
+            <p className="px-5 py-4 text-sm text-[#6B7280]">Heute noch keine Buchungen.</p>
+          ) : (
+            <div className="divide-y divide-[#F3F4F6]">
+              {stempel.map((row, i) => {
+                const prevWasActive = i > 0 && stempel[i - 1].isActive
+                const showSeparator = !row.isActive && prevWasActive
+                return (
+                  <div key={row.employee.id}>
+                    {showSeparator && (
+                      <div className="px-5 py-1.5 bg-[#F9FAFB]">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF]">
+                          Ausgestempelt
+                        </span>
+                      </div>
                     )}
-                    <button
-                      onClick={() => row.isActive && row.openEntryId ? handleClockOut(row.openEntryId) : undefined}
-                      className={cn(
-                        'flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#EDE7DC] text-[#706D6A] hover:bg-[#EDE7DC] transition-colors shrink-0',
-                        (!row.isActive || !row.openEntryId) && 'invisible pointer-events-none'
+                    <div className="flex items-center gap-3 px-5 py-2.5">
+                      <span className={cn(
+                        'w-2 h-2 rounded-full shrink-0',
+                        row.isActive ? 'bg-green-500' : 'bg-[#D1D5DB]'
+                      )} />
+                      <span className="text-sm font-semibold text-[#111827] flex-1">
+                        {row.employee.last_name}, {row.employee.first_name}
+                      </span>
+                      <span className="text-xs text-[#6B7280]">{row.sinceLabel}</span>
+                      {row.isActive ? (
+                        <span className="text-xs font-bold tabular-nums w-16 text-right text-green-700">
+                          {Math.floor(row.totalMins / 60)}
+                          <span className="blink">:</span>
+                          {String(row.totalMins % 60).padStart(2, '0')} h
+                        </span>
+                      ) : (
+                        <span className="text-xs font-bold tabular-nums w-16 text-right text-[#6B7280]">
+                          {fmtMins(row.totalMins)}
+                        </span>
                       )}
-                      title="Ausstempeln"
-                    >
-                      <LogOut size={11} /> Ausstempeln
-                    </button>
+                      <button
+                        onClick={() => row.isActive && row.openEntryId ? handleClockOut(row.openEntryId) : undefined}
+                        className={cn(
+                          'flex items-center gap-1 text-xs px-2 py-1 rounded border border-[#E5E7EB] text-[#6B7280] hover:bg-[#E5E7EB] transition-colors shrink-0',
+                          (!row.isActive || !row.openEntryId) && 'invisible pointer-events-none'
+                        )}
+                        title="Ausstempeln"
+                      >
+                        <LogOut size={11} /> Ausstempeln
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
+                )
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     )
   }
 
@@ -626,41 +639,47 @@ export default function Dashboard() {
   function renderWidget(id: WidgetId) {
     switch (id) {
       case 'stat-eingestempelt':
-        return <StatCard label="Eingestempelt heute" value={presentToday}            sub={`von ${data.activeTotal} aktiven MA`}     color="green"  />
+        return <StatCard label="Eingestempelt heute" value={presentToday}            sub={`von ${data.activeTotal} aktiven MA`}     color="green"                                             icon={UserCheck} />
       case 'stat-abwesend':
-        return <StatCard label="Abwesend heute"       value={data.absentToday.length} sub={absentSub}                                color={data.absentToday.length > 0 ? 'amber' : 'default'} />
+        return <StatCard label="Abwesend heute"       value={data.absentToday.length} sub={absentSub}                                color={data.absentToday.length > 0 ? 'amber' : 'default'} icon={UserX}     />
       case 'stat-genehmigungen':
-        return <StatCard label="Offene Genehmigungen" value={data.pending.length}     sub="Warten auf Freigabe"                      color={data.pending.length > 0 ? 'red' : 'default'} />
+        return <StatCard label="Offene Genehmigungen" value={data.pending.length}     sub="Warten auf Freigabe"                      color={data.pending.length > 0 ? 'red' : 'default'}       icon={Bell}      />
       case 'stat-resturlaub':
-        return <StatCard label="Resturlaub-Verfall"   value={data.carryOverCount}     sub={`Resturlaub ${year}`}                     color={data.carryOverCount > 0 ? 'amber' : 'default'} />
-      case 'antraege':     return renderAntraege()
-      case 'abwesend':     return renderAbwesend()
+        return <StatCard label="Resturlaub-Verfall"   value={data.carryOverCount}     sub={`Resturlaub ${year}`}                     color={data.carryOverCount > 0 ? 'amber' : 'default'}     icon={CalendarX} />
+      case 'antraege':      return renderAntraege()
+      case 'abwesend':      return renderAbwesend()
       case 'arbeitszeiten': return renderArbeitszeiten()
+      case 'stat-ueberstunden':
+        return <StatCard label="Überstunden diese Woche" value={0} sub="Demnächst verfügbar" color="default" icon={Bell} />
+      case 'stat-krankmeldungen':
+        return <StatCard label="Krankmeldungen" value={data.absentToday.filter(a => a.type === 'K' || a.type === 'KK').length} sub="Aktuelle K/KK-Einträge" color={data.absentToday.some(a => a.type === 'K' || a.type === 'KK') ? 'red' : 'default'} icon={UserX} />
+      case 'geburtstage':
+        return <WidgetStub label="Geburtstage im Monat" />
+      case 'dokumente-ablauf':
+        return <WidgetStub label="Ablaufende Verträge" />
     }
   }
 
-  // ── JSX ───────────────────────────────────────────────────────────────────
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1917]">Dashboard</h1>
-          <p className="text-sm text-[#706D6A] capitalize">
+          <h1 className="text-2xl font-bold text-[#111827]">Dashboard</h1>
+          <p className="text-sm capitalize text-[#6B7280]">
             {format(new Date(), 'EEEE, dd. MMMM yyyy', { locale: de })}
           </p>
         </div>
         {editMode ? (
           <button
             onClick={() => setEditMode(false)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#BA7517] text-white text-sm font-medium hover:bg-[#9E6312] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#4F46E5] text-white text-sm font-medium hover:bg-[#4338CA] transition-colors"
           >
             Fertig
           </button>
         ) : (
           <button
             onClick={() => setEditMode(true)}
-            className="p-2 rounded-lg border border-[#EDE7DC] text-[#706D6A] hover:bg-[#F5F2EE] hover:text-[#1A1917] transition-colors"
+            className="p-2 rounded-lg transition-colors border border-[#E5E7EB] text-[#6B7280] hover:bg-[#F3F4F6] hover:text-[#111827]"
             title="Layout anpassen"
           >
             <SlidersHorizontal size={16} />
@@ -669,64 +688,46 @@ export default function Dashboard() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-[#706D6A]">Lade…</p>
+        <p className="text-sm text-[#6B7280]">Lade…</p>
       ) : (
         <>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
+          <RGL
+            measureBeforeMount
+            layout={layout}
+            cols={4}
+            rowHeight={160}
+            isDraggable={editMode}
+            isResizable={editMode}
+            onLayoutChange={saveLayout}
+            onResizeStop={(_l, _old, newItem) => newItem && markManualResize(newItem.i)}
+            margin={[16, 16]}
+            containerPadding={[0, 0]}
+            draggableCancel=".widget-no-drag"
           >
-            <div className="space-y-4">
-              {/* Zone 1: StatCard-Grid */}
-              {visibleStats.length > 0 && (
-                <SortableContext items={visibleStats} strategy={rectSortingStrategy}>
-                  <div className="grid grid-cols-4 gap-4">
-                    {visibleStats.map(id => (
-                      <SortableWidget key={id} id={id} editMode={editMode} onRemove={() => remove(id)}>
-                        {renderWidget(id)}
-                      </SortableWidget>
-                    ))}
-                  </div>
-                </SortableContext>
-              )}
+            {visible.map(id => (
+              <div key={id} className="relative">
+                {editMode && (
+                  <button
+                    onClick={() => removeWidget(id)}
+                    className="widget-no-drag absolute top-2 right-2 z-10 w-5 h-5 flex items-center justify-center rounded-full bg-black/20 hover:bg-red-500 text-white transition-colors"
+                    title="Widget entfernen"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+                {renderWidget(id)}
+              </div>
+            ))}
+          </RGL>
 
-              {/* Zone 2: Panel-Liste */}
-              {visiblePanels.length > 0 && (
-                <SortableContext items={visiblePanels} strategy={verticalListSortingStrategy}>
-                  <div className="space-y-4">
-                    {visiblePanels.map(id => (
-                      <SortableWidget key={id} id={id} editMode={editMode} onRemove={() => remove(id)}>
-                        {renderWidget(id)}
-                      </SortableWidget>
-                    ))}
-                  </div>
-                </SortableContext>
-              )}
-            </div>
-
-            <DragOverlay>
-              {activeId && (
-                <div className={cn(
-                  'opacity-90 shadow-2xl rounded-xl rotate-1',
-                  STAT_IDS.includes(activeId) ? 'w-56' : ''
-                )}>
-                  {renderWidget(activeId)}
-                </div>
-              )}
-            </DragOverlay>
-          </DndContext>
-
-          {/* Versteckte Widgets — nur im Edit-Mode */}
-          {editMode && (hiddenStats.length > 0 || hiddenPanels.length > 0) && (
-            <div className="mt-4 flex flex-wrap gap-2 p-4 border border-dashed border-[#EDE7DC] rounded-xl bg-[#FAF7F2]">
-              <p className="text-xs text-[#706D6A] w-full mb-1 font-medium">Widget hinzufügen:</p>
-              {[...hiddenStats, ...hiddenPanels].map(id => (
+          {editMode && hidden.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2 p-4 border border-dashed border-[#E5E7EB] rounded-xl bg-[#F9FAFB]">
+              <p className="text-xs text-[#6B7280] w-full mb-1 font-medium">Widget hinzufügen:</p>
+              {hidden.map(id => (
                 <button
                   key={id}
-                  onClick={() => add(id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#EDE7DC] text-sm text-[#706D6A] hover:border-[#BA7517] hover:text-[#BA7517] transition-colors"
+                  onClick={() => addWidget(id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E5E7EB] text-sm text-[#6B7280] hover:border-[#4F46E5] hover:text-[#4F46E5] transition-colors"
                 >
                   <Plus size={13} /> {WIDGET_META[id].label}
                 </button>
@@ -739,20 +740,42 @@ export default function Dashboard() {
   )
 }
 
-// ── Hilfsfunktionen ────────────────────────────────────────────────────────
 function calcDays(from: string, to: string): number {
   return Math.round((parseISO(to).getTime() - parseISO(from).getTime()) / 86_400_000) + 1
 }
 
-function StatCard({ label, value, sub, color }: {
-  label: string; value: number; sub: string; color: 'green' | 'amber' | 'red' | 'default'
+function StatCard({ label, value, sub, color, icon: Icon }: {
+  label: string; value: number; sub: string; color: 'green' | 'amber' | 'red' | 'default'; icon: LucideIcon
 }) {
-  const cls = { green: 'text-green-600', amber: 'text-[#BA7517]', red: 'text-red-600', default: 'text-[#1A1917]' }[color]
+  const colorMap = {
+    green:   { accent: 'bg-green-500',  iconBg: 'bg-green-50',  iconColor: 'text-green-600',  numColor: 'text-green-600'  },
+    amber:   { accent: 'bg-amber-500',  iconBg: 'bg-amber-50',  iconColor: 'text-amber-600',  numColor: 'text-amber-600'  },
+    red:     { accent: 'bg-red-500',    iconBg: 'bg-red-50',    iconColor: 'text-red-600',    numColor: 'text-red-600'    },
+    default: { accent: 'bg-[#4F46E5]', iconBg: 'bg-[#EEF2FF]', iconColor: 'text-[#4F46E5]', numColor: 'text-[#111827]' },
+  }[color]
   return (
-    <div className="bg-white border border-[#EDE7DC] rounded-lg p-5">
-      <div className="text-[11px] font-semibold uppercase tracking-wider text-[#706D6A] mb-2">{label}</div>
-      <div className={`text-3xl font-bold mb-1 ${cls}`}>{value}</div>
-      <div className="text-xs text-[#706D6A]">{sub}</div>
-    </div>
+    <Card className="h-full flex flex-col">
+      <div className={`h-1 w-full flex-none ${colorMap.accent}`} />
+      <CardContent className="flex-1 flex items-start justify-between gap-3 py-4 px-5">
+        <div className="min-w-0">
+          <CardTitle className="mb-2 leading-snug">{label}</CardTitle>
+          <div className={`text-4xl font-bold leading-none mb-1.5 tabular-nums ${colorMap.numColor}`}>{value}</div>
+          <CardDescription className="leading-snug">{sub}</CardDescription>
+        </div>
+        <div className={`flex-none w-12 h-12 rounded-xl flex items-center justify-center ${colorMap.iconBg}`}>
+          <Icon size={22} className={colorMap.iconColor} strokeWidth={1.75} />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function WidgetStub({ label }: { label: string }) {
+  return (
+    <Card className="h-full">
+      <CardContent className="flex items-center justify-center h-full">
+        <CardDescription>{label} – demnächst verfügbar</CardDescription>
+      </CardContent>
+    </Card>
   )
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Trash2, Save, Upload, Download, ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { motion } from 'motion/react'
+import { Trash2, Save, Upload, Download, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { format, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { pb } from '../lib/pb'
@@ -12,6 +12,12 @@ import { Label }  from '../components/ui/label'
 import { cn } from '@/lib/utils'
 
 // ── Typen & Konstanten ────────────────────────────────────────────────────────
+
+interface Props {
+  employeeId: string | 'new' | null
+  onClose:  () => void
+  onSaved?: () => void
+}
 
 type Tab = 'stammdaten' | 'urlaubskonto' | 'dokumente'
 
@@ -51,10 +57,9 @@ function toDateInput(v: string | undefined): string {
 
 // ── Hauptkomponente ───────────────────────────────────────────────────────────
 
-export default function MitarbeiterDetail() {
-  const { id }   = useParams()
-  const navigate = useNavigate()
-  const isNew    = !id
+export default function MitarbeiterModal({ employeeId, onClose, onSaved }: Props) {
+  const id    = employeeId === 'new' ? undefined : (employeeId ?? undefined)
+  const isNew = employeeId === 'new'
 
   const [tab, setTab]               = useState<Tab>('stammdaten')
   const [form, setForm]             = useState<FormData>(EMPTY)
@@ -69,6 +74,11 @@ export default function MitarbeiterDetail() {
   const [viewMonth, setViewMonth]       = useState(() => startOfMonth(new Date()))
   const [dashData, setDashData]         = useState<DashData | null>(null)
   const [dashLoading, setDashLoading]   = useState(false)
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
 
   useEffect(() => {
     pb.collection('departments')
@@ -184,6 +194,8 @@ export default function MitarbeiterDetail() {
             password:        tempPass,
             passwordConfirm: tempPass,
             name:            `${form.first_name} ${form.last_name}`,
+            first_name:      form.first_name,
+            last_name:       form.last_name,
             role:            'mitarbeiter',
             employee:        rec.id,
           })
@@ -201,9 +213,19 @@ export default function MitarbeiterDetail() {
           )
         }
 
-        navigate(`/mitarbeiter/${rec.id}`, { replace: true })
+        onClose()
       } else {
         await pb.collection('employees').update(id!, data)
+        // users first_name / last_name / name synchron halten
+        pb.collection('users')
+          .getFirstListItem(`employee = "${id}"`, { requestKey: null })
+          .then(u => pb.collection('users').update(u.id, {
+            first_name: form.first_name,
+            last_name:  form.last_name,
+            name:       `${form.first_name} ${form.last_name}`,
+          }))
+          .catch(() => {/* kein User verknüpft — ignorieren */})
+        onSaved ? onSaved() : onClose()
       }
     } catch (err: unknown) {
       const pbErr = err as { status?: number; response?: { data?: Record<string, { message: string }> }; message?: string }
@@ -222,184 +244,210 @@ export default function MitarbeiterDetail() {
     if (!id) return
     try {
       await pb.collection('employees').delete(id)
-      navigate('/mitarbeiter', { replace: true })
+      onClose()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Fehler beim Löschen')
+      setConfirmDel(false)
     }
   }
 
-  if (loading) return <p className="text-sm text-[#706D6A]">Lade…</p>
-
-  const title = isNew ? 'Neuer Mitarbeiter' : `${form.last_name}, ${form.first_name}`
+  if (!employeeId) return null
 
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/mitarbeiter')}>
-          <ArrowLeft size={16} />
-        </Button>
-        <div>
-          <h1 className="text-xl font-bold text-[#1A1917]">{title}</h1>
-          <p className="text-xs text-[#706D6A]">{isNew ? 'Neuen Mitarbeiter anlegen' : 'Mitarbeiter bearbeiten'}</p>
-        </div>
-      </div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.18 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm"
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+        className="relative bg-white rounded-2xl w-[90vw] max-w-[860px] max-h-[90vh] overflow-y-auto shadow-2xl"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 p-1.5 rounded-lg text-[#6B7280] hover:bg-[#E5E7EB] transition-colors"
+        >
+          <X size={18} />
+        </button>
 
-      {/* Mini-Dashboard — nur für bestehende MA */}
-      {!isNew && (
-        <MiniDashboard
-          form={form}
-          data={dashData}
-          loading={dashLoading}
-          viewMonth={viewMonth}
-          onPrevMonth={() => setViewMonth(m => subMonths(m, 1))}
-          onNextMonth={() => setViewMonth(m => addMonths(m, 1))}
-        />
-      )}
+        <div className="p-6">
+          {loading ? (
+            <p className="text-sm text-[#6B7280]">Lade…</p>
+          ) : (
+            <>
+              <div className="mb-3 pr-8">
+                <h1 className="text-xl font-bold text-[#111827]">
+                  {isNew ? 'Neuer Mitarbeiter' : `${form.last_name}, ${form.first_name}`}
+                </h1>
+                <p className="text-xs text-[#6B7280]">{isNew ? 'Neuen Mitarbeiter anlegen' : 'Mitarbeiter bearbeiten'}</p>
+              </div>
 
-      {/* Tab-Leiste — nur für bestehende MA */}
-      {!isNew && (
-        <div className="flex border-b border-[#EDE7DC] mb-4">
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={cn(
-                'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
-                tab === t.id
-                  ? 'border-[#BA7517] text-[#BA7517]'
-                  : 'border-transparent text-[#706D6A] hover:text-[#1A1917]',
+              {/* Mini-Dashboard — nur für bestehende MA */}
+              {!isNew && (
+                <MiniDashboard
+                  form={form}
+                  data={dashData}
+                  loading={dashLoading}
+                  viewMonth={viewMonth}
+                  onPrevMonth={() => setViewMonth(m => subMonths(m, 1))}
+                  onNextMonth={() => setViewMonth(m => addMonths(m, 1))}
+                />
               )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      )}
 
-      {error && (
-        <div className="mb-3 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md whitespace-pre-line">{error}</div>
-      )}
-      {userWarn && (
-        <div className="mb-3 p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md">{userWarn}</div>
-      )}
-
-      {/* ── Stammdaten ─────────────────────────────────────────────────────── */}
-      {(isNew || tab === 'stammdaten') && (
-        <form onSubmit={handleSave} className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-3">
-            <Card title="Persönliche Daten">
-              <div className="grid grid-cols-2 gap-3">
-                <F label="Vorname *"><Input value={form.first_name} onChange={e => upd('first_name', e.target.value)} required /></F>
-                <F label="Nachname *"><Input value={form.last_name}  onChange={e => upd('last_name',  e.target.value)} required /></F>
-                <F label="E-Mail *"><Input type="email" value={form.email} onChange={e => upd('email', e.target.value)} required /></F>
-                <F label="Telefon"><Input value={form.phone} onChange={e => upd('phone', e.target.value)} /></F>
-                <F label="Geburtsdatum" className="col-span-2">
-                  <Input type="date" value={form.birthday} onChange={e => upd('birthday', e.target.value)} className="max-w-[180px]" />
-                </F>
-              </div>
-              <div className="grid grid-cols-3 gap-3 mt-3">
-                <F label="Straße & Nr." className="col-span-2">
-                  <Input value={form.street} onChange={e => upd('street', e.target.value)} />
-                </F>
-                <F label="PLZ"><Input value={form.zip} onChange={e => upd('zip', e.target.value)} /></F>
-                <F label="Stadt" className="col-span-2">
-                  <Input value={form.city} onChange={e => upd('city', e.target.value)} />
-                </F>
-              </div>
-            </Card>
-
-            <div className="flex flex-col gap-3">
-              <Card title="Tätigkeit">
-                <div className="grid grid-cols-2 gap-3">
-                  <F label="Abteilung">
-                    <NativeSelect value={form.department} onChange={e => upd('department', e.target.value)}>
-                      <option value="">— keine —</option>
-                      {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                    </NativeSelect>
-                  </F>
-                  <F label="Position"><Input value={form.position} onChange={e => upd('position', e.target.value)} /></F>
-                  <F label="Vertragstyp *">
-                    <NativeSelect value={form.contract_type} onChange={e => upd('contract_type', e.target.value as ContractType)} required>
-                      {(Object.entries(CONTRACT_LABELS) as [ContractType, string][]).map(([k, v]) => (
-                        <option key={k} value={k}>{v}</option>
-                      ))}
-                    </NativeSelect>
-                  </F>
-                  <F label="Stunden/Woche *">
-                    <Input type="number" min={1} max={168} step={0.5} value={form.weekly_hours}
-                      onChange={e => upd('weekly_hours', parseFloat(e.target.value))} required />
-                  </F>
+              {/* Tab-Leiste — nur für bestehende MA */}
+              {!isNew && (
+                <div className="flex border-b border-[#E5E7EB] mb-4">
+                  {TABS.map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => setTab(t.id)}
+                      className={cn(
+                        'px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors',
+                        tab === t.id
+                          ? 'border-[#4F46E5] text-[#4F46E5]'
+                          : 'border-transparent text-[#6B7280] hover:text-[#111827]',
+                      )}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
                 </div>
-              </Card>
+              )}
 
-              <Card title="Beschäftigung">
-                <div className="grid grid-cols-2 gap-3">
-                  <F label="Eintrittsdatum *">
-                    <Input type="date" value={form.start_date} onChange={e => upd('start_date', e.target.value)} required />
-                  </F>
-                  <F label="Austrittsdatum">
-                    <Input type="date" value={form.end_date} onChange={e => upd('end_date', e.target.value)} />
-                  </F>
-                  <F label="Urlaubstage/Jahr *">
-                    <Input type="number" min={0} max={365} value={form.vacation_days}
-                      onChange={e => upd('vacation_days', parseInt(e.target.value))} required />
-                  </F>
-                  <F label="Status">
-                    <div className="flex items-center gap-2 h-9">
-                      <input
-                        type="checkbox"
-                        id="active"
-                        checked={form.active}
-                        onChange={e => upd('active', e.target.checked)}
-                        className="h-4 w-4 rounded border-[#EDE7DC] accent-[#BA7517]"
-                      />
-                      <Label htmlFor="active" className="font-normal cursor-pointer">Aktiv</Label>
+              {error && (
+                <div className="mb-3 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md whitespace-pre-line">{error}</div>
+              )}
+              {userWarn && (
+                <div className="mb-3 p-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md">{userWarn}</div>
+              )}
+
+              {/* ── Stammdaten ─────────────────────────────────────────────────────── */}
+              {(isNew || tab === 'stammdaten') && (
+                <form onSubmit={handleSave} className="flex flex-col gap-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Card title="Persönliche Daten">
+                      <div className="grid grid-cols-2 gap-3">
+                        <F label="Vorname *"><Input value={form.first_name} onChange={e => upd('first_name', e.target.value)} required /></F>
+                        <F label="Nachname *"><Input value={form.last_name}  onChange={e => upd('last_name',  e.target.value)} required /></F>
+                        <F label="E-Mail *"><Input type="email" value={form.email} onChange={e => upd('email', e.target.value)} required /></F>
+                        <F label="Telefon"><Input value={form.phone} onChange={e => upd('phone', e.target.value)} /></F>
+                        <F label="Geburtsdatum" className="col-span-2">
+                          <Input type="date" value={form.birthday} onChange={e => upd('birthday', e.target.value)} className="max-w-[180px]" />
+                        </F>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 mt-3">
+                        <F label="Straße & Nr." className="col-span-2">
+                          <Input value={form.street} onChange={e => upd('street', e.target.value)} />
+                        </F>
+                        <F label="PLZ"><Input value={form.zip} onChange={e => upd('zip', e.target.value)} /></F>
+                        <F label="Stadt" className="col-span-2">
+                          <Input value={form.city} onChange={e => upd('city', e.target.value)} />
+                        </F>
+                      </div>
+                    </Card>
+
+                    <div className="flex flex-col gap-3">
+                      <Card title="Tätigkeit">
+                        <div className="grid grid-cols-2 gap-3">
+                          <F label="Abteilung">
+                            <NativeSelect value={form.department} onChange={e => upd('department', e.target.value)}>
+                              <option value="">— keine —</option>
+                              {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                            </NativeSelect>
+                          </F>
+                          <F label="Position"><Input value={form.position} onChange={e => upd('position', e.target.value)} /></F>
+                          <F label="Vertragstyp *">
+                            <NativeSelect value={form.contract_type} onChange={e => upd('contract_type', e.target.value as ContractType)} required>
+                              {(Object.entries(CONTRACT_LABELS) as [ContractType, string][]).map(([k, v]) => (
+                                <option key={k} value={k}>{v}</option>
+                              ))}
+                            </NativeSelect>
+                          </F>
+                          <F label="Stunden/Woche *">
+                            <Input type="number" min={1} max={168} step={0.5} value={form.weekly_hours}
+                              onChange={e => upd('weekly_hours', parseFloat(e.target.value))} required />
+                          </F>
+                        </div>
+                      </Card>
+
+                      <Card title="Beschäftigung">
+                        <div className="grid grid-cols-2 gap-3">
+                          <F label="Eintrittsdatum *">
+                            <Input type="date" value={form.start_date} onChange={e => upd('start_date', e.target.value)} required />
+                          </F>
+                          <F label="Austrittsdatum">
+                            <Input type="date" value={form.end_date} onChange={e => upd('end_date', e.target.value)} />
+                          </F>
+                          <F label="Urlaubstage/Jahr *">
+                            <Input type="number" min={0} max={365} value={form.vacation_days}
+                              onChange={e => upd('vacation_days', parseInt(e.target.value))} required />
+                          </F>
+                          <F label="Status">
+                            <div className="flex items-center gap-2 h-9">
+                              <input
+                                type="checkbox"
+                                id="active"
+                                checked={form.active}
+                                onChange={e => upd('active', e.target.checked)}
+                                className="h-4 w-4 rounded border-[#E5E7EB] accent-[#4F46E5]"
+                              />
+                              <Label htmlFor="active" className="font-normal cursor-pointer">Aktiv</Label>
+                            </div>
+                          </F>
+                        </div>
+                      </Card>
                     </div>
-                  </F>
-                </div>
-              </Card>
-            </div>
-          </div>
+                  </div>
 
-          <div className="flex items-center justify-between py-1">
-            <div>
-              {!isNew && !confirmDel && (
-                <Button type="button" variant="ghost"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => setConfirmDel(true)}
-                >
-                  <Trash2 size={15} /> Löschen
-                </Button>
+                  <div className="flex items-center justify-between py-1">
+                    <div>
+                      {!isNew && !confirmDel && (
+                        <Button type="button" variant="ghost"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => setConfirmDel(true)}
+                        >
+                          <Trash2 size={15} /> Löschen
+                        </Button>
+                      )}
+                      {confirmDel && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-red-600">Wirklich löschen?</span>
+                          <Button type="button" variant="destructive" size="sm" onClick={handleDelete}>Ja</Button>
+                          <Button type="button" variant="outline"     size="sm" onClick={() => setConfirmDel(false)}>Nein</Button>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" onClick={onClose}>Abbrechen</Button>
+                      <Button type="submit" disabled={saving}>
+                        <Save size={15} />
+                        {saving ? 'Speichere…' : 'Speichern'}
+                      </Button>
+                    </div>
+                  </div>
+                </form>
               )}
-              {confirmDel && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-red-600">Wirklich löschen?</span>
-                  <Button type="button" variant="destructive" size="sm" onClick={handleDelete}>Ja</Button>
-                  <Button type="button" variant="outline"     size="sm" onClick={() => setConfirmDel(false)}>Nein</Button>
-                </div>
+
+              {/* ── Urlaubskonto ──────────────────────────────────────────────────── */}
+              {!isNew && tab === 'urlaubskonto' && (
+                <UrlaubskontoTab employeeId={id!} defaultEntitlement={form.vacation_days} />
               )}
-            </div>
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={() => navigate('/mitarbeiter')}>Abbrechen</Button>
-              <Button type="submit" disabled={saving}>
-                <Save size={15} />
-                {saving ? 'Speichere…' : 'Speichern'}
-              </Button>
-            </div>
-          </div>
-        </form>
-      )}
 
-      {/* ── Urlaubskonto ──────────────────────────────────────────────────── */}
-      {!isNew && tab === 'urlaubskonto' && (
-        <UrlaubskontoTab employeeId={id!} defaultEntitlement={form.vacation_days} />
-      )}
-
-      {/* ── Dokumente ─────────────────────────────────────────────────────── */}
-      {!isNew && tab === 'dokumente' && (
-        <DokumenteTab employeeId={id!} />
-      )}
-    </div>
+              {/* ── Dokumente ─────────────────────────────────────────────────────── */}
+              {!isNew && tab === 'dokumente' && (
+                <DokumenteTab employeeId={id!} />
+              )}
+            </>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
@@ -440,24 +488,24 @@ function MiniDashboard({ form, data, loading, viewMonth, onPrevMonth, onNextMont
     : 'green'
 
   return (
-    <div className="bg-white border border-[#EDE7DC] rounded-lg overflow-hidden mb-4">
-      <div className="grid grid-cols-3 divide-x divide-[#EDE7DC]">
+    <div className="bg-white border border-[#E5E7EB] rounded-lg overflow-hidden mb-4">
+      <div className="grid grid-cols-3 divide-x divide-[#E5E7EB]">
         {/* Urlaub */}
         <div className="px-4 py-3">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-[#706D6A] mb-1">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-[#6B7280] mb-1">
             Urlaub verbleibend
           </div>
           {loading ? (
-            <div className="h-7 w-10 bg-[#F5F2EE] rounded animate-pulse" />
+            <div className="h-7 w-10 bg-[#F3F4F6] rounded animate-pulse" />
           ) : (
             <>
               <div className={cn(
                 'text-2xl font-bold',
-                vacColor === 'green' ? 'text-green-700' : vacColor === 'amber' ? 'text-[#BA7517]' : vacColor === 'red' ? 'text-red-600' : 'text-[#1A1917]',
+                vacColor === 'green' ? 'text-green-700' : vacColor === 'amber' ? 'text-[#4F46E5]' : vacColor === 'red' ? 'text-red-600' : 'text-[#111827]',
               )}>
                 {remaining}
               </div>
-              <div className="text-xs text-[#706D6A] mt-0.5">
+              <div className="text-xs text-[#6B7280] mt-0.5">
                 {entitlement + carryOver} gesamt · {taken} genommen
               </div>
             </>
@@ -466,13 +514,13 @@ function MiniDashboard({ form, data, loading, viewMonth, onPrevMonth, onNextMont
 
         {/* Stunden */}
         <div className="px-4 py-3">
-          <div className="text-[10px] font-semibold uppercase tracking-wider text-[#706D6A] mb-1">
+          <div className="text-[10px] font-semibold uppercase tracking-wider text-[#6B7280] mb-1">
             Stunden (akt. Monat)
           </div>
-          <div className="text-2xl font-bold text-[#706D6A]">
+          <div className="text-2xl font-bold text-[#6B7280]">
             {hoursLabel ?? '—'}
           </div>
-          <div className="text-xs text-[#706D6A] mt-0.5">
+          <div className="text-xs text-[#6B7280] mt-0.5">
             {format(startOfMonth(new Date()), 'MMMM yyyy', { locale: de })}
           </div>
         </div>
@@ -480,13 +528,13 @@ function MiniDashboard({ form, data, loading, viewMonth, onPrevMonth, onNextMont
         {/* Abwesenheiten */}
         <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-[#706D6A]">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-[#6B7280]">
               Abwesenheiten
             </div>
             <div className="flex items-center gap-0.5">
               <button
                 onClick={onPrevMonth}
-                className="p-0.5 rounded hover:bg-[#F5F2EE] text-[#706D6A] hover:text-[#1A1917]"
+                className="p-0.5 rounded hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827]"
               >
                 <ChevronLeft size={14} />
               </button>
@@ -495,19 +543,19 @@ function MiniDashboard({ form, data, loading, viewMonth, onPrevMonth, onNextMont
               </span>
               <button
                 onClick={onNextMonth}
-                className="p-0.5 rounded hover:bg-[#F5F2EE] text-[#706D6A] hover:text-[#1A1917]"
+                className="p-0.5 rounded hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827]"
               >
                 <ChevronRight size={14} />
               </button>
             </div>
           </div>
           {loading ? (
-            <div className="h-7 w-8 bg-[#F5F2EE] rounded animate-pulse" />
+            <div className="h-7 w-8 bg-[#F3F4F6] rounded animate-pulse" />
           ) : absTotal === 0 ? (
-            <div className="text-2xl font-bold text-[#706D6A]">—</div>
+            <div className="text-2xl font-bold text-[#6B7280]">—</div>
           ) : (
             <>
-              <div className="text-2xl font-bold text-[#1A1917] leading-none mb-1.5">
+              <div className="text-2xl font-bold text-[#111827] leading-none mb-1.5">
                 {absTotal} T
               </div>
               <div className="flex flex-wrap gap-1">
@@ -602,20 +650,20 @@ function UrlaubskontoTab({ employeeId, defaultEntitlement }: { employeeId: strin
   const remaining   = total - taken
 
   return (
-    <div className="bg-white border border-[#EDE7DC] rounded-lg p-5">
+    <div className="bg-white border border-[#E5E7EB] rounded-lg p-5">
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-sm font-semibold text-[#1A1917]">Urlaubskonto {year}</h2>
+        <h2 className="text-sm font-semibold text-[#111827]">Urlaubskonto {year}</h2>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setYear(y => y - 1)}
-            className="p-1 rounded hover:bg-[#F5F2EE] text-[#706D6A]"
+            className="p-1 rounded hover:bg-[#F3F4F6] text-[#6B7280]"
           >
             <ChevronLeft size={16} />
           </button>
           <span className="text-sm font-medium w-12 text-center">{year}</span>
           <button
             onClick={() => setYear(y => y + 1)}
-            className="p-1 rounded hover:bg-[#F5F2EE] text-[#706D6A]"
+            className="p-1 rounded hover:bg-[#F3F4F6] text-[#6B7280]"
           >
             <ChevronRight size={16} />
           </button>
@@ -623,7 +671,7 @@ function UrlaubskontoTab({ employeeId, defaultEntitlement }: { employeeId: strin
       </div>
 
       {loading ? (
-        <p className="text-sm text-[#706D6A]">Lade…</p>
+        <p className="text-sm text-[#6B7280]">Lade…</p>
       ) : (
         <>
           {error && (
@@ -647,7 +695,7 @@ function UrlaubskontoTab({ employeeId, defaultEntitlement }: { employeeId: strin
                   />
                 </tbody>
               </table>
-              <div className="mt-4 pt-4 border-t border-[#EDE7DC]">
+              <div className="mt-4 pt-4 border-t border-[#E5E7EB]">
                 <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
                   Konto bearbeiten
                 </Button>
@@ -693,12 +741,12 @@ function UrlaubskontoTab({ employeeId, defaultEntitlement }: { employeeId: strin
 function VacRow({ label, value, sub, highlight, color }: {
   label: string; value: number; sub?: string; highlight?: boolean; color?: 'green' | 'amber' | 'red'
 }) {
-  const valueColor = color === 'red' ? 'text-red-600' : color === 'amber' ? 'text-[#BA7517]' : color === 'green' ? 'text-green-700' : 'text-[#1A1917]'
+  const valueColor = color === 'red' ? 'text-red-600' : color === 'amber' ? 'text-[#4F46E5]' : color === 'green' ? 'text-green-700' : 'text-[#111827]'
   return (
-    <tr className={highlight ? 'border-t border-b border-[#EDE7DC]' : ''}>
-      <td className={cn('py-2 pr-4 text-[#706D6A]', highlight && 'font-medium text-[#1A1917]')}>
+    <tr className={highlight ? 'border-t border-b border-[#E5E7EB]' : ''}>
+      <td className={cn('py-2 pr-4 text-[#6B7280]', highlight && 'font-medium text-[#111827]')}>
         {label}
-        {sub && <span className="block text-xs text-[#706D6A] font-normal">{sub}</span>}
+        {sub && <span className="block text-xs text-[#6B7280] font-normal">{sub}</span>}
       </td>
       <td className={cn('py-2 text-right font-semibold tabular-nums', valueColor, highlight && 'text-base')}>
         {value}
@@ -782,9 +830,9 @@ function DokumenteTab({ employeeId }: { employeeId: string }) {
   }
 
   return (
-    <div className="bg-white border border-[#EDE7DC] rounded-lg p-5">
+    <div className="bg-white border border-[#E5E7EB] rounded-lg p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold text-[#1A1917]">Dokumente</h2>
+        <h2 className="text-sm font-semibold text-[#111827]">Dokumente</h2>
         <Button size="sm" onClick={() => setShowUpload(s => !s)}>
           <Upload size={14} /> Hochladen
         </Button>
@@ -796,10 +844,10 @@ function DokumenteTab({ employeeId }: { employeeId: string }) {
 
       {/* Upload-Formular */}
       {showUpload && (
-        <form onSubmit={handleUpload} className="mb-4 p-4 border border-[#EDE7DC] rounded-lg bg-[#FDFCFB] space-y-3">
+        <form onSubmit={handleUpload} className="mb-4 p-4 border border-[#E5E7EB] rounded-lg bg-[#F9FAFB] space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-[#1A1917]">Neues Dokument</span>
-            <button type="button" onClick={() => setShowUpload(false)} className="text-[#706D6A] hover:text-[#1A1917]">
+            <span className="text-sm font-medium text-[#111827]">Neues Dokument</span>
+            <button type="button" onClick={() => setShowUpload(false)} className="text-[#6B7280] hover:text-[#111827]">
               <X size={16} />
             </button>
           </div>
@@ -810,7 +858,7 @@ function DokumenteTab({ employeeId }: { employeeId: string }) {
                 type="file"
                 required
                 onChange={handleFileChange}
-                className="block w-full text-sm text-[#1A1917] file:mr-3 file:py-1 file:px-3 file:rounded file:border file:border-[#EDE7DC] file:text-sm file:bg-white file:text-[#1A1917] hover:file:bg-[#F5F2EE] cursor-pointer"
+                className="block w-full text-sm text-[#111827] file:mr-3 file:py-1 file:px-3 file:rounded file:border file:border-[#E5E7EB] file:text-sm file:bg-white file:text-[#111827] hover:file:bg-[#F3F4F6] cursor-pointer"
               />
             </F>
             <F label="Bezeichnung *">
@@ -851,29 +899,29 @@ function DokumenteTab({ employeeId }: { employeeId: string }) {
 
       {/* Dokumentenliste */}
       {loading ? (
-        <p className="text-sm text-[#706D6A]">Lade…</p>
+        <p className="text-sm text-[#6B7280]">Lade…</p>
       ) : docs.length === 0 ? (
-        <p className="text-sm text-[#706D6A]">Noch keine Dokumente vorhanden.</p>
+        <p className="text-sm text-[#6B7280]">Noch keine Dokumente vorhanden.</p>
       ) : (
-        <div className="divide-y divide-[#EDE7DC]">
+        <div className="divide-y divide-[#E5E7EB]">
           {docs.map(doc => (
             <div key={doc.id} className="flex items-center gap-3 py-3">
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-[#1A1917] truncate">{doc.name}</div>
-                <div className="text-xs text-[#706D6A]">
+                <div className="text-sm font-medium text-[#111827] truncate">{doc.name}</div>
+                <div className="text-xs text-[#6B7280]">
                   {DOC_LABELS[doc.type]} · {doc.date ? format(parseISO(doc.date), 'dd.MM.yyyy', { locale: de }) : '—'}
                 </div>
               </div>
               <button
                 onClick={() => downloadDoc(doc)}
-                className="p-1.5 rounded text-[#706D6A] hover:text-[#1A1917] hover:bg-[#F5F2EE]"
+                className="p-1.5 rounded text-[#6B7280] hover:text-[#111827] hover:bg-[#F3F4F6]"
                 title="Herunterladen"
               >
                 <Download size={15} />
               </button>
               <button
                 onClick={() => handleDelete(doc)}
-                className="p-1.5 rounded text-[#706D6A] hover:text-red-600 hover:bg-red-50"
+                className="p-1.5 rounded text-[#6B7280] hover:text-red-600 hover:bg-red-50"
                 title="Löschen"
               >
                 <Trash2 size={15} />
@@ -890,8 +938,8 @@ function DokumenteTab({ employeeId }: { employeeId: string }) {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white border border-[#EDE7DC] rounded-lg p-5">
-      <h2 className="text-sm font-semibold text-[#1A1917] mb-4">{title}</h2>
+    <div className="bg-white border border-[#E5E7EB] rounded-lg p-5">
+      <h2 className="text-sm font-semibold text-[#111827] mb-4">{title}</h2>
       {children}
     </div>
   )
@@ -900,7 +948,7 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 function F({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={className}>
-      <Label className="text-xs text-[#706D6A] mb-1 block">{label}</Label>
+      <Label className="text-xs text-[#6B7280] mb-1 block">{label}</Label>
       {children}
     </div>
   )
@@ -910,7 +958,7 @@ function NativeSelect(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...props}
-      className="h-9 w-full rounded-md border border-[#EDE7DC] bg-white px-3 py-2 text-sm text-[#1A1917] outline-none focus:border-[#BA7517] focus:ring-2 focus:ring-[#BA7517]/20"
+      className="h-9 w-full rounded-md border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/20"
     />
   )
 }

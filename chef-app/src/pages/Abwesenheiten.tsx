@@ -31,19 +31,32 @@ export default function Abwesenheiten() {
   const [inputValue, setInputValue] = useState('')
   const [dragRange,  setDragRange]  = useState<{ empId: string; start: string; end: string } | null>(null)
   const [popover,    setPopover]    = useState<{ absence: Absence; rect: DOMRect } | null>(null)
+  const [animatingCells, setAnimatingCells] = useState<Map<string, 'filled' | 'cleared'>>(new Map())
   const inputRef       = useRef<HTMLInputElement>(null)
   const confirmTimer   = useRef<ReturnType<typeof setTimeout> | null>(null)
   const didDragRef     = useRef(false)
   const dragRef        = useRef<{ empId: string; start: string; end: string; kuerzel: AbsenceType } | null>(null)
 
+  function triggerCellAnim(key: string, type: 'filled' | 'cleared') {
+    setAnimatingCells(prev => new Map(prev).set(key, type))
+    setTimeout(() => {
+      setAnimatingCells(prev => {
+        const next = new Map(prev)
+        next.delete(key)
+        return next
+      })
+    }, 350)
+  }
+
   useEffect(() => {
     Promise.all([
       pb.collection('settings').getFullList({ requestKey: 'abs-settings' }),
       pb.collection('employees').getFullList<Employee>({
-        sort: 'last_name,first_name', filter: 'active = true', requestKey: 'abs-employees',
+        sort: 'last_name,first_name', filter: 'active = true',
+        expand: 'department', requestKey: 'abs-employees',
       }),
     ]).then(([settings, emps]) => {
-      const fs = (settings as { key: string; value: string }[]).find(s => s.key === 'federal_state')?.value ?? 'ST'
+      const fs = (settings as unknown as { key: string; value: string }[]).find(s => s.key === 'federal_state')?.value ?? 'ST'
       setFederal(fs)
       setEmployees(emps)
     }).catch(console.error)
@@ -111,11 +124,16 @@ export default function Abwesenheiten() {
       type, status: 'approved', created_by: user!.id,
     }, { requestKey: null })
     setAbsences(prev => [...prev, rec])
+    triggerCellAnim(`${empId}_${dateFrom}`, 'filled')
   }, [user])
 
   async function deleteAbsenceById(id: string) {
+    const target = absences.find(a => a.id === id)
     await pb.collection('absences').delete(id)
     setAbsences(prev => prev.filter(a => a.id !== id))
+    if (target) {
+      triggerCellAnim(`${target.employee}_${target.date_from}`, 'cleared')
+    }
   }
 
   function absDateLabel(abs: Absence) {
@@ -238,14 +256,22 @@ export default function Abwesenheiten() {
     setDragRange({ empId, start: s, end: e })
   }
 
-  function handleMouseUp() {
+  const mouseUpHandlerRef = useRef<() => void>(() => {})
+  mouseUpHandlerRef.current = () => {
     if (didDragRef.current && dragRef.current) {
       if (confirmTimer.current) clearTimeout(confirmTimer.current)
       executeConfirm(dragRef.current.kuerzel, null, dragRef.current, null)
     }
     dragRef.current = null
+    setDragRange(null)
     setTimeout(() => { didDragRef.current = false }, 0)
   }
+
+  useEffect(() => {
+    const handler = () => mouseUpHandlerRef.current()
+    window.addEventListener('mouseup', handler)
+    return () => window.removeEventListener('mouseup', handler)
+  }, [])
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (!activeCell && !dragRange) return
@@ -335,10 +361,10 @@ export default function Abwesenheiten() {
     }
   }
 
-  if (loading && employees.length === 0) return <p className="text-sm text-[#706D6A]">Lade…</p>
+  if (loading && employees.length === 0) return <p className="text-sm text-[#6B7280]">Lade…</p>
 
   return (
-    <div onMouseUp={handleMouseUp}>
+    <div>
       <input
         ref={inputRef}
         className="sr-only"
@@ -350,30 +376,30 @@ export default function Abwesenheiten() {
 
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1917]">Abwesenheiten</h1>
-          <p className="text-sm text-[#706D6A]">Monatsübersicht</p>
+          <h1 className="text-2xl font-bold text-[#111827]">Abwesenheiten</h1>
+          <p className="text-sm text-[#6B7280]">Monatsübersicht</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCurrentDate(d => subMonths(d, 1))}
-            className="p-1.5 rounded hover:bg-[#EDE7DC] text-[#706D6A]"
+            className="p-1.5 rounded hover:bg-[#E5E7EB] text-[#6B7280]"
           >
             <ChevronLeft size={16} />
           </button>
-          <span className="text-sm font-semibold text-[#1A1917] w-36 text-center">
+          <span className="text-sm font-semibold text-[#111827] w-36 text-center">
             {format(currentDate, 'MMMM yyyy', { locale: de })}
           </span>
           <button
             onClick={() => setCurrentDate(d => addMonths(d, 1))}
-            className="p-1.5 rounded hover:bg-[#EDE7DC] text-[#706D6A]"
+            className="p-1.5 rounded hover:bg-[#E5E7EB] text-[#6B7280]"
           >
             <ChevronRight size={16} />
           </button>
         </div>
       </div>
 
-      <p className="text-sm text-[#706D6A] mb-3">
-        <span className="font-semibold text-[#1A1917]">{monthWorkingDays}</span> Arbeitstage
+      <p className="text-sm text-[#6B7280] mb-3">
+        <span className="font-semibold text-[#111827]">{monthWorkingDays}</span> Arbeitstage
       </p>
 
       <div className="flex flex-wrap gap-2 mb-3">
@@ -386,29 +412,28 @@ export default function Abwesenheiten() {
             {type}
           </span>
         ))}
-        <span className="text-[10px] text-[#706D6A] ml-1 self-center">
+        <span className="text-[10px] text-[#6B7280] ml-1 self-center">
           Kürzel eingeben · ← → ↑ ↓ navigieren · ⌫ löschen · Drag zum Kopieren
         </span>
       </div>
 
-      <div className="bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
-        {employees.length === 0 && !loading ? (
-          <p className="text-sm text-[#706D6A] p-6 text-center">Keine aktiven Mitarbeiter vorhanden.</p>
-        ) : (
-          <KalenderTable
-            employees={employees}
-            absenceMap={absenceMap}
-            calendarDays={calendarDays}
-            summaries={summaries}
-            activeCell={activeCell}
-            inputValue={inputValue}
-            dragRange={dragRange}
-            onCellClick={handleCellClick}
-            onCellMouseDown={handleCellMouseDown}
-            onCellMouseEnter={handleCellMouseEnter}
-          />
-        )}
-      </div>
+      {employees.length === 0 && !loading ? (
+        <p className="text-sm text-[#6B7280] p-6 text-center">Keine aktiven Mitarbeiter vorhanden.</p>
+      ) : (
+        <KalenderTable
+          employees={employees}
+          absenceMap={absenceMap}
+          calendarDays={calendarDays}
+          summaries={summaries}
+          activeCell={activeCell}
+          inputValue={inputValue}
+          dragRange={dragRange}
+          onCellClick={handleCellClick}
+          onCellMouseDown={handleCellMouseDown}
+          onCellMouseEnter={handleCellMouseEnter}
+          animatingCells={animatingCells}
+        />
+      )}
 
       {popover && canApprove && (
         <ApprovalPopover

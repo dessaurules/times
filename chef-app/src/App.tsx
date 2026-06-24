@@ -5,11 +5,11 @@ import AppLayout           from './components/Layout/AppLayout'
 import Login               from './pages/Login'
 import Dashboard           from './pages/Dashboard'
 import Mitarbeiterliste    from './pages/Mitarbeiterliste'
-import MitarbeiterDetail   from './pages/MitarbeiterDetail'
 import Einstellungen       from './pages/Einstellungen'
 import Abwesenheiten      from './pages/Abwesenheiten'
 import Zeiterfassung     from './pages/Zeiterfassung'
 import Berichte          from './pages/Berichte'
+import Dienstplan        from './pages/Dienstplan'
 
 export default function App() {
   return (
@@ -22,11 +22,10 @@ export default function App() {
             <Route path="/abwesenheiten"      element={<Abwesenheiten />} />
             <Route path="/zeiterfassung"      element={<Zeiterfassung />} />
             <Route path="/berichte"           element={<Berichte />} />
+            <Route path="/dienstplan"         element={<Dienstplan />} />
             {/* Nur GF */}
             <Route element={<GFRoute />}>
               <Route path="/mitarbeiter"      element={<Mitarbeiterliste />} />
-              <Route path="/mitarbeiter/neu"  element={<MitarbeiterDetail />} />
-              <Route path="/mitarbeiter/:id"  element={<MitarbeiterDetail />} />
               <Route path="/einstellungen"    element={<Einstellungen />} />
             </Route>
           </Route>

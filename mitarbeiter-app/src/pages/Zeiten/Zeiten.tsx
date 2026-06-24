@@ -8,7 +8,7 @@ import { de } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react'
 import { pb } from '../../lib/pb'
 import { useAuthStore } from '../../stores/auth'
-import { getHolidayDates } from '../../lib/holidays'
+import { getHolidayDates, getHolidayMap } from '../../lib/holidays'
 import type { TimeEntry, Employee } from '@shared/types'
 import { cn } from '@/lib/utils'
 
@@ -107,7 +107,7 @@ export default function Zeiten() {
   }, [employeeId])
 
   const weekDays     = eachDayOfInterval({ start: weekStart, end: endOfWeek(weekStart, { weekStartsOn: 1 }) })
-  const holidays     = getHolidayDates(weekStart.getFullYear(), fedState)
+  const holidays     = getHolidayMap(weekStart.getFullYear(), fedState)
   const weeklyHours  = employee?.weekly_hours ?? 40
   const sollPerDay   = dailySoll(weeklyHours)
 
@@ -125,7 +125,6 @@ export default function Zeiten() {
   }, 0)
 
   // Wochen-Ist inkl. laufender Session
-  const openEntry   = entries.find(e => !e.end_time)
   const weekIstMins = entries.reduce((sum, e) => sum + netMins(e, now), 0)
 
   // Überstunden (Jahr): Ist − Soll aller abgeschlossenen Arbeitstage
