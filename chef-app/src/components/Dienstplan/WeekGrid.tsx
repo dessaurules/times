@@ -49,7 +49,7 @@ export default function WeekGrid({
         <thead className="sticky top-0 z-20 bg-white">
           <tr>
             {/* Name-Spalte Header */}
-            <th className="sticky left-0 z-30 bg-white border-b border-r border-[#E5E7EB] px-3 py-1.5 text-left min-w-[110px]">
+            <th className="sticky left-0 z-30 bg-white border-b border-r border-[#E5E7EB] px-3 py-1 text-left min-w-[150px]">
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Mitarbeiter
               </span>
@@ -59,7 +59,7 @@ export default function WeekGrid({
               <th
                 key={day.date}
                 className={cn(
-                  'w-24 min-w-[96px] text-center border-b border-r border-[#E5E7EB] py-1 bg-white',
+                  'w-28 min-w-[100px] text-center border-b border-r border-[#E5E7EB] py-0.5 bg-white',
                   day.isHoliday && 'bg-amber-50',
                   day.isWeekend && !day.isHoliday && 'bg-gray-50',
                 )}
@@ -93,7 +93,7 @@ export default function WeekGrid({
                 <tr key={`dept-${dept.id}`}>
                   <td
                     colSpan={days.length + 1}
-                    className="bg-indigo-50 text-indigo-700 text-[11px] font-bold uppercase tracking-wide px-3 py-1 cursor-pointer select-none border-y border-indigo-100"
+                    className="bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase tracking-wide px-3 py-0.5 cursor-pointer select-none border-y border-indigo-100"
                     onClick={() =>
                       setCollapsedDepts(prev => {
                         const next = new Set(prev)
@@ -148,7 +148,7 @@ export default function WeekGrid({
                       {/* Name-Zelle */}
                       <td
                         className={cn(
-                          'sticky left-0 z-10 bg-white border-b border-r border-[#E5E7EB] px-2 py-1 min-w-[110px]',
+                          'sticky left-0 z-10 bg-white border-b border-r border-[#E5E7EB] px-2 py-0.5 min-w-[150px]',
                           rowDragOverInfo?.deptId === dept.id &&
                             rowDragOverInfo?.idx === empIdx &&
                             'bg-indigo-50',
@@ -159,7 +159,7 @@ export default function WeekGrid({
                             <GripVertical className="w-3 h-3 text-gray-300 flex-shrink-0 cursor-grab" />
                           )}
                           <span className="text-[13px] font-medium text-[#111827] truncate">
-                            {emp.last_name}, {emp.first_name}
+                            {emp.first_name} {emp.last_name}
                           </span>
                         </div>
                       </td>
@@ -177,7 +177,7 @@ export default function WeekGrid({
                           <td
                             key={day.date}
                             className={cn(
-                              'border-b border-r border-[#E5E7EB] p-1 w-24 h-cell',
+                              'border-b border-r border-[#E5E7EB] p-0.5 w-28 h-20',
                               day.isHoliday && 'bg-amber-50/50',
                               day.isWeekend && !day.isHoliday && 'bg-gray-50/50',
                               isDragOver &&
@@ -201,8 +201,8 @@ export default function WeekGrid({
                             {entry ? (
                               <div
                                 className={cn(
-                                  'flex flex-col h-full relative',
-                                  entry.start_time2 ? 'gap-0.5' : 'gap-0',
+                                  'flex h-full relative',
+                                  entry.start_time2 ? 'flex-row gap-0.5' : 'flex-col gap-0',
                                 )}
                                 onClick={e => {
                                   e.stopPropagation()
@@ -215,7 +215,7 @@ export default function WeekGrid({
                                     draggable={isEditable}
                                     onDragStart={e => { e.stopPropagation(); setDragEntry(entry) }}
                                     onDragEnd={() => setDragEntry(null)}
-                                    className="text-[11px] px-1.5 grow rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center bg-emerald-50 font-black text-emerald-600"
+                                    className="text-[9px] px-1 grow rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center bg-emerald-50 font-black text-emerald-600"
                                   >
                                     F
                                   </div>
@@ -230,7 +230,7 @@ export default function WeekGrid({
                                       }}
                                       onDragEnd={() => setDragEntry(null)}
                                       className={cn(
-                                        'text-[11px] px-1.5 rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center',
+                                        'text-[9px] px-1 rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center',
                                         entry.start_time2 ? 'flex-1' : 'grow',
                                       )}
                                       style={{
@@ -240,7 +240,7 @@ export default function WeekGrid({
                                     >
                                       {entry.start_time}–{entry.end_time}
                                       {entry.note && (
-                                        <span className="block text-[9px] opacity-70 truncate">
+                                        <span className="block text-[8px] opacity-70 truncate">
                                           {entry.note}
                                         </span>
                                       )}
@@ -250,7 +250,7 @@ export default function WeekGrid({
                                       entry.end_time2 &&
                                       entry.color2 && (
                                         <div
-                                          className="text-[11px] px-1.5 flex-1 flex items-center justify-center rounded text-center"
+                                          className="text-[9px] px-1 flex-1 flex flex-col items-center justify-center rounded text-center"
                                           style={{
                                             background: SHIFT_COLOR_BG[entry.color2],
                                             color: SHIFT_COLOR_TEXT[entry.color2],
@@ -258,7 +258,7 @@ export default function WeekGrid({
                                         >
                                           {entry.start_time2}–{entry.end_time2}
                                           {entry.note2 && (
-                                            <span className="block text-[9px] opacity-70 truncate">
+                                            <span className="block text-[8px] opacity-70 truncate">
                                               {entry.note2}
                                             </span>
                                           )}
@@ -279,7 +279,7 @@ export default function WeekGrid({
                             ) : absence ? (
                               <div className="flex flex-col h-full">
                                 <div
-                                  className="text-[11px] px-1.5 grow rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center font-semibold leading-none"
+                                  className="text-[9px] px-1 grow rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center font-semibold leading-none"
                                   style={{
                                     background: ABSENCE_COLORS[absence.type].bg,
                                     color: ABSENCE_COLORS[absence.type].text,
@@ -290,13 +290,13 @@ export default function WeekGrid({
                                 </div>
                               </div>
                             ) : isEditable ? (
-                              <div className="flex items-center justify-center py-3">
-                                <span className="text-[10px] text-gray-300 border border-dashed border-gray-200 rounded px-1.5 py-0.5 hover:border-indigo-300 hover:text-indigo-400 transition-colors">
+                              <div className="flex items-center justify-center h-full">
+                                <span className="text-[9px] text-gray-300 border border-dashed border-gray-200 rounded px-1 py-0.5 hover:border-indigo-300 hover:text-indigo-400 transition-colors">
                                   +
                                 </span>
                               </div>
                             ) : (
-                              <div className="py-3" />
+                              <div />
                             )}
                           </td>
                         )
@@ -314,9 +314,9 @@ export default function WeekGrid({
                             ? 'bg-red-50 text-red-600'
                             : 'bg-emerald-50 text-emerald-600'
                         return (
-                          <td className="sticky right-0 bg-white border-l border-[#E5E7EB] border-b border-[#E5E7EB] px-2 py-1.5 min-w-[80px]">
+                          <td className="sticky right-0 bg-white border-l border-[#E5E7EB] border-b border-[#E5E7EB] px-2 py-0.5 min-w-[80px]">
                             <div className="flex items-center justify-between gap-1">
-                              <p className="text-sm font-bold text-gray-800 leading-none">{fmtMins(netMins)}</p>
+                              <p className="text-xs font-bold text-gray-800 leading-none">{fmtMins(netMins)}</p>
                               {sollMins > 0 && (
                                 <span className={cn('text-[10px] font-semibold px-1 py-0.5 rounded', saldoStyle)}>
                                   {saldo === 0 ? '±0' : (saldo > 0 ? '+' : '') + fmtMins(saldo)}
