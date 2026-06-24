@@ -147,12 +147,7 @@ export default function ShiftEditor({
 
       <DialogBody onKeyDown={e => e.key === 'Enter' && handleSave()}>
         {/* Quick-Buttons: Abwesenheiten + Schicht-Templates */}
-        {templatesError && (
-          <div className="text-red-600 text-sm mb-4">
-            Vorlagen konnten nicht geladen werden
-          </div>
-        )}
-        {!templatesLoading && !templatesError && (
+        {!templatesLoading && (
           <ShiftTemplateQuickButtons
             templates={templates}
             onSelect={handleTemplateSelect}

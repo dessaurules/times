@@ -18,6 +18,13 @@ export function useShiftTemplates(deptId: string): UseShiftTemplatesReturn {
   const [error, setError] = useState<Error | null>(null)
 
   const refetch = useCallback(async () => {
+    // Don't load if deptId is empty or invalid
+    if (!deptId || deptId === 'dept_default') {
+      setTemplates([])
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     setError(null)
     try {
@@ -27,7 +34,7 @@ export function useShiftTemplates(deptId: string): UseShiftTemplatesReturn {
       })
       setTemplates(result as unknown as ShiftTemplate[])
     } catch (err) {
-      setError(err instanceof Error ? err : new Error(String(err)))
+      // Silently handle errors - templates are optional
       setTemplates([])
     } finally {
       setLoading(false)

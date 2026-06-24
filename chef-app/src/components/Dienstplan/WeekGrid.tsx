@@ -43,6 +43,12 @@ export default function WeekGrid({
       .reduce((sum, e) => sum + calcShiftMins(e), 0)
   }
 
+  function empFreeDaysCount(empId: string): number {
+    return entries
+      .filter(e => e.employee === empId && e.is_free_day)
+      .length
+  }
+
   return (
     <div className="overflow-x-auto rounded-lg border border-[#E5E7EB] bg-white">
       <table className="border-collapse min-w-full">
@@ -59,7 +65,7 @@ export default function WeekGrid({
               <th
                 key={day.date}
                 className={cn(
-                  'w-28 min-w-[100px] text-center border-b border-r border-[#E5E7EB] py-0.5 bg-white',
+                  'w-32 min-w-[120px] text-center border-b border-r border-[#E5E7EB] py-0.5 bg-white',
                   day.isHoliday && 'bg-amber-50',
                   day.isWeekend && !day.isHoliday && 'bg-gray-50',
                 )}
@@ -154,13 +160,24 @@ export default function WeekGrid({
                             'bg-indigo-50',
                         )}
                       >
-                        <div className="flex items-center gap-1">
-                          {editableDepts.includes(dept.id) && (
-                            <GripVertical className="w-3 h-3 text-gray-300 flex-shrink-0 cursor-grab" />
-                          )}
-                          <span className="text-[13px] font-medium text-[#111827] truncate">
-                            {emp.first_name} {emp.last_name}
-                          </span>
+                        <div className="flex items-center gap-1 justify-between">
+                          <div className="flex items-center gap-1 flex-1 min-w-0">
+                            {editableDepts.includes(dept.id) && (
+                              <GripVertical className="w-3 h-3 text-gray-300 flex-shrink-0 cursor-grab" />
+                            )}
+                            <span className="text-[13px] font-medium text-[#111827] truncate">
+                              {emp.first_name} {emp.last_name}
+                            </span>
+                          </div>
+                          {(() => {
+                            const freeDays = empFreeDaysCount(emp.id)
+                            if (freeDays === 0) return null
+                            return (
+                              <span className="text-[13px] font-bold text-emerald-500 flex-shrink-0">
+                                {freeDays === 1 ? '|' : '||'}
+                              </span>
+                            )
+                          })()}
                         </div>
                       </td>
                       {/* Tag-Zellen */}
@@ -177,7 +194,7 @@ export default function WeekGrid({
                           <td
                             key={day.date}
                             className={cn(
-                              'border-b border-r border-[#E5E7EB] p-0.5 w-28 h-20',
+                              'border-b border-r border-[#E5E7EB] p-0.5 w-32 h-[25px]',
                               day.isHoliday && 'bg-amber-50/50',
                               day.isWeekend && !day.isHoliday && 'bg-gray-50/50',
                               isDragOver &&
@@ -215,13 +232,13 @@ export default function WeekGrid({
                                     draggable={isEditable}
                                     onDragStart={e => { e.stopPropagation(); setDragEntry(entry) }}
                                     onDragEnd={() => setDragEntry(null)}
-                                    className="text-[9px] px-1 grow rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center bg-emerald-50 font-black text-emerald-600"
+                                    className="text-[10px] font-black px-1 grow rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center bg-emerald-50 text-emerald-600"
                                   >
                                     F
                                   </div>
                                 ) : (
                                   <>
-                                    {/* Schicht 1 — h-full wenn keine Split, flex-1 wenn Split */}
+                                    {/* Schicht 1 — h-full wenn keine Split, w-1/2 wenn Split */}
                                     <div
                                       draggable={isEditable}
                                       onDragStart={e => {
@@ -230,15 +247,15 @@ export default function WeekGrid({
                                       }}
                                       onDragEnd={() => setDragEntry(null)}
                                       className={cn(
-                                        'text-[9px] px-1 rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center',
-                                        entry.start_time2 ? 'flex-1' : 'grow',
+                                        'text-[10px] font-semibold px-1 rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center',
+                                        entry.start_time2 ? 'w-1/2' : 'grow',
                                       )}
                                       style={{
                                         background: SHIFT_COLOR_BG[entry.color],
                                         color: SHIFT_COLOR_TEXT[entry.color],
                                       }}
                                     >
-                                      {entry.start_time}–{entry.end_time}
+                                      {parseInt(entry.start_time.split(':')[0])}–{entry.end_time ? parseInt(entry.end_time.split(':')[0]) : ''}
                                       {entry.note && (
                                         <span className="block text-[8px] opacity-70 truncate">
                                           {entry.note}
@@ -247,16 +264,15 @@ export default function WeekGrid({
                                     </div>
                                     {/* Schicht 2 (Split) */}
                                     {entry.start_time2 &&
-                                      entry.end_time2 &&
-                                      entry.color2 && (
+                                      entry.end_time2 && (
                                         <div
-                                          className="text-[9px] px-1 flex-1 flex flex-col items-center justify-center rounded text-center"
+                                          className="text-[10px] font-semibold px-1 w-1/2 flex flex-col items-center justify-center rounded text-center"
                                           style={{
-                                            background: SHIFT_COLOR_BG[entry.color2],
-                                            color: SHIFT_COLOR_TEXT[entry.color2],
+                                            background: SHIFT_COLOR_BG[entry.color2 || entry.color],
+                                            color: SHIFT_COLOR_TEXT[entry.color2 || entry.color],
                                           }}
                                         >
-                                          {entry.start_time2}–{entry.end_time2}
+                                          {parseInt(entry.start_time2.split(':')[0])}–{entry.end_time2 ? parseInt(entry.end_time2.split(':')[0]) : ''}
                                           {entry.note2 && (
                                             <span className="block text-[8px] opacity-70 truncate">
                                               {entry.note2}
@@ -279,7 +295,7 @@ export default function WeekGrid({
                             ) : absence ? (
                               <div className="flex flex-col h-full">
                                 <div
-                                  className="text-[9px] px-1 grow rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center font-semibold leading-none"
+                                  className="text-[10px] font-semibold px-1 grow rounded text-center cursor-pointer hover:opacity-80 transition-opacity flex flex-col justify-center leading-none"
                                   style={{
                                     background: ABSENCE_COLORS[absence.type].bg,
                                     color: ABSENCE_COLORS[absence.type].text,
@@ -291,7 +307,7 @@ export default function WeekGrid({
                               </div>
                             ) : isEditable ? (
                               <div className="flex items-center justify-center h-full">
-                                <span className="text-[9px] text-gray-300 border border-dashed border-gray-200 rounded px-1 py-0.5 hover:border-indigo-300 hover:text-indigo-400 transition-colors">
+                                <span className="text-[10px] font-semibold text-gray-300 border border-dashed border-gray-200 rounded px-1 py-0.5 hover:border-indigo-300 hover:text-indigo-400 transition-colors">
                                   +
                                 </span>
                               </div>
