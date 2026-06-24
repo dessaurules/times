@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Dialog, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { SHIFT_COLOR_BG, ABSENCE_LABELS, ABSENCE_COLORS, type ShiftColor } from '@shared/types'
 import type { Absence } from '@shared/types'
+import ShiftTemplateQuickButtons from './ShiftTemplateQuickButtons'
+import { useShiftTemplates } from '@/hooks/useShiftTemplates'
 
 const SHIFT_COLORS: ShiftColor[] = ['blue', 'green', 'amber', 'purple', 'rose']
 
@@ -31,11 +33,12 @@ interface Props {
   initial?:      Partial<ShiftEditorData>
   isEdit?:       boolean
   absence?:      Absence
+  department?:   string
 }
 
 export default function ShiftEditor({
   open, onClose, onSave, onDelete,
-  employeeName, dayLabel, initial, isEdit = false, absence,
+  employeeName, dayLabel, initial, isEdit = false, absence, department,
 }: Props) {
   const [isFreeDay,  setIsFreeDay]  = useState(!!(initial?.is_free_day))
   const [startTime,  setStartTime]  = useState(initial?.start_time  ?? '08:00')
@@ -47,6 +50,35 @@ export default function ShiftEditor({
   const [endTime2,   setEndTime2]   = useState(initial?.end_time2   ?? '23:00')
   const [color2,     setColor2]     = useState<ShiftColor>(initial?.color2 ?? 'purple')
   const [note2,      setNote2]      = useState(initial?.note2        ?? '')
+  const [autoEnd,    setAutoEnd]    = useState(false)
+  const [jobModel,   setJobModel]   = useState<'40h' | '30h'>('40h')
+
+  const { templates } = useShiftTemplates(department ?? 'dept_default')
+
+  function handleTemplateSelect(_id: string, data: any) {
+    if (data.is_free_day) {
+      onSave({ start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: true })
+    } else if (data.absence_type) {
+      onSave({ start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: false, note: data.absence_type })
+    } else {
+      onSave({ start_time: data.start_time, end_time: data.end_time, color: data.color, is_free_day: false })
+    }
+    onClose()
+  }
+
+  function calcEndTime(start: string, hoursPerDay: number): string {
+    const [h, m] = start.split(':').map(Number)
+    const totalMins = h * 60 + m + hoursPerDay * 60
+    const endH = Math.floor(totalMins / 60) % 24
+    const endM = totalMins % 60
+    return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
+  }
+
+  useEffect(() => {
+    if (!autoEnd) return
+    const hours = jobModel === '40h' ? 8 : 7
+    setEndTime(calcEndTime(startTime, hours))
+  }, [autoEnd, jobModel, startTime])
 
   function handleSave() {
     if (isFreeDay) {
@@ -87,6 +119,17 @@ export default function ShiftEditor({
       </DialogHeader>
 
       <DialogBody onKeyDown={e => e.key === 'Enter' && handleSave()}>
+        {/* Quick-Buttons: Abwesenheiten + Schicht-Templates */}
+        <ShiftTemplateQuickButtons
+          templates={templates}
+          onSelect={handleTemplateSelect}
+          onManage={() => {
+            // TODO: Admin-Panel öffnen (Task 5)
+          }}
+        />
+
+        <div className="border-t border-gray-100 my-3" />
+
         <div className="space-y-3">
           {/* Freier Tag Anzeige */}
           {isFreeDay && (
@@ -145,6 +188,31 @@ export default function ShiftEditor({
                   <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="mt-0.5" />
                 </div>
               </div>
+
+              <label className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                <input type="checkbox" checked={autoEnd} onChange={e => setAutoEnd(e.target.checked)} />
+                Endzeit berechnen
+              </label>
+              {autoEnd && (
+                <div className="flex gap-4 mt-2 text-sm">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      checked={jobModel === '40h'}
+                      onChange={() => setJobModel('40h')}
+                    />
+                    40h-Job (8h/Tag)
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      checked={jobModel === '30h'}
+                      onChange={() => setJobModel('30h')}
+                    />
+                    30h-Job (7h/Tag)
+                  </label>
+                </div>
+              )}
 
               <div>
                 <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Hinweis</Label>

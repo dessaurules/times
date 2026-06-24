@@ -358,6 +358,7 @@ export default function Dienstplan() {
         onDelete={editorEntry ? handleEditorDelete : undefined}
         employeeName={editorEmp ? `${editorEmp.first_name} ${editorEmp.last_name}` : ''}
         dayLabel={editorDayLabel}
+        department={editorEmp?.department}
         initial={editorEntry ? {
           start_time:  editorEntry.start_time,
           end_time:    editorEntry.end_time,
