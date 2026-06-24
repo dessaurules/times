@@ -1,9 +1,19 @@
 import { ABSENCE_COLORS } from '@shared/types'
-import type { ShiftTemplate } from '@shared/types'
+import type { ShiftTemplate, ShiftColor } from '@shared/types'
+
+type QuickAbsenceType = 'K' | 'U' | 'S'
+
+export interface QuickSelectData {
+  is_free_day: boolean
+  absence_type?: QuickAbsenceType | null
+  start_time?: string
+  end_time?: string
+  color?: ShiftColor
+}
 
 interface Props {
   templates: ShiftTemplate[]
-  onSelect: (id: string, data: any) => void
+  onSelect: (id: string, data: QuickSelectData) => void
   onManage?: () => void
 }
 

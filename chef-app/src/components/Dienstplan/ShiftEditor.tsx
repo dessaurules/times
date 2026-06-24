@@ -4,12 +4,14 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { SHIFT_COLOR_BG, ABSENCE_LABELS, ABSENCE_COLORS, type ShiftColor } from '@shared/types'
+import { SHIFT_COLOR_BG, ABSENCE_LABELS, ABSENCE_COLORS, type ShiftColor, type AbsenceType } from '@shared/types'
 import type { Absence } from '@shared/types'
-import ShiftTemplateQuickButtons from './ShiftTemplateQuickButtons'
+import ShiftTemplateQuickButtons, { type QuickSelectData } from './ShiftTemplateQuickButtons'
 import { useShiftTemplates } from '@/hooks/useShiftTemplates'
 
 const SHIFT_COLORS: ShiftColor[] = ['blue', 'green', 'amber', 'purple', 'rose']
+
+const VALID_ABSENCE_TYPES = ['K', 'U', 'S'] as const
 
 export interface ShiftEditorData {
   start_time:   string
@@ -53,15 +55,16 @@ export default function ShiftEditor({
   const [autoEnd,    setAutoEnd]    = useState(false)
   const [jobModel,   setJobModel]   = useState<'40h' | '30h'>('40h')
 
-  const { templates } = useShiftTemplates(department ?? 'dept_default')
+  const { templates, loading: templatesLoading, error: templatesError } = useShiftTemplates(department ?? 'dept_default')
 
-  function handleTemplateSelect(_id: string, data: any) {
+  function handleTemplateSelect(_id: string, data: QuickSelectData) {
     if (data.is_free_day) {
       onSave({ start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: true })
-    } else if (data.absence_type) {
-      onSave({ start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: false, note: data.absence_type })
+    } else if (data.absence_type && (VALID_ABSENCE_TYPES as readonly string[]).includes(data.absence_type)) {
+      const label = ABSENCE_LABELS[data.absence_type as AbsenceType] ?? data.absence_type
+      onSave({ start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: false, note: label })
     } else {
-      onSave({ start_time: data.start_time, end_time: data.end_time, color: data.color, is_free_day: false })
+      onSave({ start_time: data.start_time ?? '08:00', end_time: data.end_time ?? '16:00', color: data.color ?? 'blue', is_free_day: false })
     }
     onClose()
   }
@@ -120,13 +123,20 @@ export default function ShiftEditor({
 
       <DialogBody onKeyDown={e => e.key === 'Enter' && handleSave()}>
         {/* Quick-Buttons: Abwesenheiten + Schicht-Templates */}
-        <ShiftTemplateQuickButtons
-          templates={templates}
-          onSelect={handleTemplateSelect}
-          onManage={() => {
-            // TODO: Admin-Panel öffnen (Task 5)
-          }}
-        />
+        {templatesError && (
+          <div className="text-red-600 text-sm mb-4">
+            Vorlagen konnten nicht geladen werden
+          </div>
+        )}
+        {!templatesLoading && !templatesError && (
+          <ShiftTemplateQuickButtons
+            templates={templates}
+            onSelect={handleTemplateSelect}
+            onManage={() => {
+              // TODO: Admin-Panel öffnen (Task 5)
+            }}
+          />
+        )}
 
         <div className="border-t border-gray-100 my-3" />
 
