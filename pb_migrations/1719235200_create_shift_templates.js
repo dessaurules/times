@@ -1,8 +1,8 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
   const collection = new Collection({
-    "createRule": "user.role = 'gf'",
-    "deleteRule": "user.role = 'gf'",
+    "createRule": "@request.auth.role = 'gf'",
+    "deleteRule": "@request.auth.role = 'gf'",
     "fields": [
       {
         "autogeneratePattern": "[a-z0-9]{15}",
@@ -111,12 +111,12 @@ migrate((app) => {
     "indexes": [
       "CREATE UNIQUE INDEX idx_shift_templates_dept_name ON shift_templates (department, name)"
     ],
-    "listRule": null,
+    "listRule": "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
     "name": "shift_templates",
     "system": false,
     "type": "base",
-    "updateRule": "user.role = 'gf'",
-    "viewRule": null
+    "updateRule": "@request.auth.role = 'gf'",
+    "viewRule": "@request.auth.role = 'gf' || @request.auth.role = 'sl'"
   });
 
   return app.save(collection);
