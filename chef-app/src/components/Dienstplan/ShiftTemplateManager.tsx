@@ -91,9 +91,10 @@ interface ModalProps {
   onClose: () => void
   onSave: (data: TemplateFormData & { id?: string }) => Promise<void>
   onDelete?: (id: string) => Promise<void>
+  deleteMode?: boolean
 }
 
-function TemplateModal({ initial, onClose, onSave, onDelete }: ModalProps) {
+function TemplateModal({ initial, onClose, onSave, onDelete, deleteMode = false }: ModalProps) {
   const isEdit = Boolean(initial)
   const [form, setForm] = useState<TemplateFormData>(
     initial
@@ -101,7 +102,7 @@ function TemplateModal({ initial, onClose, onSave, onDelete }: ModalProps) {
       : { ...EMPTY_FORM },
   )
   const [saving, setSaving] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(deleteMode)
   const [error, setError] = useState<string | null>(null)
 
   function set<K extends keyof TemplateFormData>(key: K, value: TemplateFormData[K]) {
@@ -139,6 +140,7 @@ function TemplateModal({ initial, onClose, onSave, onDelete }: ModalProps) {
       onClose()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fehler beim Löschen')
+    } finally {
       setSaving(false)
     }
   }
@@ -287,20 +289,30 @@ function TemplateModal({ initial, onClose, onSave, onDelete }: ModalProps) {
 export default function ShiftTemplateManager({ templates, onSave, onDelete, departmentId }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
   const [editTemplate, setEditTemplate] = useState<ShiftTemplate | null>(null)
+  const [isDeleteMode, setIsDeleteMode] = useState(false)
 
   function openCreate() {
     setEditTemplate(null)
+    setIsDeleteMode(false)
     setModalOpen(true)
   }
 
   function openEdit(tpl: ShiftTemplate) {
     setEditTemplate(tpl)
+    setIsDeleteMode(false)
+    setModalOpen(true)
+  }
+
+  function openDelete(tpl: ShiftTemplate) {
+    setEditTemplate(tpl)
+    setIsDeleteMode(true)
     setModalOpen(true)
   }
 
   function closeModal() {
     setModalOpen(false)
     setEditTemplate(null)
+    setIsDeleteMode(false)
   }
 
   async function handleSave(data: TemplateFormData & { id?: string }) {
@@ -389,10 +401,7 @@ export default function ShiftTemplateManager({ templates, onSave, onDelete, depa
                         <Pencil size={14} />
                       </button>
                       <button
-                        onClick={() => {
-                          setEditTemplate(tpl)
-                          setModalOpen(true)
-                        }}
+                        onClick={() => openDelete(tpl)}
                         className="p-1.5 rounded hover:bg-red-50 text-[#6B7280] hover:text-red-600"
                         title="Löschen"
                       >
@@ -414,6 +423,7 @@ export default function ShiftTemplateManager({ templates, onSave, onDelete, depa
           onClose={closeModal}
           onSave={handleSave}
           onDelete={handleDelete}
+          deleteMode={isDeleteMode}
         />
       )}
 
