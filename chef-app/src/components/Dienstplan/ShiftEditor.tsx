@@ -150,9 +150,9 @@ export default function ShiftEditor({
               }
               onClose()
             }}
-            onSelectAbsence={(absence_type) => {
-              const label = ABSENCE_LABELS[absence_type as AbsenceType] ?? absence_type
-              onSave({ start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: false, note: label })
+            onSelectAbsence={() => {
+              // Abwesenheit wurde bereits von createAbsence in QuickSelectSections erstellt
+              // Hier nur Dialog schließen
               onClose()
             }}
           />
