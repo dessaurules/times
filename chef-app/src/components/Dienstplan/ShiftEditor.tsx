@@ -57,7 +57,7 @@ export default function ShiftEditor({
   const [jobModel,   setJobModel]   = useState<'40h' | '30h'>('40h')
   const [showTemplateManager, setShowTemplateManager] = useState(false)
 
-  const { templates, loading: templatesLoading, error: templatesError, save: saveTemplate, update: updateTemplate, deleteTemplate } = useShiftTemplates(department ?? 'dept_default')
+  const { templates, loading: templatesLoading, save: saveTemplate, update: updateTemplate, deleteTemplate } = useShiftTemplates(department ?? 'dept_default')
 
   function handleTemplateSelect(_id: string, data: QuickSelectData) {
     if (data.is_free_day) {
