@@ -10,6 +10,7 @@ import ShiftTemplateManager from './ShiftTemplateManager'
 import ShiftEditorSettings from './ShiftEditorSettings'
 import QuickSelectSections from './QuickSelectSections'
 import { useShiftTemplates } from '@/hooks/useShiftTemplates'
+import { pb } from '@/lib/pb'
 import { Settings, X } from 'lucide-react'
 
 const SHIFT_COLORS: ShiftColor[] = ['blue', 'green', 'amber', 'purple', 'rose']
@@ -135,9 +136,12 @@ export default function ShiftEditor({
 
       <DialogBody onKeyDown={e => e.key === 'Enter' && handleSave()}>
         {/* Quick-Buttons: Templates + Absences */}
-        {!templatesLoading && (
+        {!templatesLoading && pb.authStore.model && (
           <QuickSelectSections
             templates={templates}
+            employeeId={employeeId}
+            date={date}
+            userId={pb.authStore.model.id}
             onSelectTemplate={(_id, data) => {
               if (data.is_free_day) {
                 onSave({ start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: true })
