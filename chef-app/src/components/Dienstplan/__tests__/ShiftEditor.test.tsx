@@ -68,6 +68,83 @@ describe('ShiftEditor Header', () => {
   })
 })
 
+describe('Quick Select Sections', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('renders Quick Select section with Frei button and templates', () => {
+    const mockTemplates = [
+      {
+        id: 'tmpl1',
+        created: '2024-01-01T00:00:00Z',
+        updated: '2024-01-01T00:00:00Z',
+        department: 'dept_1',
+        name: 'Frühschicht',
+        start_time: '06:00',
+        end_time: '14:00',
+        color: 'blue' as const,
+      },
+    ]
+
+    vi.mocked(useShiftTemplates).mockReturnValue({
+      templates: mockTemplates,
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+      save: vi.fn(),
+      update: vi.fn(),
+      deleteTemplate: vi.fn(),
+    })
+
+    render(
+      <ShiftEditor
+        open={true}
+        onClose={() => {}}
+        onSave={() => {}}
+        employeeName="Max Mustermann"
+        dayLabel="Mi, 25.06.2026"
+        department="dept_1"
+      />
+    )
+
+    // Check Quick Select section
+    expect(screen.getByText('Quick Select')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /🌴.*Frei/ })).toBeInTheDocument()
+    expect(screen.getByText('Frühschicht')).toBeInTheDocument()
+  })
+
+  it('renders Abwesenheiten section with 4 absence types', () => {
+    vi.mocked(useShiftTemplates).mockReturnValue({
+      templates: [],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+      save: vi.fn(),
+      update: vi.fn(),
+      deleteTemplate: vi.fn(),
+    })
+
+    render(
+      <ShiftEditor
+        open={true}
+        onClose={() => {}}
+        onSave={() => {}}
+        employeeName="Max Mustermann"
+        dayLabel="Mi, 25.06.2026"
+        department="dept_1"
+      />
+    )
+
+    expect(screen.getByText('Abwesenheiten')).toBeInTheDocument()
+    // Check for emoji + label pairs
+    expect(screen.getByText(/🏥.*Krank/)).toBeInTheDocument()
+    expect(screen.getByText(/✈️.*Urlaub/)).toBeInTheDocument()
+    expect(screen.getByText(/📚.*Schulung/)).toBeInTheDocument()
+    expect(screen.getByText(/🩺.*Arzttermin/)).toBeInTheDocument()
+  })
+})
+
 describe('Settings Modal', () => {
   beforeEach(() => {
     vi.clearAllMocks()

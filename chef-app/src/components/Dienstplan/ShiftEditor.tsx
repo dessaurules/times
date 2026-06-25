@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { SHIFT_COLOR_BG, ABSENCE_LABELS, ABSENCE_COLORS, type ShiftColor, type AbsenceType } from '@shared/types'
 import type { Absence } from '@shared/types'
-import ShiftTemplateQuickButtons, { type QuickSelectData } from './ShiftTemplateQuickButtons'
 import ShiftTemplateManager from './ShiftTemplateManager'
 import ShiftEditorSettings from './ShiftEditorSettings'
+import QuickSelectSections from './QuickSelectSections'
 import { useShiftTemplates } from '@/hooks/useShiftTemplates'
 
 const SHIFT_COLORS: ShiftColor[] = ['blue', 'green', 'amber', 'purple', 'rose']
@@ -169,12 +169,23 @@ export default function ShiftEditor({
       </DialogHeader>
 
       <DialogBody onKeyDown={e => e.key === 'Enter' && handleSave()}>
-        {/* Quick-Buttons: Abwesenheiten + Schicht-Templates */}
+        {/* Quick-Buttons: Templates + Absences */}
         {!templatesLoading && (
-          <ShiftTemplateQuickButtons
+          <QuickSelectSections
             templates={templates}
-            onSelect={handleTemplateSelect}
-            onManage={handleManageTemplates}
+            onSelectTemplate={(id, data) => {
+              if (data.is_free_day) {
+                onSave({ start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: true })
+              } else {
+                onSave({ start_time: data.start_time, end_time: data.end_time, color: data.color, is_free_day: false })
+              }
+              onClose()
+            }}
+            onSelectAbsence={(absence_type) => {
+              const label = ABSENCE_LABELS[absence_type as AbsenceType] ?? absence_type
+              onSave({ start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: false, note: label })
+              onClose()
+            }}
           />
         )}
 
