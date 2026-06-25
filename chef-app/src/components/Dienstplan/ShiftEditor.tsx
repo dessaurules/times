@@ -8,6 +8,7 @@ import { SHIFT_COLOR_BG, ABSENCE_LABELS, ABSENCE_COLORS, type ShiftColor, type A
 import type { Absence } from '@shared/types'
 import ShiftTemplateQuickButtons, { type QuickSelectData } from './ShiftTemplateQuickButtons'
 import ShiftTemplateManager from './ShiftTemplateManager'
+import ShiftEditorSettings from './ShiftEditorSettings'
 import { useShiftTemplates } from '@/hooks/useShiftTemplates'
 
 const SHIFT_COLORS: ShiftColor[] = ['blue', 'green', 'amber', 'purple', 'rose']
@@ -37,11 +38,13 @@ interface Props {
   isEdit?:       boolean
   absence?:      Absence
   department?:   string
+  date?:         string
+  employeeId?:   string
 }
 
 export default function ShiftEditor({
   open, onClose, onSave, onDelete,
-  employeeName, dayLabel, initial, isEdit = false, absence, department,
+  employeeName, dayLabel, initial, isEdit = false, absence, department, date, employeeId,
 }: Props) {
   const [isFreeDay,  setIsFreeDay]  = useState(!!(initial?.is_free_day))
   const [startTime,  setStartTime]  = useState(initial?.start_time  ?? '08:00')
@@ -56,6 +59,7 @@ export default function ShiftEditor({
   const [autoEnd,    setAutoEnd]    = useState(false)
   const [jobModel,   setJobModel]   = useState<'40h' | '30h'>('40h')
   const [showTemplateManager, setShowTemplateManager] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
 
   const { templates, loading: templatesLoading, save: saveTemplate, update: updateTemplate, deleteTemplate } = useShiftTemplates(department ?? 'dept_default')
 
@@ -143,7 +147,7 @@ export default function ShiftEditor({
             {/* Gear icon for settings */}
             <button
               type="button"
-              onClick={() => {/* Task 5: setShowSettings(true) */}}
+              onClick={() => setShowSettings(true)}
               className="p-2 rounded hover:bg-gray-100 text-gray-600 transition-colors flex-shrink-0"
               title="Einstellungen"
               aria-label="Einstellungen"
@@ -389,6 +393,18 @@ export default function ShiftEditor({
           </div>
         </div>
       </div>
+    )}
+
+    {/* ShiftEditorSettings Modal */}
+    {showSettings && date && employeeId && (
+      <ShiftEditorSettings
+        open={true}
+        onClose={() => setShowSettings(false)}
+        employeeName={employeeName}
+        date={date}
+        department={department ?? 'dept_default'}
+        employeeId={employeeId}
+      />
     )}
     </>
   )
