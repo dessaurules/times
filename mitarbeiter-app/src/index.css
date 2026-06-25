@@ -10,6 +10,12 @@
   animation: blink 1.6s step-start infinite;
 }
 
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 @layer base {
   :root {
     /* ── Mitarbeiter-App Indigo/Violet-Theme ──────── */

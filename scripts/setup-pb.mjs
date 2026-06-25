@@ -60,6 +60,22 @@ async function patchCollection(id, body) {
   return d
 }
 
+async function addFieldIfMissing(collectionName, field) {
+  const r = await fetch(`${BASE}/api/collections/${collectionName}`, { headers: H })
+  if (!r.ok) { console.error(`Collection ${collectionName} nicht gefunden`); return }
+  const col = await r.json()
+  if (col.fields.some(f => f.name === field.name)) {
+    console.log(`  Feld "${field.name}" in "${collectionName}" bereits vorhanden`)
+    return
+  }
+  const pr = await fetch(`${BASE}/api/collections/${col.id}`, {
+    method: 'PATCH', headers: H, body: JSON.stringify({ fields: [...col.fields, field] }),
+  })
+  const pd = await pr.json()
+  if (!pr.ok) throw new Error(`addField ${collectionName}.${field.name}: ${JSON.stringify(pd)}`)
+  console.log(`✓ Feld "${field.name}" zu "${collectionName}" hinzugefügt`)
+}
+
 // ── Feld-Definitionen (PocketBase v0.23+ flat API) ────
 const f = {
   text:     (name, o = {}) => ({ type: 'text',     name, required: false, ...o }),
@@ -74,6 +90,7 @@ const f = {
     collectionId, cascadeDelete: false, minSelect: 0, maxSelect: 1,
     ...o,
   }),
+  json: (name, o = {}) => ({ type: 'json', name, required: false, ...o }),
 }
 
 // ── 1. departments ────────────────────────────────────
@@ -230,14 +247,14 @@ await create({
   name: 'notifications', type: 'base',
   listRule:   "user = @request.auth.id",
   viewRule:   "user = @request.auth.id",
-  createRule: "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  createRule: "@request.auth.id != ''",
   updateRule: "user = @request.auth.id",
   deleteRule: "user = @request.auth.id",
   fields: [
     f.relation('user',         USERS_ID, { required: true, cascadeDelete: true }),
     f.text('title',            { required: true }),
     f.text('message'),
-    f.select('type', ['absence_request','absence_approved','absence_rejected','general'], { required: true }),
+    f.select('type', ['absence_request','absence_approved','absence_rejected','general','shift_published'], { required: true }),
     f.bool('read'),
     f.text('reference_id'),
   ],
@@ -260,7 +277,50 @@ await create({
   ],
 })
 
-// ── 11. Default settings ──────────────────────────────
+// ── 11. shift_plans ───────────────────────────────────
+const shiftPlans = await create({
+  name: 'shift_plans', type: 'base',
+  listRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  viewRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  createRule: "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  updateRule: "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  deleteRule: "@request.auth.role = 'gf'",
+  fields: [
+    f.date('week_start',  { required: true }),
+    f.date('week_end',    { required: true }),
+    f.select('status', ['draft', 'published'], { required: true }),
+    f.relation('created_by', USERS_ID, { required: true }),
+    f.bool('push_notified'),
+  ],
+})
+
+// ── 12. shift_entries ─────────────────────────────────
+await create({
+  name: 'shift_entries', type: 'base',
+  listRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || employee = @request.auth.employee",
+  viewRule:   "@request.auth.role = 'gf' || @request.auth.role = 'sl' || employee = @request.auth.employee",
+  createRule: "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  updateRule: "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  deleteRule: "@request.auth.role = 'gf' || @request.auth.role = 'sl'",
+  fields: [
+    f.relation('plan_id',    shiftPlans.id,   { required: true, cascadeDelete: true }),
+    f.relation('employee',   employees.id,    { required: true }),
+    f.relation('department', departments.id,  { required: true }),
+    f.date('date',           { required: true }),
+    f.text('start_time',     { required: true }),
+    f.text('end_time',       { required: true }),
+    f.select('status', ['draft', 'published'], { required: true }),
+    f.text('color'),
+    f.text('start_time2'),
+    f.text('end_time2'),
+    f.text('color2'),
+    f.text('note'),
+    f.text('note2'),
+    f.bool('is_open'),
+  ],
+})
+
+// ── 13. Default settings ──────────────────────────────
 const defaultSettings = [
   { key: 'company_name',        value: 'Mein Betrieb' },
   { key: 'federal_state',       value: 'ST' },
@@ -284,6 +344,60 @@ for (const s of defaultSettings) {
     console.log(`  Setting "${s.key}" bereits vorhanden`)
   }
 }
+
+// ── push_notified Felder (für Push-Notifications) ─────
+await addFieldIfMissing('absences',    f.bool('push_notified'))
+await addFieldIfMissing('shift_plans', f.bool('push_notified'))
+
+// notifications.type um shift_published erweitern (falls Collection bereits existierte)
+{
+  const notifRes = await fetch(`${BASE}/api/collections/notifications`, { headers: H })
+  if (notifRes.ok) {
+    const notifCol = await notifRes.json()
+    const typeField = notifCol.fields?.find(f => f.name === 'type')
+    if (typeField && !typeField.values?.includes('shift_published')) {
+      typeField.values = [...(typeField.values ?? []), 'shift_published']
+      const patchRes = await fetch(`${BASE}/api/collections/${notifCol.id}`, {
+        method: 'PATCH', headers: H,
+        body: JSON.stringify({ fields: notifCol.fields }),
+      })
+      if (patchRes.ok) console.log('✓ notifications.type um shift_published erweitert')
+      else console.error('  notifications.type patch fehlgeschlagen:', await patchRes.text())
+    } else {
+      console.log('  notifications.type: shift_published bereits vorhanden')
+    }
+  }
+}
+
+// ── push_subscriptions ────────────────────────────────
+await create({
+  name: 'push_subscriptions', type: 'base',
+  listRule:   "@request.auth.id != '' && employee = @request.auth.employee",
+  viewRule:   "@request.auth.id != '' && employee = @request.auth.employee",
+  createRule: "@request.auth.id != ''",
+  updateRule: "@request.auth.id != '' && employee = @request.auth.employee",
+  deleteRule: "@request.auth.id != '' && employee = @request.auth.employee",
+  fields: [
+    f.relation('employee', employees.id, { required: true }),
+    f.text('endpoint',  { required: true }),
+    f.text('p256dh',    { required: true }),
+    f.text('auth',      { required: true }),
+    f.text('user_agent'),
+  ],
+})
+
+// ── shift_entries: Split-Schicht + Farb-Felder ────────
+await addFieldIfMissing('shift_entries', f.select('status', ['draft', 'published']))
+await addFieldIfMissing('shift_entries', f.text('color'))
+await addFieldIfMissing('shift_entries', f.text('start_time2'))
+await addFieldIfMissing('shift_entries', f.text('end_time2'))
+await addFieldIfMissing('shift_entries', f.text('color2'))
+await addFieldIfMissing('shift_entries', f.text('note'))
+await addFieldIfMissing('shift_entries', f.text('note2'))
+await addFieldIfMissing('shift_entries', f.bool('is_free_day'))
+
+// ── employees: Dienstplan-Berechtigungen ─────────────
+await addFieldIfMissing('employees', { type: 'json', name: 'planner_departments', required: false })
 
 console.log('\n✅ PocketBase Schema vollständig eingerichtet.')
 console.log('👉 Erstelle jetzt einen GF-Nutzer unter http://127.0.0.1:8091/_/')

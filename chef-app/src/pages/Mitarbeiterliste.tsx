@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Search, Plus } from 'lucide-react'
 import { pb } from '../lib/pb'
 import type { Employee, Department, ContractType } from '@shared/types'
@@ -10,11 +9,13 @@ import { Badge }     from '../components/ui/badge'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '../components/ui/table'
+import { AnimatePresence } from 'motion/react'
+import MitarbeiterModal from './MitarbeiterModal'
 
 type EmployeeRow = Employee & { expand?: { department?: Department } }
 
 export default function Mitarbeiterliste() {
-  const navigate = useNavigate()
+  const [selectedId, setSelectedId] = useState<string | 'new' | null>(null)
   const [rows, setRows]           = useState<EmployeeRow[]>([])
   const [total, setTotal]         = useState(0)
   const [loading, setLoading]     = useState(true)
@@ -24,6 +25,7 @@ export default function Mitarbeiterliste() {
   const [filterDept, setFilterDept]         = useState('')
   const [filterContract, setFilterContract] = useState('')
   const [filterActive, setFilterActive]     = useState('')
+  const [refreshKey, setRefreshKey]         = useState(0)
   const perPage = 20
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export default function Mitarbeiterliste() {
       .finally(() => { if (!cancelled) setLoading(false) })
 
     return () => { cancelled = true }
-  }, [search, page, filterDept, filterContract, filterActive])
+  }, [search, page, filterDept, filterContract, filterActive, refreshKey])
 
   function resetFilters() {
     setSearch(''); setFilterDept(''); setFilterContract(''); setFilterActive(''); setPage(1)
@@ -64,10 +66,10 @@ export default function Mitarbeiterliste() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1917] mb-1">Mitarbeiter</h1>
-          <p className="text-sm text-[#706D6A]">{total} {total === 1 ? 'Eintrag' : 'Einträge'}</p>
+          <h1 className="text-2xl font-bold text-[#111827] mb-1">Mitarbeiter</h1>
+          <p className="text-sm text-[#6B7280]">{total} {total === 1 ? 'Eintrag' : 'Einträge'}</p>
         </div>
-        <Button onClick={() => navigate('/mitarbeiter/neu')}>
+        <Button onClick={() => setSelectedId('new')}>
           <Plus size={16} /> Neuer Mitarbeiter
         </Button>
       </div>
@@ -75,7 +77,7 @@ export default function Mitarbeiterliste() {
       {/* Suche + Filter */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#706D6A] pointer-events-none" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280] pointer-events-none" />
           <Input
             placeholder="Name oder E-Mail…"
             value={search}
@@ -103,13 +105,13 @@ export default function Mitarbeiterliste() {
         </FilterSelect>
 
         {hasFilter && (
-          <button onClick={resetFilters} className="text-xs text-[#706D6A] hover:text-[#1A1917] underline underline-offset-2">
+          <button onClick={resetFilters} className="text-xs text-[#6B7280] hover:text-[#111827] underline underline-offset-2">
             Filter zurücksetzen
           </button>
         )}
       </div>
 
-      <div className="bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
+      <div className="bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -123,15 +125,15 @@ export default function Mitarbeiterliste() {
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-10 text-[#706D6A]">Lade…</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-10 text-[#6B7280]">Lade…</TableCell></TableRow>
             ) : rows.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-10 text-[#706D6A]">
+              <TableRow><TableCell colSpan={6} className="text-center py-10 text-[#6B7280]">
                 {hasFilter ? 'Keine Treffer' : 'Noch keine Mitarbeiter angelegt'}
               </TableCell></TableRow>
             ) : rows.map(emp => (
-              <TableRow key={emp.id} onClick={() => navigate(`/mitarbeiter/${emp.id}`)} className="cursor-pointer">
+              <TableRow key={emp.id} onClick={() => setSelectedId(emp.id)} className="cursor-pointer">
                 <TableCell>
-                  <div className="font-medium text-[#1A1917]">{emp.last_name}, {emp.first_name}</div>
+                  <div className="font-medium text-[#111827]">{emp.last_name}, {emp.first_name}</div>
                 </TableCell>
                 <TableCell>{emp.expand?.department?.name ?? '—'}</TableCell>
                 <TableCell>{emp.position || '—'}</TableCell>
@@ -150,13 +152,24 @@ export default function Mitarbeiterliste() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <span className="text-sm text-[#706D6A]">Seite {page} von {totalPages}</span>
+          <span className="text-sm text-[#6B7280]">Seite {page} von {totalPages}</span>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Zurück</Button>
             <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Weiter</Button>
           </div>
         </div>
       )}
+
+      <AnimatePresence>
+        {selectedId !== null && (
+          <MitarbeiterModal
+            key={String(selectedId)}
+            employeeId={selectedId}
+            onClose={() => setSelectedId(null)}
+            onSaved={() => { setSelectedId(null); setRefreshKey(k => k + 1) }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -168,7 +181,7 @@ function FilterSelect({ value, onChange, children }: {
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
-      className="h-9 rounded-md border border-[#EDE7DC] bg-white px-3 text-sm text-[#1A1917] outline-none focus:border-[#BA7517] focus:ring-2 focus:ring-[#BA7517]/20"
+      className="h-9 rounded-md border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/20"
     >
       {children}
     </select>

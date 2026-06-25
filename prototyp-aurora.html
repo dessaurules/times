@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aurora Stamp Background — 4 Varianten</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .aurora-card {
+      position: relative;
+      width: 375px;
+      height: 280px;
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .card-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      gap: 0.5rem;
+    }
+    .card-time {
+      font-size: 3.5rem;
+      font-weight: bold;
+      color: white;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    .card-label {
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.9);
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    }
+    .palette-name {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      z-index: 20;
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 p-8">
+  <div class="max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold text-white mb-2">Aurora Stamp Background</h1>
+    <p class="text-gray-300 mb-8">4 Farbvarianten — Einstempel-Animation</p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Variante 0: Türkis/Grün -->
+      <div>
+        <div id="card-0" class="aurora-card">
+          <div class="palette-name">Palette 0: Türkis</div>
+          <div class="card-overlay">
+            <div class="card-time">14:32</div>
+            <div class="card-label">Eingestempelt seit 08:00 Uhr</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Variante 1: Indigo/Violet -->
+      <div>
+        <div id="card-1" class="aurora-card">
+          <div class="palette-name">Palette 1: Indigo</div>
+          <div class="card-overlay">
+            <div class="card-time">14:32</div>
+            <div class="card-label">Eingestempelt seit 08:00 Uhr</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Variante 2: Amber/Orange -->
+      <div>
+        <div id="card-2" class="aurora-card">
+          <div class="palette-name">Palette 2: Amber</div>
+          <div class="card-overlay">
+            <div class="card-time">14:32</div>
+            <div class="card-label">Eingestempelt seit 08:00 Uhr</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Variante 3: Rose/Pink -->
+      <div>
+        <div id="card-3" class="aurora-card">
+          <div class="palette-name">Palette 3: Rose</div>
+          <div class="card-overlay">
+            <div class="card-time">14:32</div>
+            <div class="card-label">Eingestempelt seit 08:00 Uhr</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 4 Farbpaletten
+    const PALETTES = [
+      // 0: Türkis/Grün (Original)
+      { dark: [0.0, 0.1, 0.15], mid: [0.0, 0.3, 0.4], bright: [0.2, 0.8, 0.9], accent: [0.0, 0.7, 0.4] },
+      // 1: Indigo/Violet (App-Farben)
+      { dark: [0.05, 0.02, 0.15], mid: [0.2, 0.1, 0.5], bright: [0.5, 0.3, 0.9], accent: [0.4, 0.1, 0.7] },
+      // 2: Amber/Orange (Warm)
+      { dark: [0.15, 0.08, 0.0], mid: [0.5, 0.25, 0.0], bright: [0.9, 0.6, 0.1], accent: [0.8, 0.3, 0.0] },
+      // 3: Rose/Pink (Weich)
+      { dark: [0.15, 0.02, 0.1], mid: [0.5, 0.1, 0.3], bright: [0.9, 0.4, 0.7], accent: [0.7, 0.1, 0.5] },
+    ];
+
+    // Simplex Noise (aus dem Original-Code)
+    function snoise(v) {
+      const C = new THREE.Vector4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+      let i = new THREE.Vector2(Math.floor(v.x + THREE.MathUtils.dot(v, new THREE.Vector2(C.y, C.y))), Math.floor(v.y + THREE.MathUtils.dot(v, new THREE.Vector2(C.y, C.y))));
+
+      // Vereinfachte Simplex-Implementierung — für Prototyp reicht eine einfache Noise
+      return Math.sin(v.x * 12.9898 + v.y * 78.233) * 43758.5453;
+    }
+
+    // Erstelle 4 Aurora-Szenen
+    for (let paletteIdx = 0; paletteIdx < 4; paletteIdx++) {
+      const container = document.getElementById(`card-${paletteIdx}`);
+      const palette = PALETTES[paletteIdx];
+
+      // Three.js Scene
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      renderer.setClearColor(0x000000);
+      renderer.setPixelRatio(window.devicePixelRatio);
+
+      // Wende Renderer als erstes Kind an (vor dem Overlay)
+      container.insertBefore(renderer.domElement, container.firstChild);
+
+      camera.position.z = 5;
+
+      // Shader Material mit dynamischen Farben
+      const material = new THREE.ShaderMaterial({
+        uniforms: {
+          time: { value: 0 },
+          colorDark: { value: new THREE.Vector3(...palette.dark) },
+          colorMid: { value: new THREE.Vector3(...palette.mid) },
+          colorBright: { value: new THREE.Vector3(...palette.bright) },
+          colorAccent: { value: new THREE.Vector3(...palette.accent) },
+        },
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          }
+        `,
+        fragmentShader: `
+          uniform float time;
+          uniform vec3 colorDark;
+          uniform vec3 colorMid;
+          uniform vec3 colorBright;
+          uniform vec3 colorAccent;
+          varying vec2 vUv;
+
+          // Simplex Noise inline
+          float snoise(vec2 v) {
+            return sin(v.x * 12.9898 + v.y * 78.233) * 43758.5453;
+          }
+
+          void main() {
+            vec2 uv = vUv;
+            float f1 = fract(sin(dot(uv + time * 0.1, vec2(12.9898, 78.233))) * 43758.5453);
+            float f2 = fract(sin(dot(uv + time * 0.08, vec2(45.164, 94.673))) * 43758.5453);
+            float f3 = fract(sin(dot(uv + time * 0.12, vec2(65.321, 42.346))) * 43758.5453);
+
+            float streaks = sin((uv.x + f1 * 0.3) * 8.0 + time * 0.2) * 0.5 + 0.5;
+            streaks *= sin((uv.y + f2 * 0.2) * 12.0 + time * 0.15) * 0.5 + 0.5;
+
+            float aurora = pow((f1 + f2 + f3) * 0.33 + 0.5, 2.0);
+
+            vec3 color = colorDark;
+            float tealFlow = smoothstep(0.3, 0.7, aurora + streaks * 0.3);
+            color = mix(color, colorMid, tealFlow);
+
+            float cyanFlow = smoothstep(0.6, 0.9, aurora + f1 * 0.4);
+            color = mix(color, colorBright, cyanFlow);
+
+            float brightFlow = smoothstep(0.8, 1.0, streaks + aurora * 0.5);
+            color = mix(color, colorBright, brightFlow * 0.3);
+
+            float greenFlow = smoothstep(0.7, 0.95, f3 + streaks * 0.2);
+            color = mix(color, colorAccent, greenFlow * 0.3);
+
+            gl_FragColor = vec4(color, 1.0);
+          }
+        `,
+        side: THREE.DoubleSide,
+      });
+
+      const plane = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), material);
+      scene.add(plane);
+
+      // Animation Loop
+      function animate() {
+        requestAnimationFrame(animate);
+        material.uniforms.time.value += 0.01;
+        renderer.render(scene, camera);
+      }
+      animate();
+
+      // Handle resize
+      window.addEventListener('resize', () => {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+      });
+    }
+  </script>
+</body>
+</html>

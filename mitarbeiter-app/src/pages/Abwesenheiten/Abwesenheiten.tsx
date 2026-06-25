@@ -137,7 +137,7 @@ export default function Abwesenheiten() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {MONTHS.map(m => (
             <div key={m} className="h-28 rounded-2xl bg-[#F3F4F6] animate-pulse" />
           ))}
@@ -145,7 +145,7 @@ export default function Abwesenheiten() {
       ) : (
         <>
           {/* Monats-Kacheln */}
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-3 mb-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-5">
             {MONTHS.map(m => {
               const monthDate  = new Date(year, m)
               const monthAbs   = absencesForMonth(m)

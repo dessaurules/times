@@ -8,7 +8,7 @@ import { de } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react'
 import { pb } from '../../lib/pb'
 import { useAuthStore } from '../../stores/auth'
-import { getHolidayDates } from '../../lib/holidays'
+import { getHolidayDates, getHolidayMap } from '../../lib/holidays'
 import type { TimeEntry, Employee } from '@shared/types'
 import { cn } from '@/lib/utils'
 
@@ -107,7 +107,7 @@ export default function Zeiten() {
   }, [employeeId])
 
   const weekDays     = eachDayOfInterval({ start: weekStart, end: endOfWeek(weekStart, { weekStartsOn: 1 }) })
-  const holidays     = getHolidayDates(weekStart.getFullYear(), fedState)
+  const holidays     = getHolidayMap(weekStart.getFullYear(), fedState)
   const weeklyHours  = employee?.weekly_hours ?? 40
   const sollPerDay   = dailySoll(weeklyHours)
 
@@ -125,7 +125,6 @@ export default function Zeiten() {
   }, 0)
 
   // Wochen-Ist inkl. laufender Session
-  const openEntry   = entries.find(e => !e.end_time)
   const weekIstMins = entries.reduce((sum, e) => sum + netMins(e, now), 0)
 
   // Überstunden (Jahr): Ist − Soll aller abgeschlossenen Arbeitstage
@@ -153,8 +152,8 @@ export default function Zeiten() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-y-3 mb-6">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-[#111827]">Meine Zeiten</h1>
           <p className="text-sm text-[#6B7280] mt-0.5">Deine Arbeitszeitnachweise</p>
         </div>
@@ -188,7 +187,7 @@ export default function Zeiten() {
         >
           <ChevronLeft size={18} />
         </button>
-        <div className="text-center">
+        <div className="flex-1 text-center">
           <div className="text-base font-bold text-[#111827]">KW {kw}</div>
           <div className="text-xs text-[#6B7280]">
             {format(weekStart, 'd. MMM', { locale: de })} – {format(endOfWeek(weekStart, { weekStartsOn: 1 }), 'd. MMM yyyy', { locale: de })}

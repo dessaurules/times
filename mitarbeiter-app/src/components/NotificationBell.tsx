@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { Bell } from 'lucide-react'
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { pb } from '../lib/pb'
 import { useAuthStore } from '../stores/auth'
@@ -67,20 +67,26 @@ export default function NotificationBell() {
   }, [user, load])
 
   useEffect(() => {
-    function onMouseDown(e: MouseEvent) {
+    function onPointerDown(e: PointerEvent) {
       const target = e.target as Node
       if (!panelRef.current?.contains(target) && !buttonRef.current?.contains(target)) {
         setOpen(false)
       }
     }
-    if (open) document.addEventListener('mousedown', onMouseDown)
-    return () => document.removeEventListener('mousedown', onMouseDown)
+    if (open) document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
   }, [open])
 
   function handleToggle() {
     if (!open && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect()
-      setPos({ top: rect.bottom + 8, left: rect.right + 8 })
+      setPos({
+        top: rect.bottom + 8,
+        left: Math.min(
+          Math.max(8, rect.right - 320),
+          window.innerWidth - 328
+        ),
+      })
     }
     setOpen(v => !v)
   }
@@ -127,10 +133,17 @@ export default function NotificationBell() {
       {open && createPortal(
         <div
           ref={panelRef}
-          style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 9999 }}
-          className="w-80 bg-white rounded-2xl border border-[#E5E7EB] shadow-xl overflow-hidden"
+          style={{
+            position: 'fixed',
+            top: pos.top,
+            left: pos.left,
+            zIndex: 9999,
+            width: 'min(320px, calc(100vw - 16px))',
+            maxHeight: `calc(100vh - ${pos.top}px - 8px)`,
+          }}
+          className="bg-white rounded-2xl border border-[#E5E7EB] shadow-xl overflow-hidden flex flex-col"
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#E5E7EB]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#E5E7EB] shrink-0">
             <span className="text-sm font-semibold text-[#111827]">Benachrichtigungen</span>
             {unreadCount > 0 && (
               <button onClick={markAllRead} className="text-xs text-indigo-600 hover:underline">
@@ -144,7 +157,7 @@ export default function NotificationBell() {
               Keine Benachrichtigungen
             </div>
           ) : (
-            <ul className="max-h-[320px] overflow-y-auto divide-y divide-[#F3F4F6]">
+            <ul className="overflow-y-auto divide-y divide-[#F3F4F6]">
               {items.map(n => (
                 <li
                   key={n.id}
@@ -163,7 +176,7 @@ export default function NotificationBell() {
                       <div className="text-xs font-medium text-[#111827] truncate">{n.title}</div>
                       <div className="text-xs text-[#6B7280] mt-0.5 line-clamp-2">{n.message}</div>
                       <div className="text-[10px] text-[#9CA3AF] mt-1">
-                        {format(parseISO(n.created), 'dd.MM. HH:mm', { locale: de })}
+                        {n.created ? format(new Date(n.created), 'dd.MM. HH:mm', { locale: de }) : ''}
                         {' · '}
                         {TYPE_LABEL[n.type] ?? n.type}
                       </div>

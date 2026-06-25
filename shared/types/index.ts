@@ -11,14 +11,16 @@ export type ContractType   = 'vz' | 'tz' | 'mj' | 'az'
 export type AbsenceType    = 'U' | 'RU' | 'U3' | 'SU' | 'K' | 'KK' | 'AT' | 'S' | 'ÜA'
 export type AbsenceStatus  = 'pending' | 'approved' | 'rejected'
 export type DocumentType   = 'vertrag' | 'lohnschein' | 'au_schein' | 'sonstiges'
-export type NotifType      = 'absence_request' | 'absence_approved' | 'absence_rejected' | 'general'
+export type NotifType      = 'absence_request' | 'absence_approved' | 'absence_rejected' | 'general' | 'shift_published'
 
 // ── Collections ────────────────────────────────────────
 export interface User extends PBRecord {
-  email: string
-  name: string
-  role: UserRole
-  employee?: string
+  email:      string
+  name:       string
+  first_name: string
+  last_name:  string
+  role:       UserRole
+  employee?:  string
   expand?: { employee?: Employee }
 }
 
@@ -26,6 +28,16 @@ export interface Department extends PBRecord {
   name: string
   color: string
   sort_order: number
+}
+
+export interface ShiftTemplate extends PBRecord {
+  department: string      // relation ID
+  name: string
+  start_time: string      // "HH:mm"
+  end_time: string        // "HH:mm"
+  color: ShiftColor
+  sort_order?: number
+  expand?: { department?: Department }
 }
 
 export interface Employee extends PBRecord {
@@ -45,6 +57,7 @@ export interface Employee extends PBRecord {
   end_date?: string       // ISO date
   vacation_days: number
   active: boolean
+  planner_departments?: string[]  // Array von Department-IDs, z.B. ["dept_id_1","dept_id_2"]
   expand?: { department?: Department }
 }
 
@@ -114,6 +127,7 @@ export interface Availability extends PBRecord {
 // ── Konstanten ─────────────────────────────────────────
 export const VACATION_TYPES: AbsenceType[] = ['U', 'RU', 'U3', 'SU']
 export const AUTO_APPROVED_TYPES: AbsenceType[] = ['K', 'KK', 'AT', 'S', 'ÜA']
+export const SOLL_EXEMPT_ABSENCE_TYPES: AbsenceType[] = ['AT']
 
 export const CONTRACT_LABELS: Record<ContractType, string> = {
   vz: 'Vollzeit', tz: 'Teilzeit', mj: 'Minijob', az: 'Azubi',
@@ -129,4 +143,65 @@ export const ABSENCE_COLORS: Record<AbsenceType, { bg: string; text: string }> =
   AT:   { bg: '#F1EFE8', text: '#444441' },
   S:    { bg: '#E6F1FB', text: '#0C447C' },
   'ÜA': { bg: '#E1F5EE', text: '#085041' },
+}
+
+export const ABSENCE_LABELS: Record<AbsenceType, string> = {
+  U:   'Urlaub',
+  RU:  'Resturlaub',
+  U3:  'Urlaub (Teilzeit)',
+  SU:  'Sonderurlaub',
+  K:   'Krank',
+  KK:  'Krank (Kind)',
+  AT:  'Arzttermin',
+  S:   'Schulung',
+  'ÜA':'Übergang',
+}
+
+// ── Dienstplan ─────────────────────────────────────────
+export type ShiftColor  = 'blue' | 'green' | 'amber' | 'purple' | 'rose'
+export type ShiftStatus = 'draft' | 'published'
+
+export interface ShiftPlan extends PBRecord {
+  week_start:  string        // 'yyyy-MM-dd' — Montag der Woche
+  week_end:    string        // 'yyyy-MM-dd' — Sonntag (oder letzter geplanter Tag)
+  status:      ShiftStatus
+  created_by:  string        // User-ID
+  push_notified?: boolean
+}
+
+export interface ShiftEntry extends PBRecord {
+  plan_id:      string       // Relation zu ShiftPlan
+  employee:     string       // Relation zu Employee
+  department:   string       // Relation zu Department
+  date:         string       // 'yyyy-MM-dd'
+  start_time:   string       // 'HH:mm'
+  end_time:     string       // 'HH:mm'
+  color:        ShiftColor
+  start_time2?: string       // Split-Schicht: zweite Beginn-Zeit
+  end_time2?:   string       // Split-Schicht: zweite End-Zeit
+  color2?:      ShiftColor
+  note?:        string
+  note2?:       string
+  is_free_day?: boolean      // Kennzeichnung als freier Tag
+  status:       ShiftStatus
+  expand?: {
+    employee?:   Employee
+    department?: Department
+  }
+}
+
+export const SHIFT_COLOR_BG: Record<ShiftColor, string> = {
+  blue:   '#DBEAFE',
+  green:  '#D1FAE5',
+  amber:  '#FEF3C7',
+  purple: '#EDE9FE',
+  rose:   '#FFE4E6',
+}
+
+export const SHIFT_COLOR_TEXT: Record<ShiftColor, string> = {
+  blue:   '#1E40AF',
+  green:  '#065F46',
+  amber:  '#92400E',
+  purple: '#5B21B6',
+  rose:   '#9F1239',
 }

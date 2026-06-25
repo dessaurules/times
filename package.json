@@ -1,0 +1,13 @@
+{
+  "name": "schicht-plan",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node serve.mjs",
+    "start": "node serve.mjs"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "compression": "^1.7.4"
+  }
+}
