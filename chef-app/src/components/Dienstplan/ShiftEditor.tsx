@@ -136,7 +136,7 @@ export default function ShiftEditor({
 
       <DialogBody onKeyDown={e => e.key === 'Enter' && handleSave()}>
         {/* Quick-Buttons: Templates + Absences */}
-        {!templatesLoading && pb.authStore.model && (
+        {!templatesLoading && pb.authStore.model && date && employeeId && (
           <QuickSelectSections
             templates={templates}
             employeeId={employeeId}
