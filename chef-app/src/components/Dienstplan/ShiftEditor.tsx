@@ -10,7 +10,7 @@ import ShiftTemplateManager from './ShiftTemplateManager'
 import ShiftEditorSettings from './ShiftEditorSettings'
 import QuickSelectSections from './QuickSelectSections'
 import { useShiftTemplates } from '@/hooks/useShiftTemplates'
-import { Settings } from 'lucide-react'
+import { Settings, X } from 'lucide-react'
 
 const SHIFT_COLORS: ShiftColor[] = ['blue', 'green', 'amber', 'purple', 'rose']
 
@@ -132,7 +132,6 @@ export default function ShiftEditor({
           <Settings size={16} />
         </button>
       </DialogHeader>
-      </DialogHeader>
 
       <DialogBody onKeyDown={e => e.key === 'Enter' && handleSave()}>
         {/* Quick-Buttons: Templates + Absences */}
@@ -178,7 +177,7 @@ export default function ShiftEditor({
               }}
             >
               <p className="text-sm font-semibold" style={{ color: ABSENCE_COLORS[absence.type].text }}>
-                ⚠ Abwesenheit an diesem Tag
+                Abwesenheit an diesem Tag
               </p>
               <p className="text-xs mt-0.5" style={{ color: ABSENCE_COLORS[absence.type].text }}>
                 {ABSENCE_LABELS[absence.type]} · {absence.date_from} – {absence.date_to}
@@ -330,7 +329,7 @@ export default function ShiftEditor({
               className="p-1 rounded hover:bg-gray-100 text-gray-500"
               aria-label="Schließen"
             >
-              ✕
+              <X size={16} />
             </button>
           </div>
           <div className="px-6 py-4">

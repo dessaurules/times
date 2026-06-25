@@ -361,7 +361,7 @@ export default function ShiftEditorSettings({
                 : 'border-transparent text-gray-600 hover:text-gray-900'
             }`}
           >
-            ⚙️ Templates
+            Templates
           </button>
           <button
             onClick={() => setActiveTab('absences')}
@@ -371,7 +371,7 @@ export default function ShiftEditorSettings({
                 : 'border-transparent text-gray-600 hover:text-gray-900'
             }`}
           >
-            📅 Abwesenheiten
+            Abwesenheiten
           </button>
         </div>
 

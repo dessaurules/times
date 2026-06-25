@@ -8,10 +8,14 @@ interface QuickSelectSectionsProps {
 }
 
 const ABSENCE_QUICK_SELECT = [
-  { type: 'K', emoji: '🏥', label: 'Krank' },
-  { type: 'U', emoji: '✈️', label: 'Urlaub' },
-  { type: 'S', emoji: '📚', label: 'Schulung' },
-  { type: 'AT', emoji: '🩺', label: 'Arzttermin' },
+  { type: 'K', label: 'Krank' },
+  { type: 'KK', label: 'Krank (Kind)' },
+  { type: 'U', label: 'Urlaub' },
+  { type: 'RU', label: 'Resturlaub' },
+  { type: 'SU', label: 'Sonderurlaub' },
+  { type: 'AT', label: 'Arzttermin' },
+  { type: 'S', label: 'Schulung' },
+  { type: 'ÜA', label: 'Übergang' },
 ]
 
 export default function QuickSelectSections({
@@ -23,60 +27,57 @@ export default function QuickSelectSections({
     <div className="space-y-4">
       {/* Section 1: Quick Select */}
       <div>
-        <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">
+        <h3 className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wide mb-2">
           Quick Select
         </h3>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1">
           {/* Frei Button */}
-          <Button
+          <button
             type="button"
-            variant="outline"
-            size="sm"
             onClick={() => onSelectTemplate('free', { start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: true })}
-            className="text-sm"
+            className="px-3 py-1.5 text-xs font-bold rounded border-none cursor-pointer transition-opacity hover:opacity-80"
+            style={{ background: '#D1FAE5', color: '#065F46' }}
           >
-            🌴 Frei
-          </Button>
+            F
+          </button>
 
           {/* Template Buttons */}
           {templates.map((template) => (
-            <Button
+            <button
               key={template.id}
               type="button"
-              variant="outline"
-              size="sm"
               onClick={() => onSelectTemplate(template.id, { start_time: template.start_time, end_time: template.end_time, color: template.color })}
-              className="text-sm"
+              className="px-3 py-1.5 text-xs font-bold rounded border-none cursor-pointer transition-opacity hover:opacity-80"
+              style={{ background: '#DBEAFE', color: '#1E40AF' }}
               title={`${template.start_time} - ${template.end_time}`}
             >
               {template.name}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
 
       {/* Section 2: Abwesenheiten */}
       <div>
-        <h3 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">
+        <h3 className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wide mb-2">
           Abwesenheiten
         </h3>
-        <div className="flex flex-wrap gap-2">
-          {ABSENCE_QUICK_SELECT.map(({ type, emoji, label }) => {
+        <div className="flex flex-wrap gap-1">
+          {ABSENCE_QUICK_SELECT.map(({ type, label }) => {
             const colors = ABSENCE_COLORS[type as keyof typeof ABSENCE_COLORS]
             return (
               <button
                 key={type}
                 type="button"
                 onClick={() => onSelectAbsence(type)}
-                className="px-3 py-1.5 rounded text-sm font-medium transition-all hover:shadow-sm border"
+                className="px-3 py-1.5 text-xs font-bold rounded border-none cursor-pointer transition-opacity hover:opacity-80"
                 style={{
                   background: colors.bg,
                   color: colors.text,
-                  borderColor: colors.text + '44',
                 }}
                 title={label}
               >
-                {emoji} {label}
+                {type}
               </button>
             )
           })}
