@@ -126,7 +126,7 @@ export interface Availability extends PBRecord {
 
 // ── Konstanten ─────────────────────────────────────────
 export const VACATION_TYPES: AbsenceType[] = ['U', 'RU', 'U3', 'SU']
-export const AUTO_APPROVED_TYPES: AbsenceType[] = ['K', 'KK', 'AT', 'S', 'ÜA']
+export const AUTO_APPROVED_TYPES: AbsenceType[] = ['K', 'KK', 'U', 'RU', 'AT', 'S', 'ÜA']
 export const SOLL_EXEMPT_ABSENCE_TYPES: AbsenceType[] = ['AT']
 
 export const CONTRACT_LABELS: Record<ContractType, string> = {

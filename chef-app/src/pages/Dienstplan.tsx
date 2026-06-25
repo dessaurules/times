@@ -127,10 +127,27 @@ export default function Dienstplan() {
     if (days.length === 0) return
     const firstDay = days[0].date
     const lastDay  = days[days.length - 1].date
-    pb.collection('absences').getFullList<Absence>({
-      filter: `date_from <= "${lastDay}" && date_to >= "${firstDay}" && status != "rejected"`,
-      requestKey: null,
-    }).then(setAbsences).catch(() => setAbsences([]))
+
+    const loadAbsences = async () => {
+      try {
+        const list = await pb.collection('absences').getFullList<Absence>({
+          filter: `date_from <= "${lastDay}" && date_to >= "${firstDay}" && status != "rejected"`,
+          requestKey: null,
+        })
+        setAbsences(list)
+      } catch {
+        setAbsences([])
+      }
+    }
+
+    loadAbsences()
+
+    // Real-Time Subscription für automatische Updates
+    const unsubscribe = pb.collection('absences').subscribe('*', () => {
+      loadAbsences()
+    }, { expand: 'employee' })
+
+    return () => unsubscribe?.()
   }, [days])
 
   const absenceMap = useMemo(() => {
