@@ -135,19 +135,30 @@ export default function Dienstplan() {
           requestKey: null,
         })
         setAbsences(list)
-      } catch {
+      } catch (error) {
+        console.error('Fehler beim Laden von Abwesenheiten:', error)
         setAbsences([])
       }
     }
 
     loadAbsences()
 
-    // Real-Time Subscription für automatische Updates
-    const unsubscribe = pb.collection('absences').subscribe('*', () => {
-      loadAbsences()
-    }, { expand: 'employee' })
-
-    return () => unsubscribe?.()
+    // Real-Time Subscription für automatische Updates (optional)
+    try {
+      const unsubscribe = pb.collection('absences').subscribe('*', async () => {
+        loadAbsences()
+      })
+      return () => {
+        try {
+          unsubscribe?.()
+        } catch (e) {
+          console.error('Fehler beim Unsubscribe:', e)
+        }
+      }
+    } catch (error) {
+      console.warn('Real-Time Subscription nicht verfügbar:', error)
+      return
+    }
   }, [days])
 
   const absenceMap = useMemo(() => {
