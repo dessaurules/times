@@ -1,6 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import { ABSENCE_COLORS, ABSENCE_LABELS, type ShiftTemplate, type ShiftColor } from '@shared/types'
+import { ABSENCE_COLORS, type ShiftTemplate, type ShiftColor } from '@shared/types'
 
 interface QuickSelectSectionsProps {
   templates: ShiftTemplate[]

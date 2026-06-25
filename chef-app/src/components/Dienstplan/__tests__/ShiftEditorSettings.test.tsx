@@ -235,11 +235,11 @@ describe('ShiftEditorSettings', () => {
       ]
 
       // Mock pb.collection
-      global.pb = {
+      vi.stubGlobal('pb', {
         collection: vi.fn(() => ({
           getFullList: vi.fn().mockResolvedValue(mockAbsences),
         })),
-      } as any
+      })
 
       const user = userEvent.setup()
       render(
@@ -273,11 +273,11 @@ describe('ShiftEditorSettings', () => {
     })
 
     it('shows empty state when no absences', async () => {
-      global.pb = {
+      vi.stubGlobal('pb', {
         collection: vi.fn(() => ({
           getFullList: vi.fn().mockResolvedValue([]),
         })),
-      } as any
+      })
 
       const user = userEvent.setup()
       render(
@@ -317,11 +317,11 @@ describe('ShiftEditorSettings', () => {
         },
       ]
 
-      global.pb = {
+      vi.stubGlobal('pb', {
         collection: vi.fn(() => ({
           getFullList: vi.fn().mockResolvedValue(mockAbsences),
         })),
-      } as any
+      })
 
       const user = userEvent.setup()
       render(

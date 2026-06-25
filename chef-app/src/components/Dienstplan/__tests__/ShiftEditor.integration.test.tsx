@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ShiftEditor from '../ShiftEditor'
 import type { ShiftTemplate } from '@shared/types'
@@ -152,7 +152,7 @@ describe('ShiftEditor Integration', () => {
     )
 
     // Ensure Freier Tag is NOT checked
-    const freierTagCheckbox = screen.getByRole('checkbox', { name: /Freier Tag/i })
+    const freierTagCheckbox = screen.getByRole('checkbox', { name: /Freier Tag/i }) as HTMLInputElement
     if (freierTagCheckbox.checked) {
       await user.click(freierTagCheckbox)
     }

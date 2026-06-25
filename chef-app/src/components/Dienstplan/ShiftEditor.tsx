@@ -13,8 +13,6 @@ import { useShiftTemplates } from '@/hooks/useShiftTemplates'
 
 const SHIFT_COLORS: ShiftColor[] = ['blue', 'green', 'amber', 'purple', 'rose']
 
-const VALID_ABSENCE_TYPES = ['K', 'U', 'S'] as const
-
 export interface ShiftEditorData {
   start_time:   string
   end_time:     string
@@ -62,22 +60,6 @@ export default function ShiftEditor({
   const [showSettings, setShowSettings] = useState(false)
 
   const { templates, loading: templatesLoading, save: saveTemplate, update: updateTemplate, deleteTemplate } = useShiftTemplates(department ?? 'dept_default')
-
-  function handleTemplateSelect(_id: string, data: QuickSelectData) {
-    if (data.is_free_day) {
-      onSave({ start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: true })
-    } else if (data.absence_type && (VALID_ABSENCE_TYPES as readonly string[]).includes(data.absence_type)) {
-      const label = ABSENCE_LABELS[data.absence_type as AbsenceType] ?? data.absence_type
-      onSave({ start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: false, note: label })
-    } else {
-      onSave({ start_time: data.start_time ?? '08:00', end_time: data.end_time ?? '16:00', color: data.color ?? 'blue', is_free_day: false })
-    }
-    onClose()
-  }
-
-  async function handleManageTemplates() {
-    setShowTemplateManager(true)
-  }
 
   async function handleSaveTemplate(data: { name: string; start_time: string; end_time: string; color: ShiftColor; id?: string }) {
     const deptId = department ?? 'dept_default'
@@ -173,7 +155,7 @@ export default function ShiftEditor({
         {!templatesLoading && (
           <QuickSelectSections
             templates={templates}
-            onSelectTemplate={(id, data) => {
+            onSelectTemplate={(_id, data) => {
               if (data.is_free_day) {
                 onSave({ start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: true })
               } else {

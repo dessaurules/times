@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import { pb } from '@/lib/pb'
 import { useShiftTemplates } from '@/hooks/useShiftTemplates'
 
 interface ShiftEditorSettingsProps {
@@ -235,7 +236,7 @@ function AbsencesTab({ employeeId, dateFrom }: { employeeId: string; dateFrom: s
         const isoTo = dateToObj.toISOString().split('T')[0]
 
         const allAbsences = await pb.collection('absences').getFullList<Absence>({
-          filter: `employee = "${employeeId}" && status != "rejected" && (date_from >= "${isoFrom}" || date_to <= "${isoTo}")`,
+          filter: `employee = "${employeeId}" && status != "rejected" && (date_from <= "${isoTo}" && date_to >= "${isoFrom}")`,
           sort: 'date_from',
         })
 
