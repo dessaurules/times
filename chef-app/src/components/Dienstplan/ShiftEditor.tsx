@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Dialog, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog'
+import { Dialog, DialogHeader, DialogBody } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import ShiftTemplateManager from './ShiftTemplateManager'
 import ShiftEditorSettings from './ShiftEditorSettings'
 import QuickSelectSections from './QuickSelectSections'
 import { useShiftTemplates } from '@/hooks/useShiftTemplates'
+import { Settings } from 'lucide-react'
 
 const SHIFT_COLORS: ShiftColor[] = ['blue', 'green', 'amber', 'purple', 'rose']
 
@@ -117,37 +118,20 @@ export default function ShiftEditor({
   return (
     <>
     <Dialog open={open} onClose={onClose}>
-      <DialogHeader>
-        <div className="flex items-start justify-between w-full">
-          <div>
-            <DialogTitle>{isEdit ? 'Schicht bearbeiten' : 'Schicht eintragen'}</DialogTitle>
-            <p className="text-xs text-gray-600 mt-1 font-medium">
-              {employeeName} · {dayLabel}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Gear icon for settings */}
-            <button
-              type="button"
-              onClick={() => setShowSettings(true)}
-              className="p-2 rounded hover:bg-gray-100 text-gray-600 transition-colors flex-shrink-0"
-              title="Einstellungen"
-              aria-label="Einstellungen"
-            >
-              ⚙️
-            </button>
-            {/* Freier Tag Checkbox */}
-            <label className="flex items-center gap-1.5 cursor-pointer select-none flex-shrink-0">
-              <input
-                type="checkbox"
-                checked={isFreeDay}
-                onChange={e => setIsFreeDay(e.target.checked)}
-                className="w-3.5 h-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              <span className="text-xs font-medium text-gray-600">Freier Tag</span>
-            </label>
-          </div>
+      <DialogHeader className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold text-[#111827] leading-tight">{employeeName}</p>
+          <p className="text-xs text-[#6B7280] mt-0.5">{dayLabel}</p>
         </div>
+        <button
+          type="button"
+          onClick={() => setShowSettings(true)}
+          className="p-1.5 rounded-md hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827] transition-colors flex-shrink-0"
+          title="Einstellungen"
+        >
+          <Settings size={16} />
+        </button>
+      </DialogHeader>
       </DialogHeader>
 
       <DialogBody onKeyDown={e => e.key === 'Enter' && handleSave()}>
@@ -187,7 +171,7 @@ export default function ShiftEditor({
           {/* Abwesenheits-Warnung */}
           {!isFreeDay && absence && (
             <div
-              className="rounded-lg p-3 border"
+              className="rounded-lg p-3 border mb-3"
               style={{
                 background: ABSENCE_COLORS[absence.type].bg,
                 borderColor: ABSENCE_COLORS[absence.type].text + '44',
@@ -205,105 +189,61 @@ export default function ShiftEditor({
             </div>
           )}
 
-          {/* Readonly info */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Mitarbeiter</Label>
-              <p className="text-sm font-medium text-gray-700 mt-0.5">{employeeName}</p>
-            </div>
-            <div>
-              <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Tag</Label>
-              <p className="text-sm font-medium text-gray-700 mt-0.5">{dayLabel}</p>
-            </div>
-          </div>
-
           {/* Schichtfelder (ausgeblendet bei Freiem Tag) */}
           {!isFreeDay && (
             <>
-              {/* Schicht 1 */}
-              <div className="grid grid-cols-2 gap-2">
+              {/* Schicht 1: Beginn + Ende */}
+              <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
-                  <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Beginn</Label>
-                  <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="mt-0.5" />
+                  <Label className="text-[10px] text-[#6B7280] uppercase tracking-wide font-bold">Beginn</Label>
+                  <Input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="mt-1" />
                 </div>
                 <div>
-                  <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Ende</Label>
-                  <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="mt-0.5" />
+                  <Label className="text-[10px] text-[#6B7280] uppercase tracking-wide font-bold">Ende</Label>
+                  <Input type="time" value={endTime} onChange={e => setEndTime(e.target.value)} className="mt-1" />
                 </div>
               </div>
 
-              <label className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                <input type="checkbox" checked={autoEnd} onChange={e => setAutoEnd(e.target.checked)} />
-                Endzeit berechnen
-              </label>
-              {autoEnd && (
-                <div className="flex gap-4 mt-2 text-sm">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      checked={jobModel === '40h'}
-                      onChange={() => setJobModel('40h')}
-                    />
-                    40h-Job (8h/Tag)
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      checked={jobModel === '30h'}
-                      onChange={() => setJobModel('30h')}
-                    />
-                    30h-Job (7h/Tag)
-                  </label>
+              {/* Schicht 1: Hinweis + Farbe */}
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <Label className="text-[10px] text-[#6B7280] uppercase tracking-wide font-bold">Hinweis</Label>
+                  <Input
+                    value={note}
+                    onChange={e => setNote(e.target.value)}
+                    placeholder="optional"
+                    className="mt-1"
+                  />
                 </div>
-              )}
-
-              <div>
-                <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Hinweis</Label>
-                <Input
-                  value={note}
-                  onChange={e => setNote(e.target.value)}
-                  placeholder="z.B. Springer, Vertretung…"
-                  className="mt-0.5"
-                />
-              </div>
-
-              <div>
-                <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Farbe</Label>
-                <div className="flex gap-2 mt-1">
-                  {SHIFT_COLORS.map(c => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setColor(c)}
-                      className={cn(
-                        'w-6 h-6 rounded-full border-2 transition-transform',
-                        color === c ? 'border-gray-800 scale-110' : 'border-transparent hover:scale-105',
-                      )}
-                      style={{ background: SHIFT_COLOR_BG[c] }}
-                      title={c}
-                    />
-                  ))}
+                <div>
+                  <Label className="text-[10px] text-[#6B7280] uppercase tracking-wide font-bold">Farbe</Label>
+                  <div className="flex gap-2 mt-1">
+                    {SHIFT_COLORS.map(c => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setColor(c)}
+                        className={cn(
+                          'w-5 h-5 rounded-full border-2 transition-transform flex-shrink-0',
+                          color === c ? 'border-[#111827] scale-110' : 'border-transparent hover:scale-105',
+                        )}
+                        style={{ background: SHIFT_COLOR_BG[c] }}
+                        title={c}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Split-Schicht Toggle */}
-              <div className="border-t border-gray-100 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setShowSplit(v => !v)}
-                  className={cn(
-                    'flex items-center gap-2 text-sm font-medium transition-all',
-                    showSplit
-                      ? 'text-indigo-600 hover:text-indigo-700'
-                      : 'text-gray-600 hover:text-indigo-600'
-                  )}
-                >
-                  <span className={cn('transition-transform text-lg', showSplit ? 'rotate-90' : '')}>
-                    {showSplit ? '➖' : '➕'}
-                  </span>
-                  {showSplit ? 'Zweite Schicht entfernen' : '➕ Zweite Schicht hinzufügen'}
-                </button>
-              </div>
+              {/* Shift 2 Toggle - gestrichelt */}
+              <button
+                type="button"
+                onClick={() => setShowSplit(v => !v)}
+                className="flex items-center gap-2 w-full pt-2.5 mt-3 border-t border-dashed border-[#E5E7EB] text-xs font-medium text-[#4F46E5] hover:text-[#4338CA] bg-none text-left transition-colors"
+              >
+                <span>+</span>
+                {showSplit ? 'Zweite Schicht entfernen' : 'Zweite Schicht'}
+              </button>
             </>
           )}
 
@@ -311,37 +251,37 @@ export default function ShiftEditor({
           {!isFreeDay && showSplit && (
             <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 space-y-3 mt-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-indigo-700">✂️ Zweite Schicht</p>
+                <p className="text-sm font-semibold text-indigo-700">Zweite Schicht</p>
                 <button
                   type="button"
                   onClick={() => setShowSplit(false)}
-                  className="p-1 rounded hover:bg-indigo-200 text-indigo-600 transition-colors text-sm"
-                  title="Löschen"
+                  className="px-2 py-1 rounded text-xs font-medium text-indigo-600 hover:bg-indigo-100 transition-colors"
+                  title="Entfernen"
                 >
                   Entfernen
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Beginn2</Label>
-                  <Input type="time" value={startTime2} onChange={e => setStartTime2(e.target.value)} className="mt-0.5" />
+                  <Label className="text-[10px] text-[#6B7280] uppercase tracking-wide font-bold">Beginn</Label>
+                  <Input type="time" value={startTime2} onChange={e => setStartTime2(e.target.value)} className="mt-1" />
                 </div>
                 <div>
-                  <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Ende2</Label>
-                  <Input type="time" value={endTime2} onChange={e => setEndTime2(e.target.value)} className="mt-0.5" />
+                  <Label className="text-[10px] text-[#6B7280] uppercase tracking-wide font-bold">Ende</Label>
+                  <Input type="time" value={endTime2} onChange={e => setEndTime2(e.target.value)} className="mt-1" />
                 </div>
               </div>
               <div>
-                <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Hinweis2</Label>
+                <Label className="text-[10px] text-[#6B7280] uppercase tracking-wide font-bold">Hinweis</Label>
                 <Input
                   value={note2}
                   onChange={e => setNote2(e.target.value)}
-                  placeholder="Abenddienst…"
-                  className="mt-0.5"
+                  placeholder="optional"
+                  className="mt-1"
                 />
               </div>
               <div>
-                <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Farbe2</Label>
+                <Label className="text-[10px] text-[#6B7280] uppercase tracking-wide font-bold">Farbe</Label>
                 <div className="flex gap-2 mt-1">
                   {SHIFT_COLORS.map(c => (
                     <button
@@ -349,8 +289,8 @@ export default function ShiftEditor({
                       type="button"
                       onClick={() => setColor2(c)}
                       className={cn(
-                        'w-6 h-6 rounded-full border-2 transition-transform',
-                        color2 === c ? 'border-gray-800 scale-110' : 'border-transparent hover:scale-105',
+                        'w-5 h-5 rounded-full border-2 transition-transform flex-shrink-0',
+                        color2 === c ? 'border-[#111827] scale-110' : 'border-transparent hover:scale-105',
                       )}
                       style={{ background: SHIFT_COLOR_BG[c] }}
                       title={c}

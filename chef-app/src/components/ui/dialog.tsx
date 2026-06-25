@@ -34,7 +34,7 @@ function Dialog({ open, onClose, children }: DialogProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-            className="relative z-10 bg-white rounded-lg shadow-lg border border-[#E5E7EB] w-full max-w-sm"
+            className="relative z-10 bg-white rounded-lg shadow-lg border border-[#E5E7EB] w-full max-w-[560px]"
           >
             {children}
           </motion.div>
