@@ -25,12 +25,26 @@ export default function QuickSelectSections({
   const [isCreatingAbsence, setIsCreatingAbsence] = useState(false)
 
   const handleAbsenceClick = async (type: AbsenceType) => {
+    // Debug: Überprüfe ob essenzielle Werte vorhanden sind
+    if (!employeeId || !date) {
+      alert(`Fehler: employeeId oder date ist leer. employeeId="${employeeId}", date="${date}"`)
+      return
+    }
+
+    if (!userId) {
+      alert('Fehler: userId nicht vorhanden')
+      return
+    }
+
     try {
       setIsCreatingAbsence(true)
-      await createAbsence(employeeId, date, date, type, userId)
+      console.log('Erstelle Abwesenheit:', { employeeId, date, type, userId })
+      const result = await createAbsence(employeeId, date, date, type, userId)
+      console.log('Abwesenheit erfolgreich erstellt:', result)
       onSelectAbsence(type, date, date)
     } catch (error) {
       console.error('Fehler beim Erstellen der Abwesenheit:', error)
+      alert(`Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`)
     } finally {
       setIsCreatingAbsence(false)
     }
