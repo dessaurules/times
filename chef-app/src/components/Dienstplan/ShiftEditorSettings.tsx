@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Pencil, Trash2 } from 'lucide-react'
-import type { ShiftColor } from '@shared/types'
+import type { ShiftColor, Absence } from '@shared/types'
+import { ABSENCE_COLORS, ABSENCE_LABELS } from '@shared/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -13,6 +14,7 @@ interface ShiftEditorSettingsProps {
   employeeName: string
   date: string
   department: string
+  employeeId?: string
 }
 
 // ── Konstanten ────────────────────────────────────────────────────────────────
@@ -213,12 +215,110 @@ function TemplatesTab({ department }: { department: string }) {
   )
 }
 
+// ── AbsencesTab ──────────────────────────────────────────────────────────
+
+function AbsencesTab({ employeeId, dateFrom }: { employeeId: string; dateFrom: string }) {
+  const [absences, setAbsences] = useState<Absence[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function loadAbsences() {
+      try {
+        setLoading(true)
+        // Query absences for date range (3 months window)
+        const dateFromObj = new Date(dateFrom)
+        const dateToObj = new Date(dateFromObj)
+        dateToObj.setMonth(dateToObj.getMonth() + 3)
+
+        const isoFrom = dateFromObj.toISOString().split('T')[0]
+        const isoTo = dateToObj.toISOString().split('T')[0]
+
+        const allAbsences = await pb.collection('absences').getFullList<Absence>({
+          filter: `employee = "${employeeId}" && status != "rejected" && (date_from >= "${isoFrom}" || date_to <= "${isoTo}")`,
+          sort: 'date_from',
+        })
+
+        setAbsences(allAbsences)
+        setError(null)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load absences')
+        setAbsences([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadAbsences()
+  }, [employeeId, dateFrom])
+
+  if (loading) {
+    return <div className="text-center text-sm text-gray-600 py-4">Laden...</div>
+  }
+
+  if (error) {
+    return <div className="text-center text-sm text-red-600 py-4">{error}</div>
+  }
+
+  if (absences.length === 0) {
+    return <div className="text-center text-sm text-gray-600 py-4">Keine Abwesenheiten</div>
+  }
+
+  return (
+    <div className="space-y-3">
+      {absences.map((absence) => {
+        const colors = ABSENCE_COLORS[absence.type]
+        const statusLabel = absence.status === 'approved' ? 'Genehmigt' : 'Ausstehend'
+
+        return (
+          <div
+            key={absence.id}
+            className="p-3 rounded-lg border"
+            style={{
+              background: colors.bg,
+              borderColor: colors.text + '44',
+            }}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="font-medium text-sm" style={{ color: colors.text }}>
+                  {ABSENCE_LABELS[absence.type]}
+                </p>
+                <p className="text-xs mt-1" style={{ color: colors.text }}>
+                  {absence.date_from} – {absence.date_to}
+                </p>
+                {absence.note && (
+                  <p className="text-xs mt-1 opacity-75" style={{ color: colors.text }}>
+                    {absence.note}
+                  </p>
+                )}
+              </div>
+              <div className="ml-3">
+                <span
+                  className="inline-block px-2 py-1 text-xs font-medium rounded"
+                  style={{
+                    background: colors.text + '22',
+                    color: colors.text,
+                  }}
+                >
+                  {statusLabel}
+                </span>
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function ShiftEditorSettings({
   open,
   onClose,
   employeeName,
   date,
   department,
+  employeeId,
 }: ShiftEditorSettingsProps) {
   const [activeTab, setActiveTab] = useState<'templates' | 'absences'>('templates')
 
@@ -279,10 +379,8 @@ export default function ShiftEditorSettings({
           {activeTab === 'templates' && (
             <TemplatesTab department={department} />
           )}
-          {activeTab === 'absences' && (
-            <div>
-              <p className="text-gray-600">Absences tab placeholder</p>
-            </div>
+          {activeTab === 'absences' && employeeId && (
+            <AbsencesTab employeeId={employeeId} dateFrom={date} />
           )}
         </div>
       </div>

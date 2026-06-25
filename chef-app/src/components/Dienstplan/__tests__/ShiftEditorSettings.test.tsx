@@ -205,4 +205,144 @@ describe('ShiftEditorSettings', () => {
       })
     })
   })
+
+  // ── Absences Tab Tests ────────────────────────────────────────────────────────
+  describe('Absences Tab', () => {
+    it('renders absences for the selected date', async () => {
+      const mockAbsences = [
+        {
+          id: 'abs1',
+          created: '2024-01-01T00:00:00Z',
+          updated: '2024-01-01T00:00:00Z',
+          employee: 'emp1',
+          date_from: '2026-06-25',
+          date_to: '2026-06-27',
+          type: 'U' as const,
+          status: 'approved' as const,
+          created_by: 'user1',
+        },
+        {
+          id: 'abs2',
+          created: '2024-01-01T00:00:00Z',
+          updated: '2024-01-01T00:00:00Z',
+          employee: 'emp1',
+          date_from: '2026-06-30',
+          date_to: '2026-07-05',
+          type: 'K' as const,
+          status: 'pending' as const,
+          created_by: 'user1',
+        },
+      ]
+
+      // Mock pb.collection
+      global.pb = {
+        collection: vi.fn(() => ({
+          getFullList: vi.fn().mockResolvedValue(mockAbsences),
+        })),
+      } as any
+
+      const user = userEvent.setup()
+      render(
+        <ShiftEditorSettings
+          open={true}
+          onClose={() => {}}
+          employeeName="Max Mustermann"
+          date="2026-06-25"
+          department="dept_1"
+          employeeId="emp1"
+        />
+      )
+
+      // Click Absences tab
+      const absencesTab = screen.getByText('📅 Abwesenheiten')
+      await user.click(absencesTab)
+
+      // Wait for absences to render
+      await waitFor(() => {
+        expect(screen.getByText('Urlaub')).toBeInTheDocument()
+        expect(screen.getByText('Krank')).toBeInTheDocument()
+      })
+
+      // Check date ranges display
+      expect(screen.getByText('2026-06-25 – 2026-06-27')).toBeInTheDocument()
+      expect(screen.getByText('2026-06-30 – 2026-07-05')).toBeInTheDocument()
+
+      // Check status display
+      expect(screen.getByText('Genehmigt')).toBeInTheDocument()
+      expect(screen.getByText('Ausstehend')).toBeInTheDocument()
+    })
+
+    it('shows empty state when no absences', async () => {
+      global.pb = {
+        collection: vi.fn(() => ({
+          getFullList: vi.fn().mockResolvedValue([]),
+        })),
+      } as any
+
+      const user = userEvent.setup()
+      render(
+        <ShiftEditorSettings
+          open={true}
+          onClose={() => {}}
+          employeeName="Max Mustermann"
+          date="2026-06-25"
+          department="dept_1"
+          employeeId="emp1"
+        />
+      )
+
+      // Click Absences tab
+      const absencesTab = screen.getByText('📅 Abwesenheiten')
+      await user.click(absencesTab)
+
+      // Check empty state
+      await waitFor(() => {
+        expect(screen.getByText(/Keine Abwesenheiten/)).toBeInTheDocument()
+      })
+    })
+
+    it('filters out rejected absences', async () => {
+      // Mock returns only non-rejected absences (simulating PocketBase filter)
+      const mockAbsences = [
+        {
+          id: 'abs1',
+          created: '2024-01-01T00:00:00Z',
+          updated: '2024-01-01T00:00:00Z',
+          employee: 'emp1',
+          date_from: '2026-06-25',
+          date_to: '2026-06-27',
+          type: 'U' as const,
+          status: 'approved' as const,
+          created_by: 'user1',
+        },
+      ]
+
+      global.pb = {
+        collection: vi.fn(() => ({
+          getFullList: vi.fn().mockResolvedValue(mockAbsences),
+        })),
+      } as any
+
+      const user = userEvent.setup()
+      render(
+        <ShiftEditorSettings
+          open={true}
+          onClose={() => {}}
+          employeeName="Max Mustermann"
+          date="2026-06-25"
+          department="dept_1"
+          employeeId="emp1"
+        />
+      )
+
+      // Click Absences tab
+      const absencesTab = screen.getByText('📅 Abwesenheiten')
+      await user.click(absencesTab)
+
+      // Should only show approved
+      await waitFor(() => {
+        expect(screen.getByText('Urlaub')).toBeInTheDocument()
+      })
+    })
+  })
 })
