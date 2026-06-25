@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button'
 import { ABSENCE_COLORS, type ShiftTemplate, type ShiftColor } from '@shared/types'
 
 interface QuickSelectSectionsProps {
@@ -27,7 +26,7 @@ export default function QuickSelectSections({
     <div className="space-y-4">
       {/* Section 1: Quick Select */}
       <div>
-        <h3 className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wide mb-2">
+        <h3 className="text-[10px] font-bold text-[#6B7280] uppercase tracking-[0.08em] mb-2">
           Quick Select
         </h3>
         <div className="flex flex-wrap gap-1">
@@ -35,8 +34,8 @@ export default function QuickSelectSections({
           <button
             type="button"
             onClick={() => onSelectTemplate('free', { start_time: '00:00', end_time: '00:00', color: 'blue', is_free_day: true })}
-            className="px-3 py-1.5 text-xs font-bold rounded border-none cursor-pointer transition-opacity hover:opacity-80"
-            style={{ background: '#D1FAE5', color: '#065F46' }}
+            className="font-bold rounded border-none cursor-pointer transition-opacity hover:opacity-80"
+            style={{ padding: '3px 10px', fontSize: '11px', background: '#D1FAE5', color: '#065F46' }}
           >
             F
           </button>
@@ -47,8 +46,8 @@ export default function QuickSelectSections({
               key={template.id}
               type="button"
               onClick={() => onSelectTemplate(template.id, { start_time: template.start_time, end_time: template.end_time, color: template.color })}
-              className="px-3 py-1.5 text-xs font-bold rounded border-none cursor-pointer transition-opacity hover:opacity-80"
-              style={{ background: '#DBEAFE', color: '#1E40AF' }}
+              className="font-bold rounded border-none cursor-pointer transition-opacity hover:opacity-80"
+              style={{ padding: '3px 10px', fontSize: '11px', background: '#DBEAFE', color: '#1E40AF' }}
               title={`${template.start_time} - ${template.end_time}`}
             >
               {template.name}
@@ -59,7 +58,7 @@ export default function QuickSelectSections({
 
       {/* Section 2: Abwesenheiten */}
       <div>
-        <h3 className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wide mb-2">
+        <h3 className="text-[10px] font-bold text-[#6B7280] uppercase tracking-[0.08em] mb-2">
           Abwesenheiten
         </h3>
         <div className="flex flex-wrap gap-1">
@@ -70,8 +69,10 @@ export default function QuickSelectSections({
                 key={type}
                 type="button"
                 onClick={() => onSelectAbsence(type)}
-                className="px-3 py-1.5 text-xs font-bold rounded border-none cursor-pointer transition-opacity hover:opacity-80"
+                className="font-bold rounded border-none cursor-pointer transition-opacity hover:opacity-80"
                 style={{
+                  padding: '3px 10px',
+                  fontSize: '11px',
                   background: colors.bg,
                   color: colors.text,
                 }}
