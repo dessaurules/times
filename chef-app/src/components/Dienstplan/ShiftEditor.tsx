@@ -136,11 +136,11 @@ export default function ShiftEditor({
 
       <DialogBody onKeyDown={e => e.key === 'Enter' && handleSave()}>
         {/* Quick-Buttons: Templates + Absences */}
-        {!templatesLoading && pb.authStore.model && date && employeeId && (
+        {!templatesLoading && pb.authStore.model && (
           <QuickSelectSections
             templates={templates}
-            employeeId={employeeId}
-            date={date}
+            employeeId={employeeId ?? ''}
+            date={date ?? ''}
             userId={pb.authStore.model.id}
             onSelectTemplate={(_id, data) => {
               if (data.is_free_day) {
