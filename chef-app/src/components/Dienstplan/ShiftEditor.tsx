@@ -305,14 +305,21 @@ export default function ShiftEditor({
               </div>
 
               {/* Split-Schicht Toggle */}
-              <div className="border-t border-gray-100 pt-2">
+              <div className="border-t border-gray-100 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowSplit(v => !v)}
-                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-indigo-600 transition-colors"
+                  className={cn(
+                    'flex items-center gap-2 text-sm font-medium transition-all',
+                    showSplit
+                      ? 'text-indigo-600 hover:text-indigo-700'
+                      : 'text-gray-600 hover:text-indigo-600'
+                  )}
                 >
-                  <span className={cn('transition-transform', showSplit ? 'rotate-90' : '')}>&rsaquo;</span>
-                  {showSplit ? 'Zweite Teilschicht entfernen' : 'Zweite Teilschicht hinzufügen'}
+                  <span className={cn('transition-transform text-lg', showSplit ? 'rotate-90' : '')}>
+                    {showSplit ? '➖' : '➕'}
+                  </span>
+                  {showSplit ? 'Zweite Schicht entfernen' : '➕ Zweite Schicht hinzufügen'}
                 </button>
               </div>
             </>
@@ -320,20 +327,30 @@ export default function ShiftEditor({
 
           {/* Schicht 2 */}
           {!isFreeDay && showSplit && (
-            <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 space-y-3">
-              <p className="text-xs font-semibold text-indigo-700">&#x2702; Zweite Teilschicht</p>
+            <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4 space-y-3 mt-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-indigo-700">✂️ Zweite Schicht</p>
+                <button
+                  type="button"
+                  onClick={() => setShowSplit(false)}
+                  className="p-1 rounded hover:bg-indigo-200 text-indigo-600 transition-colors text-sm"
+                  title="Löschen"
+                >
+                  Entfernen
+                </button>
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Beginn</Label>
+                  <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Beginn2</Label>
                   <Input type="time" value={startTime2} onChange={e => setStartTime2(e.target.value)} className="mt-0.5" />
                 </div>
                 <div>
-                  <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Ende</Label>
+                  <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Ende2</Label>
                   <Input type="time" value={endTime2} onChange={e => setEndTime2(e.target.value)} className="mt-0.5" />
                 </div>
               </div>
               <div>
-                <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Hinweis</Label>
+                <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Hinweis2</Label>
                 <Input
                   value={note2}
                   onChange={e => setNote2(e.target.value)}
@@ -342,7 +359,7 @@ export default function ShiftEditor({
                 />
               </div>
               <div>
-                <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Farbe</Label>
+                <Label className="text-[11px] text-gray-500 uppercase tracking-wide">Farbe2</Label>
                 <div className="flex gap-2 mt-1">
                   {SHIFT_COLORS.map(c => (
                     <button

@@ -145,6 +145,102 @@ describe('Quick Select Sections', () => {
   })
 })
 
+describe('Shift 2 Expandable Section', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('shows expand button initially', () => {
+    vi.mocked(useShiftTemplates).mockReturnValue({
+      templates: [],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+      save: vi.fn(),
+      update: vi.fn(),
+      deleteTemplate: vi.fn(),
+    })
+
+    render(
+      <ShiftEditor
+        open={true}
+        onClose={() => {}}
+        onSave={() => {}}
+        employeeName="Max Mustermann"
+        dayLabel="Mi, 25.06.2026"
+        department="dept_1"
+      />
+    )
+
+    expect(screen.getByText(/Zweite Schicht hinzufügen/)).toBeInTheDocument()
+  })
+
+  it('expands shift 2 section when button is clicked', async () => {
+    const user = userEvent.setup()
+
+    vi.mocked(useShiftTemplates).mockReturnValue({
+      templates: [],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+      save: vi.fn(),
+      update: vi.fn(),
+      deleteTemplate: vi.fn(),
+    })
+
+    render(
+      <ShiftEditor
+        open={true}
+        onClose={() => {}}
+        onSave={() => {}}
+        employeeName="Max Mustermann"
+        dayLabel="Mi, 25.06.2026"
+        department="dept_1"
+      />
+    )
+
+    const expandBtn = screen.getByText(/Zweite Schicht hinzufügen/)
+    await user.click(expandBtn)
+
+    // Should show shift 2 fields
+    await waitFor(() => {
+      expect(screen.getByText(/Zweite Schicht entfernen/)).toBeInTheDocument()
+    })
+  })
+
+  it('collapses shift 2 section when button is clicked again', async () => {
+    const user = userEvent.setup()
+
+    vi.mocked(useShiftTemplates).mockReturnValue({
+      templates: [],
+      loading: false,
+      error: null,
+      refetch: vi.fn(),
+      save: vi.fn(),
+      update: vi.fn(),
+      deleteTemplate: vi.fn(),
+    })
+
+    render(
+      <ShiftEditor
+        open={true}
+        onClose={() => {}}
+        onSave={() => {}}
+        employeeName="Max Mustermann"
+        dayLabel="Mi, 25.06.2026"
+        department="dept_1"
+        initial={{ start_time: '08:00', end_time: '16:00', color: 'blue', start_time2: '18:00', end_time2: '23:00', color2: 'purple' }}
+      />
+    )
+
+    const collapseBtn = screen.getByText(/Zweite Schicht entfernen/)
+    await user.click(collapseBtn)
+
+    // Should show expand button again
+    expect(screen.getByText(/Zweite Schicht hinzufügen/)).toBeInTheDocument()
+  })
+})
+
 describe('Settings Modal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
