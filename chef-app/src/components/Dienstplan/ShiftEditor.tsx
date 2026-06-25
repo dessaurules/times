@@ -132,17 +132,36 @@ export default function ShiftEditor({
     <>
     <Dialog open={open} onClose={onClose}>
       <DialogHeader>
-        <DialogTitle>{isEdit ? 'Schicht bearbeiten' : 'Schicht eintragen'}</DialogTitle>
-        {/* Freier Tag Checkbox */}
-        <label className="flex items-center gap-1.5 cursor-pointer select-none ml-auto">
-          <input
-            type="checkbox"
-            checked={isFreeDay}
-            onChange={e => setIsFreeDay(e.target.checked)}
-            className="w-3.5 h-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-          />
-          <span className="text-xs font-medium text-gray-600">Freier Tag</span>
-        </label>
+        <div className="flex items-start justify-between w-full">
+          <div>
+            <DialogTitle>{isEdit ? 'Schicht bearbeiten' : 'Schicht eintragen'}</DialogTitle>
+            <p className="text-xs text-gray-600 mt-1 font-medium">
+              {employeeName} · {dayLabel}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Gear icon for settings */}
+            <button
+              type="button"
+              onClick={() => {/* Task 5: setShowSettings(true) */}}
+              className="p-2 rounded hover:bg-gray-100 text-gray-600 transition-colors flex-shrink-0"
+              title="Einstellungen"
+              aria-label="Einstellungen"
+            >
+              ⚙️
+            </button>
+            {/* Freier Tag Checkbox */}
+            <label className="flex items-center gap-1.5 cursor-pointer select-none flex-shrink-0">
+              <input
+                type="checkbox"
+                checked={isFreeDay}
+                onChange={e => setIsFreeDay(e.target.checked)}
+                className="w-3.5 h-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-xs font-medium text-gray-600">Freier Tag</span>
+            </label>
+          </div>
+        </div>
       </DialogHeader>
 
       <DialogBody onKeyDown={e => e.key === 'Enter' && handleSave()}>
