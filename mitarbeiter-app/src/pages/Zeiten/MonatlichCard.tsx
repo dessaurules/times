@@ -26,10 +26,12 @@ export default function MonatlichCard({ employeeId, fedState, weeklyHours }: Pro
   const [year, setYear] = useState(today.getFullYear())
   const [entries, setEntries] = useState<TimeEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!employeeId) return
     setLoading(true)
+    setError(null)
     const from = format(new Date(year, 0, 1), "yyyy-MM-dd HH:mm:ss")
     const to   = format(endOfDay(new Date(year, 11, 31)), "yyyy-MM-dd HH:mm:ss")
 
@@ -38,7 +40,7 @@ export default function MonatlichCard({ employeeId, fedState, weeklyHours }: Pro
       sort:   'start_time',
       requestKey: null,
     }).then(setEntries)
-      .catch(console.error)
+      .catch(e => setError((e as Error).message || 'Fehler beim Laden der Monatsstunden'))
       .finally(() => setLoading(false))
   }, [employeeId, year])
 
@@ -84,6 +86,12 @@ export default function MonatlichCard({ employeeId, fedState, weeklyHours }: Pro
           <ChevronRight size={18} />
         </button>
       </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
       <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
       <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden min-w-[480px]">
