@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { addDays, format, parseISO, isAfter } from 'date-fns'
 import { ChevronLeft, ChevronRight, Check, AlertCircle } from 'lucide-react'
 import { pb } from '../lib/pb'
@@ -95,29 +95,100 @@ export default function Dienstplan() {
   const [entries, setEntries] = useState<ShiftEntry[]>([])
   const [planLoading, setPlanLoading] = useState(true)
 
+  // Pro Woche höchstens eine gleichzeitig laufende Load-or-Create-Anfrage.
+  // Ohne dieses Cache landen bei React-StrictMode-Doppelmount (Dev) zwei
+  // parallele loadOrCreatePlan()-Aufrufe für dieselbe Woche im .catch-Zweig
+  // (beide sehen "noch nicht angelegt") und erzeugen zwei Datensätze, da
+  // shift_plans keinen Unique-Index auf week_start hat. Das reine
+  // `cancelled`-Flag allein verhindert nur verwaiste setState-Aufrufe,
+  // nicht den doppelten Netzwerk-Request — verifiziert per manuellem
+  // Browser-Test (2 Datensätze für dieselbe Woche trotz `cancelled`-Flag).
+  const planRequestsRef = useRef<Map<string, Promise<ShiftPlan>>>(new Map())
+
   useEffect(() => {
+    let cancelled = false
     setPlanLoading(true)
-    pb.collection('shift_plans')
-      .getFirstListItem<ShiftPlan>(`week_start ~ "${weekStartStr}"`, { requestKey: null })
-      .then(p => { setPlan(p); return p })
-      .catch(async () => {
-        const created = await pb.collection('shift_plans').create<ShiftPlan>({
+
+    async function loadOrCreatePlan(): Promise<ShiftPlan> {
+      try {
+        // Hinweis: bewusst weiterhin der Contains-Operator (`~`), nicht `=`.
+        // PocketBase speichert "date"-Felder als vollen Zeitstempel-String
+        // (z. B. "2026-08-03 00:00:00.000Z"), während weekStartStr nur
+        // "yyyy-MM-dd" ist. `=` vergleicht exakt und würde daher NIE
+        // matchen → jeder Seitenaufruf würde einen neuen (Duplikat-)Plan
+        // anlegen. `~` auf dem vollen 10-stelligen Datumspräfix ist hier
+        // eindeutig und funktioniert korrekt (verifiziert per curl).
+        return await pb.collection('shift_plans')
+          .getFirstListItem<ShiftPlan>(`week_start ~ "${weekStartStr}"`, { requestKey: null })
+      } catch (err) {
+        // Nur "nicht gefunden" (404) rechtfertigt das Anlegen eines neuen
+        // Plans — jeder andere Fehler (Netzwerk, Server, ...) wird
+        // weitergereicht statt stillschweigend im Create-Zweig zu landen.
+        if ((err as { status?: number }).status !== 404) throw err
+
+        // created_by ist ein Pflichtfeld (required relation). Ohne
+        // angemeldeten User würde die Anfrage serverseitig mit 400
+        // ("Cannot be blank.") abgelehnt — das war die beobachtete
+        // Fehlerursache. Statt einen leeren String zu senden, brechen wir
+        // hier kontrolliert ab.
+        const userId = pb.authStore.record?.id
+        if (!userId) {
+          // tsconfig-Ziel ES2020 kennt den Error(message, { cause }) Constructor-Overload nicht
+          // (erst ES2022-lib); `err` (404) ist hier ohnehin nur der Auslöser des Create-Zweigs,
+          // nicht die Ursache des fehlenden Users.
+          // eslint-disable-next-line preserve-caught-error
+          throw new Error('Kein angemeldeter Benutzer gefunden – Dienstplan kann nicht angelegt werden.')
+        }
+
+        return await pb.collection('shift_plans').create<ShiftPlan>({
           week_start:  weekStartStr,
           week_end:    format(addDays(weekStart, days.length - 1), 'yyyy-MM-dd'),
           status:      'draft',
-          created_by:  (pb.authStore.model?.id ?? '') as string,
+          created_by:  userId,
         }, { requestKey: null })
-        setPlan(created)
-        return created
-      })
+      }
+    }
+
+    // Gecachte Promise pro Woche wiederverwenden, statt bei jedem
+    // Effect-Lauf (insb. StrictMode-Doppelmount) einen neuen
+    // loadOrCreatePlan()-Aufruf zu starten — siehe Kommentar bei
+    // planRequestsRef oben.
+    let planPromise = planRequestsRef.current.get(weekStartStr)
+    if (!planPromise) {
+      planPromise = loadOrCreatePlan()
+      planRequestsRef.current.set(weekStartStr, planPromise)
+      // .catch() am Ende verhindert eine "Unhandled Rejection" durch diese
+      // rein Cache-pflegende Kette — der eigentliche Fehler wird bereits
+      // über die .then()/.catch()-Kette unten pro Effect-Invocation behandelt.
+      planPromise
+        .finally(() => {
+          // Nur den eigenen Cache-Eintrag entfernen, falls er nicht bereits
+          // durch einen neueren Aufruf für dieselbe Woche ersetzt wurde.
+          if (planRequestsRef.current.get(weekStartStr) === planPromise) {
+            planRequestsRef.current.delete(weekStartStr)
+          }
+        })
+        .catch(() => {})
+    }
+
+    planPromise
       .then(async p => {
+        if (cancelled) return
+        setPlan(p)
         const ents = await pb.collection('shift_entries').getFullList<ShiftEntry>({
           filter: `plan_id = "${p.id}"`,
           requestKey: null,
         })
-        setEntries(ents)
+        if (!cancelled) setEntries(ents)
       })
-      .finally(() => setPlanLoading(false))
+      .catch(err => {
+        console.error('Fehler beim Laden/Anlegen des Dienstplans:', err)
+      })
+      .finally(() => { if (!cancelled) setPlanLoading(false) })
+
+    // cancelled-Flag verhindert setState nach Unmount/Re-Run, insbesondere
+    // beim React-StrictMode-Doppelmount in Dev (zwei parallele Effect-Läufe).
+    return () => { cancelled = true }
   }, [weekStartStr, weekStart, days.length])
 
   // ── Abwesenheiten laden ───────────────────────────────────────────
