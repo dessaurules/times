@@ -13,7 +13,7 @@ migrate((app) => {
     "deleteRule": "@request.auth.record.role = 'gf'",
     "fields": [
       {
-        "id": "text3208210256",
+        "id": "text_gam_tasks_id",
         "name": "id",
         "type": "text",
         "required": true,
@@ -107,7 +107,8 @@ migrate((app) => {
         "hidden": false,
         "onlyInt": true,
         "min": null,
-        "max": null
+        "max": null,
+        "defaultValue": 480
       },
       {
         "id": "bool4182639507",
@@ -179,7 +180,7 @@ migrate((app) => {
     "deleteRule": "@request.auth.record.role = 'gf'",
     "fields": [
       {
-        "id": "text3208210256",
+        "id": "text_gam_assignments_id",
         "name": "id",
         "type": "text",
         "required": true,
@@ -266,7 +267,7 @@ migrate((app) => {
     "deleteRule": "@request.auth.record.role = 'gf'",
     "fields": [
       {
-        "id": "text3208210256",
+        "id": "text_gam_submissions_id",
         "name": "id",
         "type": "text",
         "required": true,
@@ -396,7 +397,7 @@ migrate((app) => {
     "deleteRule": "@request.auth.record.role = 'gf'",
     "fields": [
       {
-        "id": "text3208210256",
+        "id": "text_gam_rewards_id",
         "name": "id",
         "type": "text",
         "required": true,
@@ -553,7 +554,7 @@ migrate((app) => {
     "deleteRule": "@request.auth.record.role = 'gf'",
     "fields": [
       {
-        "id": "text3208210256",
+        "id": "text_gam_orders_id",
         "name": "id",
         "type": "text",
         "required": true,
@@ -649,7 +650,7 @@ migrate((app) => {
     "deleteRule": "",
     "fields": [
       {
-        "id": "text3208210256",
+        "id": "text_gam_events_id",
         "name": "id",
         "type": "text",
         "required": true,
@@ -740,7 +741,7 @@ migrate((app) => {
     "deleteRule": "",
     "fields": [
       {
-        "id": "text3208210256",
+        "id": "text_gam_settings_id",
         "name": "id",
         "type": "text",
         "required": true,
@@ -761,7 +762,8 @@ migrate((app) => {
         "required": false,
         "presentable": false,
         "unique": false,
-        "hidden": false
+        "hidden": false,
+        "defaultValue": false
       },
       {
         "id": "relation2012404567",
@@ -784,7 +786,7 @@ migrate((app) => {
   // 8. Add points field to users collection
   const users = app.findCollectionByNameOrId("_pb_users_auth_");
   users.fields.addAt(users.fields.length, new Field({
-    "id": "number2123515680",
+    "id": "number_users_points",
     "name": "points",
     "type": "number",
     "required": false,
@@ -793,9 +795,31 @@ migrate((app) => {
     "hidden": false,
     "onlyInt": true,
     "min": null,
-    "max": null
+    "max": null,
+    "defaultValue": 0
   }));
   app.save(users);
+
+  // 9. Add indexes after all collections are created
+  // Note: Indexes with system fields (created/updated) are deferred to Phase 2
+  // because they require separate timing. For now, create indexes on explicit fields.
+
+  // Update gam_assignments with composite index
+  const assignmentsCol = app.findCollectionByNameOrId("pbc_gamification_assignments");
+  assignmentsCol.indexes = ["CREATE INDEX idx_gam_assignments_user_status_expires ON gam_assignments (user_id, status, expires_at)"];
+  app.save(assignmentsCol);
+
+  // Update gam_submissions with index on explicit fields
+  // TODO Phase 2: Add "created" column to this index once system fields are properly initialized
+  const submissionsCol = app.findCollectionByNameOrId("pbc_gamification_submissions");
+  submissionsCol.indexes = ["CREATE INDEX idx_gam_submissions_user_status ON gam_submissions (user_id, status)"];
+  app.save(submissionsCol);
+
+  // Update gam_events with user index
+  // TODO Phase 2: Add "created" column to this index once system fields are properly initialized
+  const eventsCol = app.findCollectionByNameOrId("pbc_gamification_events");
+  eventsCol.indexes = ["CREATE INDEX idx_gam_events_user ON gam_events (user_id)"];
+  app.save(eventsCol);
 }, (app) => {
   // Rollback: Delete all gamification collections
   const collections = [
@@ -817,6 +841,6 @@ migrate((app) => {
 
   // Rollback: Remove points field from users
   const users = app.findCollectionByNameOrId("_pb_users_auth_");
-  users.fields.removeById("number2123515680");
+  users.fields.removeById("number_users_points");
   app.save(users);
 });
