@@ -57,7 +57,7 @@ export default function ZeitenCarousel({ slides, initialIndex = 0 }: Props) {
       <div className="overflow-hidden -mx-4 px-4" ref={emblaRef}>
         <div className="flex gap-3">
           {slides.map(slide => (
-            <div key={slide.key} className="flex-[0_0_88%] min-w-0">
+            <div key={slide.key} className="flex-[0_0_100%] sm:flex-[0_0_90%] lg:flex-[0_0_88%] min-w-0">
               {slide.content}
             </div>
           ))}

@@ -92,10 +92,10 @@ export default function TaeglichCard({ employeeId, fedState, weeklyHours }: Prop
       )}
 
       <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden min-w-[480px]">
-        <div className="grid grid-cols-[80px_1fr_1fr_80px_80px_90px] px-4 py-2.5 border-b border-[#E5E7EB] bg-[#F9FAFB]">
-          {['Tag', 'Kommt', 'Geht', 'Pause', 'Ist', 'Status'].map(h => (
-            <div key={h} className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">{h}</div>
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden min-w-[320px] sm:min-w-[480px]">
+        <div className="grid grid-cols-3 sm:grid-cols-6 px-4 py-2.5 border-b border-[#E5E7EB] bg-[#F9FAFB]">
+          {['Tag', 'Kommt', 'Geht', 'Pause', 'Ist', 'Status'].map((h, i) => (
+            <div key={h} className={`text-xs font-semibold text-[#6B7280] uppercase tracking-wide ${i > 0 && i < 4 ? 'hidden sm:block' : ''}`}>{h}</div>
           ))}
         </div>
 
@@ -117,7 +117,7 @@ export default function TaeglichCard({ employeeId, fedState, weeklyHours }: Prop
                 <div
                   key={ds}
                   className={cn(
-                    'grid grid-cols-[80px_1fr_1fr_80px_80px_90px] px-4 py-3 border-b border-[#F3F4F6] last:border-0',
+                    'grid grid-cols-3 sm:grid-cols-6 px-4 py-3 border-b border-[#F3F4F6] last:border-0',
                     (isWE || isHoliday) && 'bg-[#F9FAFB]',
                     isCurrent && !isWE && 'bg-indigo-50/40'
                   )}
@@ -138,20 +138,20 @@ export default function TaeglichCard({ employeeId, fedState, weeklyHours }: Prop
                   {dayEntries.length === 0 ? (
                     <>
                       <Cell muted>—</Cell>
-                      <Cell muted>—</Cell>
-                      <Cell muted>—</Cell>
+                      <Cell muted className="hidden sm:block">—</Cell>
+                      <Cell muted className="hidden sm:block">—</Cell>
                       <Cell muted>—</Cell>
                     </>
                   ) : (
                     <>
                       <Cell>{fmtHHMM(dayEntries[0].start_time)}</Cell>
-                      <Cell>
+                      <Cell className="hidden sm:block">
                         {runningE
                           ? <span className="text-emerald-600 text-xs font-medium">läuft…</span>
                           : fmtHHMM(dayEntries[dayEntries.length - 1].end_time!)
                         }
                       </Cell>
-                      <Cell>
+                      <Cell className="hidden sm:block">
                         {dayEntries[0].break_minutes
                           ? `${dayEntries[0].break_minutes} min`
                           : '—'
@@ -168,7 +168,7 @@ export default function TaeglichCard({ employeeId, fedState, weeklyHours }: Prop
                     </>
                   )}
 
-                  <div className="flex items-center">
+                  <div className="flex items-center hidden sm:flex">
                     {isWE || isHoliday ? (
                       <span className="text-xs text-[#D1D5DB]">WE</span>
                     ) : runningE ? (
@@ -193,13 +193,13 @@ export default function TaeglichCard({ employeeId, fedState, weeklyHours }: Prop
               )
             })}
 
-            <div className="grid grid-cols-[80px_1fr_1fr_80px_80px_90px] px-4 py-3 bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
-              <div className="text-xs font-semibold text-[#6B7280] col-span-4">Woche gesamt</div>
+            <div className="grid grid-cols-3 sm:grid-cols-6 px-4 py-3 bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
+              <div className="text-xs font-semibold text-[#6B7280] col-span-2 sm:col-span-4">Woche gesamt</div>
               <div className="text-sm font-bold text-[#111827] tabular-nums">
                 {fmtDuration(weekIstMins)}
               </div>
               <div className={cn(
-                'text-sm font-bold tabular-nums',
+                'text-sm font-bold tabular-nums hidden sm:block',
                 weekIstMins - weekSollMins >= 0 ? 'text-emerald-600' : 'text-red-500'
               )}>
                 {fmtDuration(weekIstMins - weekSollMins, true)}
@@ -213,9 +213,9 @@ export default function TaeglichCard({ employeeId, fedState, weeklyHours }: Prop
   )
 }
 
-function Cell({ children, muted }: { children: React.ReactNode; muted?: boolean }) {
+function Cell({ children, muted, className }: { children: React.ReactNode; muted?: boolean; className?: string }) {
   return (
-    <div className={cn('text-sm flex items-center', muted ? 'text-[#D1D5DB]' : 'text-[#374151]')}>
+    <div className={cn('text-sm flex items-center', muted ? 'text-[#D1D5DB]' : 'text-[#374151]', className)}>
       {children}
     </div>
   )

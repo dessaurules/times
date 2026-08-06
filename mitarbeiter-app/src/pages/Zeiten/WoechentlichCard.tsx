@@ -106,10 +106,10 @@ export default function WoechentlichCard({ employeeId, fedState, weeklyHours }: 
       )}
 
       <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-      <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden min-w-[480px]">
-        <div className="grid grid-cols-[1fr_1fr_1fr_1fr] px-4 py-2.5 border-b border-[#E5E7EB] bg-[#F9FAFB]">
-          {['Woche', 'Ist', 'Soll', 'Differenz'].map(h => (
-            <div key={h} className="text-xs font-semibold text-[#6B7280] uppercase tracking-wide">{h}</div>
+      <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden min-w-[320px] sm:min-w-[480px]">
+        <div className="grid grid-cols-2 sm:grid-cols-4 px-4 py-2.5 border-b border-[#E5E7EB] bg-[#F9FAFB]">
+          {['Woche', 'Ist', 'Soll', 'Differenz'].map((h, i) => (
+            <div key={h} className={`text-xs font-semibold text-[#6B7280] uppercase tracking-wide ${i > 1 ? 'hidden sm:block' : ''}`}>{h}</div>
           ))}
         </div>
 
@@ -120,7 +120,7 @@ export default function WoechentlichCard({ employeeId, fedState, weeklyHours }: 
             <div
               key={`${row.kw}-${row.weekStart.getFullYear()}`}
               className={cn(
-                'grid grid-cols-[1fr_1fr_1fr_1fr] px-4 py-3 border-b border-[#F3F4F6] last:border-0',
+                'grid grid-cols-2 sm:grid-cols-4 px-4 py-3 border-b border-[#F3F4F6] last:border-0',
                 row.isCurrent && 'bg-indigo-50/40'
               )}
             >
@@ -133,11 +133,11 @@ export default function WoechentlichCard({ employeeId, fedState, weeklyHours }: 
               <div className="text-sm font-semibold tabular-nums text-[#111827] flex items-center">
                 {fmtDuration(row.ist)}
               </div>
-              <div className="text-sm tabular-nums text-[#6B7280] flex items-center">
+              <div className="text-sm tabular-nums text-[#6B7280] flex items-center hidden sm:flex">
                 {fmtDuration(row.soll)}
               </div>
               <div className={cn(
-                'text-sm font-bold tabular-nums flex items-center',
+                'text-sm font-bold tabular-nums flex items-center hidden sm:flex',
                 row.diff >= 0 ? 'text-emerald-600' : 'text-red-500'
               )}>
                 {fmtDuration(row.diff, true)}
