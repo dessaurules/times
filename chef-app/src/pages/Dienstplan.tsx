@@ -182,6 +182,13 @@ export default function Dienstplan() {
         if (!cancelled) setEntries(ents)
       })
       .catch(err => {
+        // Ohne Reset würden `plan`/`entries` weiter auf die Vorwoche zeigen,
+        // während `days` bereits zur neuen Woche gewechselt ist. Ein Klick
+        // auf eine Zelle würde dann `plan_id: plan.id` der alten Woche
+        // setzen — der neue Eintrag wäre unsichtbar (Filter läuft immer
+        // über plan_id), da Entries stets nach plan_id gefiltert geladen
+        // werden.
+        if (!cancelled) { setPlan(null); setEntries([]) }
         console.error('Fehler beim Laden/Anlegen des Dienstplans:', err)
       })
       .finally(() => { if (!cancelled) setPlanLoading(false) })
@@ -193,6 +200,7 @@ export default function Dienstplan() {
 
   // ── Abwesenheiten laden ───────────────────────────────────────────
   const [absences, setAbsences] = useState<Absence[]>([])
+  const unsubAbsencesRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     if (days.length === 0) return
@@ -214,21 +222,14 @@ export default function Dienstplan() {
 
     loadAbsences()
 
-    // Real-Time Subscription für automatische Updates (optional)
-    try {
-      const unsubscribe = pb.collection('absences').subscribe('*', async () => {
-        loadAbsences()
-      })
-      return () => {
-        try {
-          unsubscribe?.()
-        } catch (e) {
-          console.error('Fehler beim Unsubscribe:', e)
-        }
-      }
-    } catch (error) {
-      console.warn('Real-Time Subscription nicht verfügbar:', error)
-      return
+    pb.collection('absences')
+      .subscribe<Absence>('*', () => { loadAbsences() }, { requestKey: null })
+      .then(fn => { unsubAbsencesRef.current = fn })
+      .catch(err => console.warn('Real-Time Subscription nicht verfügbar:', err))
+
+    return () => {
+      unsubAbsencesRef.current?.()
+      pb.collection('absences').unsubscribe('*')
     }
   }, [days])
 

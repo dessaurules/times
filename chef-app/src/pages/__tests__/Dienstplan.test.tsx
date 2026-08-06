@@ -46,6 +46,15 @@ describe('Dienstplan — Plan-Anlage', () => {
       expect.objectContaining({ created_by: 'user123' }),
       expect.anything(),
     )
+    // Pin den `~`-Contains-Filter fest: PocketBase speichert "date"-Felder
+    // mit Zeitstempel-Anteil, daher würde `=` (Exakt-Vergleich) nie matchen
+    // und bei jedem Seitenaufruf einen Duplikat-Plan anlegen (siehe Kommentar
+    // in Dienstplan.tsx). Diese Assertion verhindert, dass ein künftiges
+    // "Aufräumen" den Filter versehentlich zurück auf `=` ändert.
+    expect(mockGetFirstListItem).toHaveBeenCalledWith(
+      expect.stringContaining('week_start ~ "'),
+      expect.anything(),
+    )
   })
 
   it('wirft einen Nicht-404-Fehler weiter statt einen Plan anzulegen', async () => {
