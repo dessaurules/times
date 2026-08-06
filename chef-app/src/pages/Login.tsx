@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/auth'
 import { Button } from '../components/ui/button'
 import { Input }  from '../components/ui/input'
@@ -9,14 +9,12 @@ export default function Login() {
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState<string | null>(null)
-  const navigate = useNavigate()
   const login = useAuthStore(s => s.login)
   const isLoading = useAuthStore(s => s.isLoading)
   const user = useAuthStore(s => s.user)
 
   if (user && (user.role === 'gf' || user.role === 'sl')) {
-    navigate('/', { replace: true })
-    return null
+    return <Navigate to="/" replace />
   }
 
   async function handleSubmit(e: React.FormEvent) {

@@ -42,4 +42,23 @@ describe('Login', () => {
     fireEvent.click(screen.getByRole('button', { name: /Anmelden/i }))
     await waitFor(() => expect(screen.getByText(/falsch/i)).toBeInTheDocument())
   })
+
+  it('redirected einen eingeloggten GF-User ohne React-Render-Warnung', async () => {
+    vi.doMock('../../stores/auth', () => ({
+      useAuthStore: (selector: (s: { user: { role: string }; isLoading: boolean; login: typeof mockLogin }) => unknown) =>
+        selector({ user: { role: 'gf' }, isLoading: false, login: mockLogin }),
+    }))
+    const { default: LoginWithUser } = await import('../Login')
+
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    render(<MemoryRouter><LoginWithUser /></MemoryRouter>)
+
+    const hadRenderWarning = errorSpy.mock.calls.some(call =>
+      String(call[0]).includes('Cannot update a component')
+    )
+    expect(hadRenderWarning).toBe(false)
+
+    errorSpy.mockRestore()
+    vi.doUnmock('../../stores/auth')
+  })
 })
