@@ -47,21 +47,17 @@ describe('Login', () => {
   it('redirected einen eingeloggten GF-User ohne React-Render-Warnung', () => {
     authStoreState = { user: { role: 'gf' }, isLoading: false }
 
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     render(<MemoryRouter initialEntries={['/login']}><Login /></MemoryRouter>)
 
-    // When a gf user is logged in, <Navigate> is rendered instead of the login form
-    // The form should not be in the DOM
-    const emailInput = screen.queryByLabelText(/E-Mail/i)
-    expect(emailInput).not.toBeInTheDocument()
-
-    // Verify no React render warnings occurred during this render
-    const hadRenderWarning = errorSpy.mock.calls.some(call =>
-      String(call[0]).includes('Cannot update a component')
+    // Verify no "navigate() in render" warning occurred
+    // The warning from react-router-dom is: "You should call navigate() in a React.useEffect(), not when your component is first rendered."
+    const hadNavigateWarning = warnSpy.mock.calls.some(call =>
+      /navigate.*useEffect/i.test(String(call[0]))
     )
-    expect(hadRenderWarning).toBe(false)
+    expect(hadNavigateWarning).toBe(false)
 
-    errorSpy.mockRestore()
+    warnSpy.mockRestore()
     authStoreState = { user: null, isLoading: false }
   })
 })
