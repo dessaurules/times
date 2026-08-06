@@ -7,9 +7,10 @@ vi.mock('../../lib/pb', () => ({
 }))
 
 const mockLogin = vi.fn()
+let authStoreState = { user: null as { role: string } | null, isLoading: false }
 vi.mock('../../stores/auth', () => ({
-  useAuthStore: (selector: (s: { user: null; isLoading: boolean; login: typeof mockLogin }) => unknown) =>
-    selector({ user: null, isLoading: false, login: mockLogin }),
+  useAuthStore: (selector: (s: { user: { role: string } | null; isLoading: boolean; login: typeof mockLogin }) => unknown) =>
+    selector({ user: authStoreState.user, isLoading: authStoreState.isLoading, login: mockLogin }),
 }))
 
 import Login from '../Login'
@@ -43,22 +44,24 @@ describe('Login', () => {
     await waitFor(() => expect(screen.getByText(/falsch/i)).toBeInTheDocument())
   })
 
-  it('redirected einen eingeloggten GF-User ohne React-Render-Warnung', async () => {
-    vi.doMock('../../stores/auth', () => ({
-      useAuthStore: (selector: (s: { user: { role: string }; isLoading: boolean; login: typeof mockLogin }) => unknown) =>
-        selector({ user: { role: 'gf' }, isLoading: false, login: mockLogin }),
-    }))
-    const { default: LoginWithUser } = await import('../Login')
+  it('redirected einen eingeloggten GF-User ohne React-Render-Warnung', () => {
+    authStoreState = { user: { role: 'gf' }, isLoading: false }
 
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    render(<MemoryRouter><LoginWithUser /></MemoryRouter>)
+    render(<MemoryRouter initialEntries={['/login']}><Login /></MemoryRouter>)
 
+    // When a gf user is logged in, <Navigate> is rendered instead of the login form
+    // The form should not be in the DOM
+    const emailInput = screen.queryByLabelText(/E-Mail/i)
+    expect(emailInput).not.toBeInTheDocument()
+
+    // Verify no React render warnings occurred during this render
     const hadRenderWarning = errorSpy.mock.calls.some(call =>
       String(call[0]).includes('Cannot update a component')
     )
     expect(hadRenderWarning).toBe(false)
 
     errorSpy.mockRestore()
-    vi.doUnmock('../../stores/auth')
+    authStoreState = { user: null, isLoading: false }
   })
 })
