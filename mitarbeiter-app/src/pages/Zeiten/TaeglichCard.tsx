@@ -23,6 +23,7 @@ export default function TaeglichCard({ employeeId, fedState, weeklyHours }: Prop
   )
   const [entries, setEntries] = useState<TimeEntry[]>([])
   const [loading, setLoading]  = useState(true)
+  const [error, setError]      = useState<string | null>(null)
   const [now, setNow]          = useState(new Date())
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -34,6 +35,7 @@ export default function TaeglichCard({ employeeId, fedState, weeklyHours }: Prop
   useEffect(() => {
     if (!employeeId) return
     setLoading(true)
+    setError(null)
     const from = format(weekStart, "yyyy-MM-dd HH:mm:ss")
     const to   = format(endOfDay(endOfWeek(weekStart, { weekStartsOn: 1 })), "yyyy-MM-dd HH:mm:ss")
 
@@ -42,7 +44,7 @@ export default function TaeglichCard({ employeeId, fedState, weeklyHours }: Prop
       sort:   'start_time',
       requestKey: null,
     }).then(setEntries)
-      .catch(console.error)
+      .catch(e => setError((e as Error).message || 'Fehler beim Laden der Zeiteinträge'))
       .finally(() => setLoading(false))
   }, [employeeId, weekStart])
 
@@ -82,6 +84,12 @@ export default function TaeglichCard({ employeeId, fedState, weeklyHours }: Prop
           <ChevronRight size={18} />
         </button>
       </div>
+
+      {error && (
+        <div className="mb-4 px-4 py-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl">
+          {error}
+        </div>
+      )}
 
       <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
       <div className="bg-white rounded-2xl border border-[#E5E7EB] shadow-sm overflow-hidden min-w-[480px]">
