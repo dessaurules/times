@@ -20,6 +20,7 @@ export default function Mitarbeiterliste() {
   const [total, setTotal]         = useState(0)
   const [loading, setLoading]     = useState(true)
   const [search, setSearch]       = useState('')
+  const [searchInput, setSearchInput] = useState('')
   const [page, setPage]           = useState(1)
   const [departments, setDepts]   = useState<Department[]>([])
   const [filterDept, setFilterDept]         = useState('')
@@ -34,6 +35,14 @@ export default function Mitarbeiterliste() {
       .then(setDepts)
       .catch(console.error)
   }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput)
+      setPage(1)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchInput])
 
   useEffect(() => {
     let cancelled = false
@@ -80,8 +89,8 @@ export default function Mitarbeiterliste() {
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280] pointer-events-none" />
           <Input
             placeholder="Name oder E-Mail…"
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1) }}
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
             className="pl-9 w-56"
           />
         </div>

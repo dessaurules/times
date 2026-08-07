@@ -58,16 +58,6 @@ function minutesBetween(from: string, to: string | undefined) {
   return differenceInMinutes(end, parseISO(from))
 }
 
-function todayMins(entries: TimeEntry[]) {
-  const today = format(new Date(), 'yyyy-MM-dd')
-  return entries
-    .filter(e => e.start_time.startsWith(today))
-    .reduce((sum, e) => {
-      const gross = minutesBetween(e.start_time, e.end_time)
-      return sum + Math.max(0, gross - (e.break_minutes ?? 0))
-    }, 0)
-}
-
 export default function Dashboard() {
   const user      = useAuthStore(s => s.user)
   const [emp,     setEmp]     = useState<Employee | null>(null)
@@ -188,9 +178,7 @@ export default function Dashboard() {
   }
 
   const liveMins     = openEntry ? minutesBetween(openEntry.start_time, undefined) : 0
-  const todayNetMins = isStamped
-    ? todayMins(entries.filter(e => e.id !== openEntry!.id)) + Math.max(0, liveMins)
-    : todayMins(entries)
+  const todayNetMins = isStamped ? liveMins : 0
 
   const holidays = useMemo(() => getHolidayDates(year, fedState), [year, fedState])
 

@@ -171,8 +171,7 @@ export default function Dashboard() {
       try {
         const from = `${today} 00:00:00`
         const to   = `${today} 23:59:59`
-        const [empList, absentList, pendingList, carryList, timeList, empFullList] = await Promise.all([
-          pb.collection('employees').getList(1, 1, { filter: 'active = true', requestKey: null }),
+        const [absentList, pendingList, carryList, timeList, empFullList] = await Promise.all([
           pb.collection('absences').getFullList<AbsenceExp>({
             filter: `date_from <= "${today}" && date_to >= "${today}" && status = "approved"`,
             expand: 'employee', requestKey: null,
@@ -192,7 +191,7 @@ export default function Dashboard() {
           }),
         ])
         setData({
-          activeTotal:    empList.totalItems,
+          activeTotal:    empFullList.length,
           absentToday:    absentList,
           pending:        pendingList,
           carryOverCount: carryList.totalItems,
