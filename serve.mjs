@@ -4,29 +4,47 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const app = express()
 
-// ── Chef-App (Port 3001) ──────────────────────────────────────
-const chefApp = express()
-chefApp.use(compression())
+app.use(compression())
+
 const chefAppPath = path.join(__dirname, 'chef-app', 'dist')
-chefApp.use(express.static(chefAppPath, { index: 'index.html' }))
-chefApp.get('*', (req, res) => {
+const mitAppPath = path.join(__dirname, 'mitarbeiter-app', 'dist')
+
+// ── Chef-App auf Root ────────────────────────────────────────
+app.use('/', express.static(chefAppPath, {
+  index: false,
+  setHeaders: (res, path) => {
+    if (path.endsWith('.html')) res.set('Cache-Control', 'no-cache')
+  }
+}))
+app.get('/', (req, res) => {
   res.sendFile(path.join(chefAppPath, 'index.html'))
 })
-chefApp.listen(3001, '0.0.0.0', () => {
-  console.log('✅ Chef-App läuft auf http://0.0.0.0:3001')
+app.get(/^(?!\/ma\/)/, (req, res) => {
+  res.sendFile(path.join(chefAppPath, 'index.html'))
 })
 
-// ── Mitarbeiter-App (Port 3002) ───────────────────────────────
-const mitApp = express()
-mitApp.use(compression())
-const mitAppPath = path.join(__dirname, 'mitarbeiter-app', 'dist')
-mitApp.use(express.static(mitAppPath, { index: 'index.html' }))
-mitApp.get('*', (req, res) => {
+// ── Mitarbeiter-App unter /ma ────────────────────────────────
+app.use('/ma/', express.static(mitAppPath, {
+  index: false,
+  setHeaders: (res, path) => {
+    if (path.endsWith('.html')) res.set('Cache-Control', 'no-cache')
+  }
+}))
+app.get('/ma/', (req, res) => {
   res.sendFile(path.join(mitAppPath, 'index.html'))
 })
-mitApp.listen(3002, '0.0.0.0', () => {
-  console.log('✅ Mitarbeiter-App läuft auf http://0.0.0.0:3002')
+app.get('/ma/*', (req, res) => {
+  res.sendFile(path.join(mitAppPath, 'index.html'))
+})
+
+// ── Server starten ───────────────────────────────────────────
+const PORT = 3001
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Unified Server läuft auf http://0.0.0.0:${PORT}`)
+  console.log(`   - Chef-App: http://0.0.0.0:${PORT}/`)
+  console.log(`   - Mitarbeiter-App: http://0.0.0.0:${PORT}/ma/`)
 })
 
 // Fehlerbehandlung
