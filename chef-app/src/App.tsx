@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute      from './components/Layout/ProtectedRoute'
 import GFRoute             from './components/Layout/GFRoute'
@@ -14,8 +15,17 @@ import ShiftTemplatesPage from '@/pages/Admin/ShiftTemplates'
 import GameTasks from './pages/Admin/GameTasks'
 import GameRewards from './pages/Admin/GameRewards'
 import GameApprovals from './pages/Admin/GameApprovals'
+import { useAuthStore } from './stores/auth'
+import { pb } from './lib/pb'
 
 export default function App() {
+  useEffect(() => {
+    useAuthStore.getState().refresh().catch(() => {
+      pb.authStore.clear()
+      useAuthStore.getState().logout()
+    })
+  }, [])
+
   return (
     <BrowserRouter>
       <Routes>
