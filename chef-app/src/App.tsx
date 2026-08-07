@@ -11,6 +11,9 @@ import Zeiterfassung     from './pages/Zeiterfassung'
 import Berichte          from './pages/Berichte'
 import Dienstplan        from './pages/Dienstplan'
 import ShiftTemplatesPage from '@/pages/Admin/ShiftTemplates'
+import GameTasks from './pages/Admin/GameTasks'
+import GameRewards from './pages/Admin/GameRewards'
+import GameApprovals from './pages/Admin/GameApprovals'
 
 export default function App() {
   return (
@@ -29,6 +32,9 @@ export default function App() {
               <Route path="/mitarbeiter"              element={<Mitarbeiterliste />} />
               <Route path="/einstellungen"            element={<Einstellungen />} />
               <Route path="/admin/shift-templates"    element={<ShiftTemplatesPage />} />
+              <Route path="/admin/gamification/tasks"    element={<GameTasks />} />
+              <Route path="/admin/gamification/rewards"  element={<GameRewards />} />
+              <Route path="/admin/gamification/approvals" element={<GameApprovals />} />
             </Route>
           </Route>
         </Route>
