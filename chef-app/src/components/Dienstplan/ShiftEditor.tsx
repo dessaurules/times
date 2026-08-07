@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { SHIFT_COLOR_BG, ABSENCE_LABELS, ABSENCE_COLORS, type ShiftColor, type AbsenceType } from '@shared/types'
+import { SHIFT_COLOR_BG, ABSENCE_LABELS, ABSENCE_COLORS, type ShiftColor } from '@shared/types'
 import type { Absence } from '@shared/types'
 import ShiftTemplateManager from './ShiftTemplateManager'
 import ShiftEditorSettings from './ShiftEditorSettings'
@@ -46,7 +46,7 @@ export default function ShiftEditor({
   open, onClose, onSave, onDelete,
   employeeName, dayLabel, initial, isEdit = false, absence, department, date, employeeId,
 }: Props) {
-  const [isFreeDay,  setIsFreeDay]  = useState(!!(initial?.is_free_day))
+  const [isFreeDay,  _setIsFreeDay]  = useState(!!(initial?.is_free_day))
   const [startTime,  setStartTime]  = useState(initial?.start_time  ?? '08:00')
   const [endTime,    setEndTime]    = useState(initial?.end_time     ?? '16:00')
   const [color,      setColor]      = useState<ShiftColor>(initial?.color ?? 'blue')
@@ -56,8 +56,8 @@ export default function ShiftEditor({
   const [endTime2,   setEndTime2]   = useState(initial?.end_time2   ?? '23:00')
   const [color2,     setColor2]     = useState<ShiftColor>(initial?.color2 ?? 'purple')
   const [note2,      setNote2]      = useState(initial?.note2        ?? '')
-  const [autoEnd,    setAutoEnd]    = useState(false)
-  const [jobModel,   setJobModel]   = useState<'40h' | '30h'>('40h')
+  const [autoEnd,    _setAutoEnd]    = useState(false)
+  const [jobModel,   _setJobModel]   = useState<'40h' | '30h'>('40h')
   const [showTemplateManager, setShowTemplateManager] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
 
