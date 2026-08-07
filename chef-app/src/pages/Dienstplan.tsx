@@ -157,9 +157,8 @@ export default function Dienstplan() {
     if (!planPromise) {
       planPromise = loadOrCreatePlan()
       planRequestsRef.current.set(weekStartStr, planPromise)
-      // .catch() am Ende verhindert eine "Unhandled Rejection" durch diese
-      // rein Cache-pflegende Kette — der eigentliche Fehler wird bereits
-      // über die .then()/.catch()-Kette unten pro Effect-Invocation behandelt.
+      // Cache-Eintrag entfernen nach Abschluss (Success oder Fehler),
+      // damit bei erneutem Aufruf neu versucht wird.
       planPromise
         .finally(() => {
           // Nur den eigenen Cache-Eintrag entfernen, falls er nicht bereits
@@ -168,7 +167,6 @@ export default function Dienstplan() {
             planRequestsRef.current.delete(weekStartStr)
           }
         })
-        .catch(() => {})
     }
 
     planPromise
