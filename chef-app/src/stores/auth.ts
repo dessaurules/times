@@ -7,6 +7,7 @@ interface AuthState {
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => void
+  refresh: () => Promise<void>
   isGF: () => boolean
   isSL: () => boolean
 }
@@ -26,8 +27,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
-    pb.authStore.clear()
+    if (pb.authStore.isValid) pb.authStore.clear()
     set({ user: null })
+  },
+
+  refresh: async () => {
+    if (!pb.authStore.isValid) return
+    try {
+      const fresh = await pb.collection('users').authRefresh()
+      set({ user: fresh.record as unknown as User })
+    } catch {
+      pb.authStore.clear()
+      set({ user: null })
+    }
   },
 
   isGF: () => get().user?.role === 'gf',

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   startOfWeek, endOfWeek, addWeeks, subWeeks,
   eachDayOfInterval, format, parseISO, getISOWeek, isToday,
+  differenceInMinutes,
 } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, Plus, Trash2, Save, X } from 'lucide-react'
@@ -10,7 +11,9 @@ import { useAuthStore } from '../stores/auth'
 import type { Employee, Department, TimeEntry } from '@shared/types'
 import { Button } from '../components/ui/button'
 import { Input }  from '../components/ui/input'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
+import { loadRowOrder, sortEmployees } from '@/lib/dienstplanUtils'
 
 // ── Pausenregeln ──────────────────────────────────────────────────────────────
 
@@ -77,6 +80,14 @@ export default function Zeiterfassung() {
   const [departments, setDepts]       = useState<Department[]>([])
   const [activeCell,  setActiveCell]  = useState<ActiveCell | null>(null)
   const [breakRules,  setBreakRules]  = useState<BreakRule[]>(DEFAULT_BREAK_RULES)
+  const [now,         setNow]         = useState(new Date())
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(id)
+  }, [])
+
+  const rowOrder = useMemo(() => loadRowOrder(format(weekStart, 'yyyy-MM-dd')), [weekStart])
 
   const weekEnd  = endOfWeek(weekStart, { weekStartsOn: 1 })
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
@@ -141,29 +152,29 @@ export default function Zeiterfassung() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#1A1917]">Zeiterfassung</h1>
+          <h1 className="text-2xl font-bold text-[#111827]">Zeiterfassung</h1>
         </div>
         <div className="flex items-center gap-2">
           <select
             value={filterDept}
             onChange={e => setFilterDept(e.target.value)}
-            className="h-9 rounded-md border border-[#EDE7DC] bg-white px-3 text-sm text-[#1A1917] outline-none focus:border-[#BA7517] focus:ring-2 focus:ring-[#BA7517]/20"
+            className="h-9 rounded-md border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/20"
           >
             <option value="">Alle Abteilungen</option>
             {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
           </select>
-          <div className="flex items-center gap-1 bg-white border border-[#EDE7DC] rounded-md px-1">
-            <button onClick={() => setWeekStart(w => subWeeks(w, 1))} className="p-1.5 rounded hover:bg-[#F5F2EE] text-[#706D6A] hover:text-[#1A1917]">
+          <div className="flex items-center gap-1 bg-white border border-[#E5E7EB] rounded-md px-1">
+            <button onClick={() => setWeekStart(w => subWeeks(w, 1))} className="p-1.5 rounded hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827]">
               <ChevronLeft size={16} />
             </button>
             <button
               onClick={() => setWeekStart(startOfWeek(new Date(), { weekStartsOn: 1 }))}
-              className="px-3 py-1 text-xs text-[#706D6A] hover:text-[#1A1917] hover:bg-[#F5F2EE] rounded min-w-[200px] text-center"
+              className="px-3 py-1 text-xs text-[#6B7280] hover:text-[#111827] hover:bg-[#F3F4F6] rounded min-w-[200px] text-center"
               title="Zur aktuellen Woche"
             >
               KW {kw} · {format(weekStart, 'dd.MM.', { locale: de })}–{format(weekEnd, 'dd.MM.yyyy', { locale: de })}
             </button>
-            <button onClick={() => setWeekStart(w => addWeeks(w, 1))} className="p-1.5 rounded hover:bg-[#F5F2EE] text-[#706D6A] hover:text-[#1A1917]">
+            <button onClick={() => setWeekStart(w => addWeeks(w, 1))} className="p-1.5 rounded hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827]">
               <ChevronRight size={16} />
             </button>
           </div>
@@ -171,103 +182,134 @@ export default function Zeiterfassung() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-[#706D6A]">Lade…</p>
+        <p className="text-sm text-[#6B7280]">Lade…</p>
       ) : (
-        <div className="bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="bg-[#F5F2EE]">
-                <th className="text-left text-xs font-semibold text-[#1A1917] px-3 py-2 border-b border-r border-[#EDE7DC] min-w-[160px]">
-                  Mitarbeiter
-                </th>
+        <div className="bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[130px] text-left py-1.5">Mitarbeiter</TableHead>
                 {weekDays.map(day => (
-                  <th key={day.toISOString()} className={cn(
-                    'text-center text-xs font-semibold border-b border-r border-[#EDE7DC] px-2 py-2 min-w-[80px]',
-                    (day.getDay() === 0 || day.getDay() === 6) && 'text-[#706D6A]',
-                    isToday(day) && 'text-[#BA7517]',
+                  <TableHead key={day.toISOString()} className={cn(
+                    'w-[72px] text-center py-1.5',
+                    (day.getDay() === 0 || day.getDay() === 6) && 'text-[#6B7280]',
+                    isToday(day) && 'text-[#4F46E5]',
                   )}>
                     <div>{format(day, 'EEE', { locale: de })}</div>
-                    <div className="font-normal text-[#706D6A]">{format(day, 'dd.MM.', { locale: de })}</div>
-                  </th>
+                    <div className="font-normal text-[11px] text-[#6B7280]">{format(day, 'dd.MM.', { locale: de })}</div>
+                  </TableHead>
                 ))}
-                <th className="text-center text-xs font-semibold text-[#706D6A] border-b border-[#EDE7DC] px-3 py-2 min-w-[72px]">
-                  Σ Woche
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+                <TableHead className="w-[80px] text-right py-1.5 text-[#6B7280] pr-3">Σ Woche</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {employees.length === 0 ? (
-                <tr><td colSpan={9} className="text-center py-10 text-[#706D6A]">Keine Mitarbeiter gefunden.</td></tr>
-              ) : employees.map(emp => {
-                const wTotal = weekTotal(emp.id)
-                return (
-                  <>
-                    <tr key={emp.id} className="group border-b border-[#EDE7DC]">
-                      <td className="px-3 py-2 border-r border-[#EDE7DC]">
-                        <div className="font-medium text-[#1A1917]">{emp.last_name}, {emp.first_name}</div>
-                        {emp.expand?.department && (
-                          <div className="text-xs text-[#706D6A]">{emp.expand.department.name}</div>
-                        )}
-                      </td>
-                      {weekDays.map(day => {
-                        const dk         = format(day, 'yyyy-MM-dd')
-                        const dayEntries = entries.filter(e => e.employee === emp.id && dateKey(e.start_time) === dk)
-                        const dayMins    = dayEntries.reduce((s, e) => s + netMinutes(e), 0)
-                        const isOpen     = dayEntries.some(e => !e.end_time)
-                        const isActive   = activeCell?.empId === emp.id && activeCell?.date === dk
-                        const isWeekend  = day.getDay() === 0 || day.getDay() === 6
+                <TableRow>
+                  <TableCell colSpan={weekDays.length + 2} className="text-center py-10 text-[#6B7280]">
+                    Keine Mitarbeiter gefunden.
+                  </TableCell>
+                </TableRow>
+              ) : (() => {
+                // Mitarbeiter nach Abteilung gruppieren
+                const grouped = new Map<string, { deptName: string; deptId: string; emps: EmployeeRow[] }>()
+                for (const emp of employees) {
+                  const key      = emp.department || '__none__'
+                  const deptName = emp.expand?.department?.name ?? 'Ohne Abteilung'
+                  if (!grouped.has(key)) grouped.set(key, { deptName, deptId: emp.department, emps: [] })
+                  grouped.get(key)!.emps.push(emp)
+                }
+                return [...grouped.values()].flatMap(({ deptName, deptId, emps }) => {
+                  // Reihenfolge wie im Dienstplan (rowOrder aus localStorage)
+                  const sortedEmps = sortEmployees(emps, deptId, rowOrder)
+                  return [
+                  // Abteilungs-Header
+                  <TableRow key={`dept-${deptName}`}>
+                    <TableCell
+                      colSpan={weekDays.length + 2}
+                      className="bg-indigo-50 py-1 px-3 text-[11px] font-bold uppercase tracking-wide text-indigo-700 border-y border-indigo-100"
+                    >
+                      {deptName}
+                    </TableCell>
+                  </TableRow>,
+                  // Mitarbeiter-Zeilen (in Dienstplan-Reihenfolge)
+                  ...sortedEmps.flatMap(emp => {
+                    const wTotal = weekTotal(emp.id)
+                    return [
+                      <TableRow key={emp.id}>
+                        <TableCell className="w-[130px] py-1.5">
+                          <div className="font-medium text-[#111827] text-[13px]">{emp.last_name}, {emp.first_name}</div>
+                        </TableCell>
+                        {weekDays.map(day => {
+                          const dk         = format(day, 'yyyy-MM-dd')
+                          const dayEntries = entries.filter(e => e.employee === emp.id && dateKey(e.start_time) === dk)
+                          const dayMins    = dayEntries.reduce((s, e) => s + netMinutes(e), 0)
+                          const isOpen     = dayEntries.some(e => !e.end_time)
+                          const isActive   = activeCell?.empId === emp.id && activeCell?.date === dk
+                          const isWeekend  = day.getDay() === 0 || day.getDay() === 6
 
-                        return (
-                          <td key={dk} onClick={() => toggleCell(emp.id, dk)} className={cn(
-                            'text-center border-r border-[#EDE7DC] px-2 py-2 cursor-pointer transition-colors',
-                            isWeekend && 'bg-[#F9F8F6]',
-                            !isWeekend && !isActive && 'hover:bg-[#F5F2EE]',
-                            isActive && 'bg-[#FDF8F0]',
-                          )}>
-                            {isOpen ? (
-                              <span className="text-xs font-medium text-[#BA7517]">
-                                {toLocalHHMM(dayEntries.find(e => !e.end_time)!.start_time)}…
-                              </span>
-                            ) : dayEntries.length > 0 ? (
-                              <span className={cn('text-xs font-semibold', dayMins >= (emp.weekly_hours / 5 * 60 - 15) ? 'text-green-700' : 'text-[#1A1917]')}>
-                                {fmtH(dayMins)}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-[#EDE7DC]">—</span>
+                          return (
+                            <TableCell key={dk} onClick={() => toggleCell(emp.id, dk)} className={cn(
+                              'w-[72px] text-center cursor-pointer transition-colors py-1.5',
+                              isWeekend && 'bg-[#F9F8F6]',
+                              !isWeekend && !isActive && 'hover:bg-[#F3F4F6]',
+                              isActive && 'bg-[#EEF2FF]',
+                            )}>
+                              {isOpen ? (() => {
+                                const openEntry = dayEntries.find(e => !e.end_time)!
+                                const mins = Math.max(0,
+                                  differenceInMinutes(now, parseISO(openEntry.start_time))
+                                  - (openEntry.break_minutes ?? 0)
+                                )
+                                const h  = Math.floor(mins / 60)
+                                const mm = String(mins % 60).padStart(2, '0')
+                                return (
+                                  <span className="text-xs font-bold tabular-nums text-green-700">
+                                    {h}<span className="blink">:</span>{mm} h
+                                  </span>
+                                )
+                              })() : dayEntries.length > 0 ? (
+                                <span className="text-xs font-semibold text-[#111827]">
+                                  {fmtH(dayMins)}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-[#E5E7EB]">—</span>
+                              )}
+                            </TableCell>
+                          )
+                        })}
+                        <TableCell className="w-[80px] text-right py-1.5 pr-3">
+                          <span className="text-xs font-semibold tabular-nums text-[#111827] whitespace-nowrap">
+                            {wTotal > 0 ? fmtH(wTotal) : '—'}
+                            {emp.weekly_hours > 0 && (
+                              <span className="text-[#9CA3AF] font-normal"> / {emp.weekly_hours} h</span>
                             )}
-                          </td>
-                        )
-                      })}
-                      <td className="text-center px-3 py-2">
-                        <span className={cn('text-xs font-semibold', wTotal > 0 ? 'text-[#1A1917]' : 'text-[#706D6A]')}>
-                          {wTotal > 0 ? fmtH(wTotal) : '—'}
-                        </span>
-                        {wTotal > 0 && <div className="text-[10px] text-[#706D6A]">Soll: {emp.weekly_hours} h</div>}
-                      </td>
-                    </tr>
-
-                    {activeCell?.empId === emp.id && (
-                      <tr key={`${emp.id}-detail`}>
-                        <td colSpan={9} className="bg-[#FDFCFB] border-b border-[#EDE7DC] px-4 py-3">
+                          </span>
+                        </TableCell>
+                      </TableRow>,
+                      activeCell?.empId === emp.id ? (
+                        <TableRow key={`${emp.id}-detail`}>
+                          <TableCell colSpan={weekDays.length + 2} className="bg-[#F9FAFB] px-4 py-3">
                           <DayDetailPanel
-                            emp={emp}
-                            date={activeCell.date}
-                            entries={entries.filter(e => e.employee === emp.id && dateKey(e.start_time) === activeCell.date)}
-                            breakRules={breakRules}
-                            currentUserId={user?.id ?? ''}
-                            onAdd={addEntry}
-                            onUpdate={updateEntry}
-                            onDelete={removeEntry}
-                            onClose={() => setActiveCell(null)}
-                          />
-                        </td>
-                      </tr>
-                    )}
-                  </>
-                )
-              })}
-            </tbody>
-          </table>
+                              emp={emp}
+                              date={activeCell.date}
+                              entries={entries.filter(e => e.employee === emp.id && dateKey(e.start_time) === activeCell.date)}
+                              breakRules={breakRules}
+                              currentUserId={user?.id ?? ''}
+                              onAdd={addEntry}
+                              onUpdate={updateEntry}
+                              onDelete={removeEntry}
+                              onClose={() => setActiveCell(null)}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ) : null,
+                    ]
+                  })
+                  ]
+                })
+              })()}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>
@@ -294,10 +336,10 @@ function DayDetailPanel({ emp, date, entries, breakRules, currentUserId, onAdd, 
     <div>
       <div className="flex items-center justify-between mb-3">
         <div>
-          <span className="text-sm font-semibold text-[#1A1917]">{emp.last_name}, {emp.first_name}</span>
-          <span className="text-xs text-[#706D6A] ml-2 capitalize">{dateLabel}</span>
+          <span className="text-sm font-semibold text-[#111827]">{emp.last_name}, {emp.first_name}</span>
+          <span className="text-xs text-[#6B7280] ml-2 capitalize">{dateLabel}</span>
         </div>
-        <button onClick={onClose} className="p-1 rounded hover:bg-[#F5F2EE] text-[#706D6A]">
+        <button onClick={onClose} className="p-1 rounded hover:bg-[#F3F4F6] text-[#6B7280]">
           <X size={15} />
         </button>
       </div>
@@ -320,7 +362,7 @@ function DayDetailPanel({ emp, date, entries, breakRules, currentUserId, onAdd, 
         />
       ) : (
         <button onClick={() => setShowNew(true)}
-          className="flex items-center gap-1.5 text-sm text-[#BA7517] hover:text-[#9E6312] font-medium mt-1">
+          className="flex items-center gap-1.5 text-sm text-[#4F46E5] hover:text-[#4338CA] font-medium mt-1">
           <Plus size={15} /> Eintrag hinzufügen
         </button>
       )}
@@ -392,27 +434,27 @@ function EntryRow({ entry, date, breakRules, currentUserId, onUpdate, onDelete }
 
   if (editing) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#BA7517]/30 rounded-md">
+      <div className="flex items-center gap-2 px-3 py-2 bg-white border border-[#4F46E5]/30 rounded-md">
         <TimeInput label="Von" value={start} onChange={v => { setStart(v); setPauseManual(false) }} />
         <TimeInput label="Bis" value={end}   onChange={v => { setEnd(v);   setPauseManual(false) }} />
         <div>
           <div className="flex items-center gap-1 mb-0.5">
-            <span className="text-[10px] text-[#706D6A]">Pause (min)</span>
-            {!pauseManual && <span className="text-[10px] text-[#BA7517]">auto</span>}
+            <span className="text-[10px] text-[#6B7280]">Pause (min)</span>
+            {!pauseManual && <span className="text-[10px] text-[#4F46E5]">auto</span>}
           </div>
           <Input type="number" min={0} max={120} step={5} value={pause}
             onChange={e => { setPause(e.target.value); setPauseManual(true) }}
             className="h-7 w-16 text-xs px-2" />
         </div>
         <div className="flex-1">
-          <div className="text-[10px] text-[#706D6A] mb-0.5">Notiz</div>
+          <div className="text-[10px] text-[#6B7280] mb-0.5">Notiz</div>
           <Input value={note} onChange={e => setNote(e.target.value)} className="h-7 text-xs" placeholder="optional" />
         </div>
         <div className="flex gap-1 mt-4">
-          <button onClick={handleSave} disabled={saving} className="p-1.5 rounded bg-[#BA7517] hover:bg-[#9E6312] text-white">
+          <button onClick={handleSave} disabled={saving} className="p-1.5 rounded bg-[#4F46E5] hover:bg-[#4338CA] text-white">
             <Save size={13} />
           </button>
-          <button onClick={() => setEditing(false)} className="p-1.5 rounded hover:bg-[#F5F2EE] text-[#706D6A]">
+          <button onClick={() => setEditing(false)} className="p-1.5 rounded hover:bg-[#F3F4F6] text-[#6B7280]">
             <X size={13} />
           </button>
         </div>
@@ -421,23 +463,23 @@ function EntryRow({ entry, date, breakRules, currentUserId, onUpdate, onDelete }
   }
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2 bg-white border border-[#EDE7DC] rounded-md group">
-      <span className="text-sm text-[#1A1917] font-medium tabular-nums w-24">
-        {toLocalHHMM(entry.start_time)} – {entry.end_time ? toLocalHHMM(entry.end_time) : <span className="text-[#BA7517]">läuft</span>}
+    <div className="flex items-center gap-3 px-3 py-2 bg-white border border-[#E5E7EB] rounded-md group">
+      <span className="text-sm text-[#111827] font-medium tabular-nums w-24">
+        {toLocalHHMM(entry.start_time)} – {entry.end_time ? toLocalHHMM(entry.end_time) : <span className="text-[#4F46E5]">läuft</span>}
       </span>
-      <span className="text-xs text-[#706D6A] w-20">
+      <span className="text-xs text-[#6B7280] w-20">
         {entry.break_minutes > 0 ? `${entry.break_minutes} min Pause` : 'keine Pause'}
       </span>
-      <span className="text-sm font-semibold text-[#1A1917] w-12 tabular-nums">
+      <span className="text-sm font-semibold text-[#111827] w-12 tabular-nums">
         {netto > 0 ? fmtH(netto) : '—'}
       </span>
-      {entry.note && <span className="text-xs text-[#706D6A] flex-1 truncate">{entry.note}</span>}
+      {entry.note && <span className="text-xs text-[#6B7280] flex-1 truncate">{entry.note}</span>}
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-auto">
         <button onClick={() => { setEditing(true); setPauseManual(false) }}
-          className="p-1 rounded hover:bg-[#F5F2EE] text-[#706D6A] text-xs">
+          className="p-1 rounded hover:bg-[#F3F4F6] text-[#6B7280] text-xs">
           Bearbeiten
         </button>
-        <button onClick={() => setConfirmDel(true)} className="p-1 rounded hover:bg-red-50 text-[#706D6A] hover:text-red-600">
+        <button onClick={() => setConfirmDel(true)} className="p-1 rounded hover:bg-red-50 text-[#6B7280] hover:text-red-600">
           <Trash2 size={13} />
         </button>
       </div>
@@ -497,23 +539,23 @@ function NewEntryForm({ empId, date, breakRules, currentUserId, onSave, onCancel
   }
 
   return (
-    <div className="border border-dashed border-[#BA7517]/40 rounded-md p-3 bg-[#FDF8F0]">
-      <div className="text-xs font-medium text-[#BA7517] mb-2">Neuer Eintrag</div>
+    <div className="border border-dashed border-[#4F46E5]/40 rounded-md p-3 bg-[#EEF2FF]">
+      <div className="text-xs font-medium text-[#4F46E5] mb-2">Neuer Eintrag</div>
       {error && <div className="mb-2 text-xs text-red-600">{error}</div>}
       <div className="flex items-end gap-2 flex-wrap">
         <TimeInput label="Von *" value={start} onChange={v => { setStart(v); setPauseManual(false) }} />
         <TimeInput label="Bis"   value={end}   onChange={v => { setEnd(v);   setPauseManual(false) }} />
         <div>
           <div className="flex items-center gap-1 mb-0.5">
-            <span className="text-[10px] text-[#706D6A]">Pause (min)</span>
-            {!pauseManual && end && <span className="text-[10px] text-[#BA7517]">auto</span>}
+            <span className="text-[10px] text-[#6B7280]">Pause (min)</span>
+            {!pauseManual && end && <span className="text-[10px] text-[#4F46E5]">auto</span>}
           </div>
           <Input type="number" min={0} max={120} step={5} value={pause}
             onChange={e => { setPause(e.target.value); setPauseManual(true) }}
             className="h-7 w-16 text-xs px-2" />
         </div>
         <div className="flex-1 min-w-[120px]">
-          <div className="text-[10px] text-[#706D6A] mb-0.5">Notiz</div>
+          <div className="text-[10px] text-[#6B7280] mb-0.5">Notiz</div>
           <Input value={note} onChange={e => setNote(e.target.value)} className="h-7 text-xs" placeholder="optional" />
         </div>
         <div className="flex gap-1">
@@ -532,7 +574,7 @@ function NewEntryForm({ empId, date, breakRules, currentUserId, onSave, onCancel
 function TimeInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <div>
-      <div className="text-[10px] text-[#706D6A] mb-0.5">{label}</div>
+      <div className="text-[10px] text-[#6B7280] mb-0.5">{label}</div>
       <Input type="time" value={value} onChange={e => onChange(e.target.value)} className="h-7 w-24 text-xs px-2" />
     </div>
   )

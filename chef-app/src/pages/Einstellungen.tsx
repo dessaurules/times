@@ -31,18 +31,19 @@ const BUNDESLAENDER = [
 ]
 
 const DEPT_COLORS = [
-  '#BA7517', '#3B82F6', '#22C55E', '#EF4444',
+  '#4F46E5', '#3B82F6', '#22C55E', '#EF4444',
   '#8B5CF6', '#EC4899', '#14B8A6', '#F97316',
-  '#6B7280', '#1A1917',
+  '#6B7280', '#111827',
 ]
 
-type Section = 'allgemein' | 'abteilungen' | 'zeiterfassung' | 'nutzer'
+type Section = 'allgemein' | 'abteilungen' | 'zeiterfassung' | 'nutzer' | 'dienstplan'
 
 const NAV: { id: Section; label: string }[] = [
   { id: 'allgemein',     label: 'Allgemein' },
   { id: 'abteilungen',   label: 'Abteilungen' },
   { id: 'zeiterfassung', label: 'Zeiterfassung' },
   { id: 'nutzer',        label: 'Nutzer & Rollen' },
+  { id: 'dienstplan',    label: 'Dienstplan' },
 ]
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -57,9 +58,9 @@ export default function Einstellungen() {
   const [section, setSection] = useState<Section>('allgemein')
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-[#1A1917] mb-1">Einstellungen</h1>
-      <p className="text-sm text-[#706D6A] mb-6">Betriebseinstellungen verwalten</p>
+    <div className="max-w-3xl">
+      <h1 className="text-2xl font-bold text-[#111827] mb-1">Einstellungen</h1>
+      <p className="text-sm text-[#6B7280] mb-6">Betriebseinstellungen verwalten</p>
 
       <div className="flex gap-6">
         {/* Linke Navigation */}
@@ -72,8 +73,8 @@ export default function Einstellungen() {
                   className={cn(
                     'w-full text-left px-3 py-2 text-sm rounded-md border-l-2 transition-colors',
                     section === n.id
-                      ? 'border-[#BA7517] text-[#BA7517] bg-[#FDF8F0] font-medium'
-                      : 'border-transparent text-[#706D6A] hover:text-[#1A1917] hover:bg-[#F5F2EE]',
+                      ? 'border-[#4F46E5] text-[#4F46E5] bg-[#EEF2FF] font-medium'
+                      : 'border-transparent text-[#6B7280] hover:text-[#111827] hover:bg-[#F3F4F6]',
                   )}
                 >
                   {n.label}
@@ -89,6 +90,7 @@ export default function Einstellungen() {
           {section === 'abteilungen'   && <AbteilungenSection />}
           {section === 'zeiterfassung' && <ZeiterfassungSection />}
           {section === 'nutzer'        && <NutzerSection />}
+          {section === 'dienstplan'    && <DienstplanSection />}
         </div>
       </div>
     </div>
@@ -147,16 +149,16 @@ function AllgemeinSection() {
     }
   }
 
-  if (loading) return <p className="text-sm text-[#706D6A]">Lade…</p>
+  if (loading) return <p className="text-sm text-[#6B7280]">Lade…</p>
 
   return (
     <div className="max-w-md">
       {error && (
         <div className="mb-4 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md">{error}</div>
       )}
-      <form onSubmit={handleSave} className="bg-white border border-[#EDE7DC] rounded-lg p-5 space-y-4">
+      <form onSubmit={handleSave} className="bg-white border border-[#E5E7EB] rounded-lg p-5 space-y-4">
         <div>
-          <Label htmlFor="company_name" className="text-xs text-[#706D6A] mb-1 block">Betriebsname</Label>
+          <Label htmlFor="company_name" className="text-xs text-[#6B7280] mb-1 block">Betriebsname</Label>
           <Input
             id="company_name"
             value={values.company_name ?? ''}
@@ -165,14 +167,14 @@ function AllgemeinSection() {
         </div>
 
         <div>
-          <Label htmlFor="federal_state" className="text-xs text-[#706D6A] mb-1 block">
+          <Label htmlFor="federal_state" className="text-xs text-[#6B7280] mb-1 block">
             Bundesland (für Feiertage)
           </Label>
           <select
             id="federal_state"
             value={values.federal_state ?? 'ST'}
             onChange={e => set('federal_state', e.target.value)}
-            className="h-9 w-full rounded-md border border-[#EDE7DC] bg-white px-3 py-2 text-sm text-[#1A1917] outline-none focus:border-[#BA7517] focus:ring-2 focus:ring-[#BA7517]/20"
+            className="h-9 w-full rounded-md border border-[#E5E7EB] bg-white px-3 py-2 text-sm text-[#111827] outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/20"
           >
             {BUNDESLAENDER.map(bl => (
               <option key={bl.code} value={bl.code}>{bl.name}</option>
@@ -181,7 +183,7 @@ function AllgemeinSection() {
         </div>
 
         <div>
-          <Label htmlFor="carry_over_deadline" className="text-xs text-[#706D6A] mb-1 block">
+          <Label htmlFor="carry_over_deadline" className="text-xs text-[#6B7280] mb-1 block">
             Urlaubsübertrag verfällt am (MM-TT)
           </Label>
           <Input
@@ -192,7 +194,7 @@ function AllgemeinSection() {
           />
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#EDE7DC]">
+        <div className="flex items-center justify-end gap-3 pt-2 border-t border-[#E5E7EB]">
           {saved && <span className="text-sm text-green-600">Gespeichert ✓</span>}
           <Button type="submit" disabled={saving}>
             <Save size={15} />
@@ -306,15 +308,15 @@ function AbteilungenSection() {
     }
   }
 
-  if (loading) return <p className="text-sm text-[#706D6A]">Lade…</p>
+  if (loading) return <p className="text-sm text-[#6B7280]">Lade…</p>
 
   return (
     <div className="max-w-md">
-      <div className="bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
+      <div className="bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
         {/* Header */}
-        <div className="px-4 py-3 border-b border-[#EDE7DC] flex items-center justify-between">
-          <span className="text-sm font-semibold text-[#1A1917]">Abteilungen</span>
-          <span className="text-xs text-[#706D6A]">{depts.length} {depts.length === 1 ? 'Eintrag' : 'Einträge'}</span>
+        <div className="px-4 py-3 border-b border-[#E5E7EB] flex items-center justify-between">
+          <span className="text-sm font-semibold text-[#111827]">Abteilungen</span>
+          <span className="text-xs text-[#6B7280]">{depts.length} {depts.length === 1 ? 'Eintrag' : 'Einträge'}</span>
         </div>
 
         {error && (
@@ -323,9 +325,9 @@ function AbteilungenSection() {
 
         {/* Liste */}
         {depts.length === 0 && !showNew ? (
-          <p className="px-4 py-6 text-sm text-[#706D6A]">Noch keine Abteilungen angelegt.</p>
+          <p className="px-4 py-6 text-sm text-[#6B7280]">Noch keine Abteilungen angelegt.</p>
         ) : (
-          <ul className="divide-y divide-[#EDE7DC]">
+          <ul className="divide-y divide-[#E5E7EB]">
             {depts.map((dept, i) => (
               <li key={dept.id}>
                 {editId === dept.id ? (
@@ -364,12 +366,12 @@ function AbteilungenSection() {
                       className="w-3 h-3 rounded-full shrink-0"
                       style={{ backgroundColor: dept.color }}
                     />
-                    <span className="flex-1 text-sm text-[#1A1917] truncate">{dept.name}</span>
+                    <span className="flex-1 text-sm text-[#111827] truncate">{dept.name}</span>
                     <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => moveUp(i)}
                         disabled={i === 0}
-                        className="p-1 rounded hover:bg-[#F5F2EE] text-[#706D6A] disabled:opacity-30"
+                        className="p-1 rounded hover:bg-[#F3F4F6] text-[#6B7280] disabled:opacity-30"
                         title="Nach oben"
                       >
                         <ChevronUp size={14} />
@@ -377,21 +379,21 @@ function AbteilungenSection() {
                       <button
                         onClick={() => moveDown(i)}
                         disabled={i === depts.length - 1}
-                        className="p-1 rounded hover:bg-[#F5F2EE] text-[#706D6A] disabled:opacity-30"
+                        className="p-1 rounded hover:bg-[#F3F4F6] text-[#6B7280] disabled:opacity-30"
                         title="Nach unten"
                       >
                         <ChevronDown size={14} />
                       </button>
                       <button
                         onClick={() => startEdit(dept)}
-                        className="p-1 rounded hover:bg-[#F5F2EE] text-[#706D6A]"
+                        className="p-1 rounded hover:bg-[#F3F4F6] text-[#6B7280]"
                         title="Bearbeiten"
                       >
                         <Pencil size={14} />
                       </button>
                       <button
                         onClick={() => { setConfirmDel(dept.id); setEditId(null); setShowNew(false) }}
-                        className="p-1 rounded hover:bg-red-50 text-[#706D6A] hover:text-red-600"
+                        className="p-1 rounded hover:bg-red-50 text-[#6B7280] hover:text-red-600"
                         title="Löschen"
                       >
                         <Trash2 size={14} />
@@ -404,7 +406,7 @@ function AbteilungenSection() {
 
             {/* Neue Abteilung — Inline-Formular */}
             {showNew && (
-              <li className="px-4 py-3 space-y-2 bg-[#FDFCFB]">
+              <li className="px-4 py-3 space-y-2 bg-[#F9FAFB]">
                 <Input
                   placeholder="Name der Abteilung"
                   value={newState.name}
@@ -431,10 +433,10 @@ function AbteilungenSection() {
 
         {/* Footer — Neue Abteilung */}
         {!showNew && (
-          <div className="px-4 py-3 border-t border-[#EDE7DC]">
+          <div className="px-4 py-3 border-t border-[#E5E7EB]">
             <button
               onClick={() => { setShowNew(true); setEditId(null); setConfirmDel(null) }}
-              className="flex items-center gap-1.5 text-sm text-[#BA7517] hover:text-[#9E6312] font-medium"
+              className="flex items-center gap-1.5 text-sm text-[#4F46E5] hover:text-[#4338CA] font-medium"
             >
               <Plus size={15} /> Neue Abteilung
             </button>
@@ -508,7 +510,7 @@ function ZeiterfassungSection() {
     }
   }
 
-  if (loading) return <p className="text-sm text-[#706D6A]">Lade…</p>
+  if (loading) return <p className="text-sm text-[#6B7280]">Lade…</p>
 
   const sorted = [...rules].sort((a, b) => a.minHours - b.minHours)
 
@@ -517,40 +519,40 @@ function ZeiterfassungSection() {
       {error && (
         <div className="mb-4 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md">{error}</div>
       )}
-      <div className="bg-white border border-[#EDE7DC] rounded-lg overflow-hidden">
-        <div className="px-4 py-3 border-b border-[#EDE7DC] flex items-center justify-between">
+      <div className="bg-white border border-[#E5E7EB] rounded-lg overflow-hidden">
+        <div className="px-4 py-3 border-b border-[#E5E7EB] flex items-center justify-between">
           <div>
-            <span className="text-sm font-semibold text-[#1A1917]">Automatische Pausenregeln</span>
-            <p className="text-xs text-[#706D6A] mt-0.5">Gemäß ArbZG §4. Werden beim Erfassen automatisch angewendet.</p>
+            <span className="text-sm font-semibold text-[#111827]">Automatische Pausenregeln</span>
+            <p className="text-xs text-[#6B7280] mt-0.5">Gemäß ArbZG §4. Werden beim Erfassen automatisch angewendet.</p>
           </div>
           <button onClick={reset} title="Auf ArbZG-Standard zurücksetzen"
-            className="p-1.5 rounded hover:bg-[#F5F2EE] text-[#706D6A] hover:text-[#1A1917]">
+            className="p-1.5 rounded hover:bg-[#F3F4F6] text-[#6B7280] hover:text-[#111827]">
             <RotateCcw size={14} />
           </button>
         </div>
 
-        <div className="divide-y divide-[#EDE7DC]">
+        <div className="divide-y divide-[#E5E7EB]">
           {sorted.map((rule, i) => {
             const origIdx = rules.indexOf(rule)
             return (
               <div key={i} className="px-4 py-3 flex items-center gap-2">
-                <span className="text-sm text-[#706D6A] shrink-0">Ab</span>
+                <span className="text-sm text-[#6B7280] shrink-0">Ab</span>
                 <Input
                   type="number" min={1} max={24} step={0.5}
                   value={rule.minHours}
                   onChange={e => updateRule(origIdx, 'minHours', parseFloat(e.target.value))}
                   className="h-8 w-16 text-sm text-center px-1"
                 />
-                <span className="text-sm text-[#706D6A] shrink-0">Stunden →</span>
+                <span className="text-sm text-[#6B7280] shrink-0">Stunden →</span>
                 <Input
                   type="number" min={0} max={120} step={5}
                   value={rule.breakMins}
                   onChange={e => updateRule(origIdx, 'breakMins', parseInt(e.target.value))}
                   className="h-8 w-16 text-sm text-center px-1"
                 />
-                <span className="text-sm text-[#706D6A] shrink-0">Min. Pause</span>
+                <span className="text-sm text-[#6B7280] shrink-0">Min. Pause</span>
                 <button onClick={() => removeRule(origIdx)}
-                  className="ml-auto p-1 rounded hover:bg-red-50 text-[#706D6A] hover:text-red-600">
+                  className="ml-auto p-1 rounded hover:bg-red-50 text-[#6B7280] hover:text-red-600">
                   <Trash2 size={14} />
                 </button>
               </div>
@@ -558,9 +560,9 @@ function ZeiterfassungSection() {
           })}
         </div>
 
-        <div className="px-4 py-3 border-t border-[#EDE7DC] flex items-center justify-between">
+        <div className="px-4 py-3 border-t border-[#E5E7EB] flex items-center justify-between">
           <button onClick={addRule}
-            className="flex items-center gap-1.5 text-sm text-[#BA7517] hover:text-[#9E6312] font-medium">
+            className="flex items-center gap-1.5 text-sm text-[#4F46E5] hover:text-[#4338CA] font-medium">
             <Plus size={15} /> Regel hinzufügen
           </button>
           <div className="flex items-center gap-3">
@@ -587,7 +589,7 @@ function NutzerSection() {
   const [error,   setError]   = useState<string | null>(null)
 
   useEffect(() => {
-    pb.collection('users').getFullList<UserRow>({ expand: 'employee', sort: 'name', requestKey: null })
+    pb.collection('users').getFullList<UserRow>({ expand: 'employee', sort: 'last_name,first_name', requestKey: null })
       .then(setUsers)
       .catch(e => setError((e as Error).message))
       .finally(() => setLoading(false))
@@ -607,26 +609,26 @@ function NutzerSection() {
   }
 
   return (
-    <div className="bg-white border border-[#EDE7DC] rounded-lg p-5">
-      <h2 className="text-sm font-semibold text-[#1A1917] mb-1">Nutzer & Rollen</h2>
-      <p className="text-xs text-[#706D6A] mb-4">Zugriffsrechte für Chef-App-Nutzer verwalten.</p>
+    <div className="bg-white border border-[#E5E7EB] rounded-lg p-5">
+      <h2 className="text-sm font-semibold text-[#111827] mb-1">Nutzer & Rollen</h2>
+      <p className="text-xs text-[#6B7280] mb-4">Zugriffsrechte für Chef-App-Nutzer verwalten.</p>
 
       {error && (
         <div className="mb-3 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md">{error}</div>
       )}
 
       {loading ? (
-        <p className="text-sm text-[#706D6A]">Lade…</p>
+        <p className="text-sm text-[#6B7280]">Lade…</p>
       ) : users.length === 0 ? (
-        <p className="text-sm text-[#706D6A]">Keine Nutzer gefunden.</p>
+        <p className="text-sm text-[#6B7280]">Keine Nutzer gefunden.</p>
       ) : (
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[#EDE7DC]">
-              <th className="text-left py-2 pr-4 text-xs font-medium text-[#706D6A]">Name</th>
-              <th className="text-left py-2 pr-4 text-xs font-medium text-[#706D6A]">E-Mail</th>
-              <th className="text-left py-2 pr-4 text-xs font-medium text-[#706D6A]">Mitarbeiter</th>
-              <th className="text-left py-2 text-xs font-medium text-[#706D6A]">Rolle</th>
+            <tr className="border-b border-[#E5E7EB]">
+              <th className="text-left py-2 pr-4 text-xs font-medium text-[#6B7280]">Name</th>
+              <th className="text-left py-2 pr-4 text-xs font-medium text-[#6B7280]">E-Mail</th>
+              <th className="text-left py-2 pr-4 text-xs font-medium text-[#6B7280]">Mitarbeiter</th>
+              <th className="text-left py-2 text-xs font-medium text-[#6B7280]">Rolle</th>
             </tr>
           </thead>
           <tbody>
@@ -634,21 +636,21 @@ function NutzerSection() {
               const isSelf = u.id === currentUser?.id
               const emp    = u.expand?.employee
               return (
-                <tr key={u.id} className="border-b border-[#EDE7DC] last:border-0">
-                  <td className="py-2.5 pr-4 font-medium text-[#1A1917]">{u.name}</td>
-                  <td className="py-2.5 pr-4 text-[#706D6A] text-xs">{u.email}</td>
-                  <td className="py-2.5 pr-4 text-[#706D6A]">
-                    {emp ? `${emp.last_name}, ${emp.first_name}` : <span className="text-[#BBBBBB]">—</span>}
+                <tr key={u.id} className="border-b border-[#E5E7EB] last:border-0">
+                  <td className="py-2.5 pr-4 font-medium text-[#111827]">{u.last_name}, {u.first_name}</td>
+                  <td className="py-2.5 pr-4 text-[#6B7280] text-xs">{u.email}</td>
+                  <td className="py-2.5 pr-4 text-[#6B7280]">
+                    {emp ? `${emp.last_name}, ${emp.first_name}` : <span className="text-[#9CA3AF]">—</span>}
                   </td>
                   <td className="py-2.5">
                     {isSelf ? (
-                      <span className="text-[#706D6A] text-xs">{ROLE_LABELS[u.role]} <span className="text-[#BBBBBB]">(du)</span></span>
+                      <span className="text-[#6B7280] text-xs">{ROLE_LABELS[u.role]} <span className="text-[#9CA3AF]">(du)</span></span>
                     ) : (
                       <select
                         value={u.role}
                         disabled={saving[u.id]}
                         onChange={e => changeRole(u.id, e.target.value as UserRole)}
-                        className="h-8 rounded-md border border-[#EDE7DC] bg-white px-2 text-sm text-[#1A1917] outline-none focus:border-[#BA7517] focus:ring-2 focus:ring-[#BA7517]/20 disabled:opacity-50"
+                        className="h-8 rounded-md border border-[#E5E7EB] bg-white px-2 text-sm text-[#111827] outline-none focus:border-[#4F46E5] focus:ring-2 focus:ring-[#4F46E5]/20 disabled:opacity-50"
                       >
                         {(Object.entries(ROLE_LABELS) as [UserRole, string][]).map(([k, v]) => (
                           <option key={k} value={k}>{v}</option>
@@ -666,6 +668,117 @@ function NutzerSection() {
   )
 }
 
+// ── Dienstplan-Berechtigungen ─────────────────────────────────────────────────
+
+type UserWithEmployee = User & { expand?: { employee?: Employee } }
+
+function DienstplanSection() {
+  const [users, setUsers]             = useState<UserWithEmployee[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [empDepts, setEmpDepts]       = useState<Record<string, string[]>>({})  // employeeId → deptIds
+  const [saving, setSaving]           = useState<Record<string, boolean>>({})
+  const [loading, setLoading]         = useState(true)
+
+  const saveTimers = useState<Record<string, ReturnType<typeof setTimeout>>>(() => ({}))[0]
+
+  useEffect(() => {
+    Promise.all([
+      pb.collection('users').getFullList<UserWithEmployee>({ expand: 'employee', sort: 'last_name,first_name', requestKey: null }),
+      pb.collection('departments').getFullList<Department>({ sort: 'sort_order', requestKey: null }),
+      pb.collection('employees').getFullList<Employee>({ requestKey: null }),
+    ]).then(([us, ds, emps]) => {
+      setUsers(us)
+      setDepartments(ds)
+      const map: Record<string, string[]> = {}
+      emps.forEach(e => { map[e.id] = e.planner_departments ?? [] })
+      setEmpDepts(map)
+    }).finally(() => setLoading(false))
+  }, [])
+
+  function toggleDept(empId: string, deptId: string) {
+    const current = empDepts[empId] ?? []
+    const updated = current.includes(deptId)
+      ? current.filter(d => d !== deptId)
+      : [...current, deptId]
+
+    setEmpDepts(prev => ({ ...prev, [empId]: updated }))
+
+    clearTimeout(saveTimers[empId])
+    saveTimers[empId] = setTimeout(async () => {
+      setSaving(s => ({ ...s, [empId]: true }))
+      try {
+        await pb.collection('employees').update(empId, { planner_departments: updated }, { requestKey: null })
+      } finally {
+        setSaving(s => ({ ...s, [empId]: false }))
+      }
+    }, 500)
+  }
+
+  if (loading) return <div className="text-sm text-[#6B7280]">Lade…</div>
+
+  return (
+    <div className="bg-white border border-[#E5E7EB] rounded-lg p-5">
+      <h2 className="text-sm font-semibold text-[#111827] mb-1">Dienstplan-Berechtigungen</h2>
+      <p className="text-xs text-[#6B7280] mb-4">
+        Lege fest, welche Nutzer Dienstpläne erstellen dürfen und für welche Abteilungen.
+      </p>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-[#E5E7EB]">
+            <th className="text-left py-2 pr-4 text-xs font-medium text-[#6B7280] min-w-[140px]">Nutzer</th>
+            <th className="text-left py-2 text-xs font-medium text-[#6B7280]">Berechtigte Abteilungen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map(u => {
+            const emp = u.expand?.employee
+            return (
+              <tr key={u.id} className="border-b border-[#E5E7EB] last:border-0">
+                <td className="py-3 pr-4">
+                  <div className="font-medium text-[#111827]">{u.last_name}, {u.first_name}</div>
+                  <div className="text-[11px] text-[#6B7280]">{ROLE_LABELS[u.role]}</div>
+                </td>
+                <td className="py-3">
+                  {u.role === 'gf' ? (
+                    <span className="text-xs text-emerald-600 font-medium">Alle (automatisch)</span>
+                  ) : !emp ? (
+                    <span className="text-xs text-[#9CA3AF]">Kein Mitarbeiterprofil</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      {departments.map(d => {
+                        const active = (empDepts[emp.id] ?? []).includes(d.id)
+                        return (
+                          <button
+                            key={d.id}
+                            type="button"
+                            disabled={saving[emp.id]}
+                            onClick={() => toggleDept(emp.id, d.id)}
+                            className={cn(
+                              'text-xs px-2.5 py-1 rounded-full border transition-colors disabled:opacity-50',
+                              active
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-white text-[#6B7280] border-[#E5E7EB] hover:border-indigo-400 hover:text-indigo-600',
+                            )}
+                          >
+                            {d.name}
+                          </button>
+                        )
+                      })}
+                      {saving[emp.id] && (
+                        <span className="text-[10px] text-[#9CA3AF]">Speichern…</span>
+                      )}
+                    </div>
+                  )}
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 // ── Farbwähler ────────────────────────────────────────────────────────────────
 
 function ColorPicker({ value, onChange }: { value: string; onChange: (c: string) => void }) {
@@ -678,7 +791,7 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (c: string)
           onClick={() => onChange(c)}
           className={cn(
             'w-6 h-6 rounded-full border-2 transition-all',
-            value === c ? 'border-[#1A1917] scale-110' : 'border-transparent hover:scale-105',
+            value === c ? 'border-[#111827] scale-110' : 'border-transparent hover:scale-105',
           )}
           style={{ backgroundColor: c }}
           title={c}

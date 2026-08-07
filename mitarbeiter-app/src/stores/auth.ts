@@ -25,7 +25,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
-    pb.authStore.clear()
+    if (pb.authStore.isValid) pb.authStore.clear()
     set({ user: null })
   },
 

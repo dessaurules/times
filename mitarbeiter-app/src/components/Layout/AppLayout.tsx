@@ -2,6 +2,8 @@ import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import BottomNav from './BottomNav'
 import NotificationBell from '../NotificationBell'
+import PushPermissionBanner from '../PushPermissionBanner'
+import { GamificationHeader } from '../Gamification/GamificationHeader'
 
 export default function AppLayout() {
   return (
@@ -13,8 +15,12 @@ export default function AppLayout() {
           <span className="font-bold text-[15px] bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
             Schicht & Plan
           </span>
-          <NotificationBell />
+          <div className="ml-auto flex items-center gap-4">
+            <GamificationHeader />
+            <NotificationBell />
+          </div>
         </header>
+        <PushPermissionBanner />
         <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
           <div className="max-w-4xl mx-auto px-4 py-5 md:px-6 md:py-8">
             <Outlet />

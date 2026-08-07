@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/auth'
 import { Button } from '../components/ui/button'
 import { Input }  from '../components/ui/input'
@@ -9,14 +9,12 @@ export default function Login() {
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [error,    setError]    = useState<string | null>(null)
-  const navigate = useNavigate()
   const login = useAuthStore(s => s.login)
   const isLoading = useAuthStore(s => s.isLoading)
   const user = useAuthStore(s => s.user)
 
   if (user && (user.role === 'gf' || user.role === 'sl')) {
-    navigate('/', { replace: true })
-    return null
+    return <Navigate to="/" replace />
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -30,10 +28,10 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F5F2EE]">
-      <div className="bg-white border border-[#EDE7DC] rounded-[8px] p-8 w-full max-w-sm shadow-sm">
+    <div className="min-h-screen flex items-center justify-center bg-[#F3F4F6]">
+      <div className="bg-white border border-[#E5E7EB] rounded-[8px] p-8 w-full max-w-sm shadow-sm">
 
-        <div className="flex items-center gap-2 mb-8 text-[#BA7517] font-bold text-[15px]">
+        <div className="flex items-center gap-2 mb-8 text-[#4F46E5] font-bold text-[15px]">
           <svg width="20" height="20" fill="none" viewBox="0 0 24 24"
                stroke="currentColor" strokeWidth={2}>
             <circle cx="12" cy="12" r="10"/>
@@ -42,8 +40,8 @@ export default function Login() {
           Schicht &amp; Plan
         </div>
 
-        <h1 className="text-xl font-bold mb-1 text-[#1A1917]">Anmelden</h1>
-        <p className="text-sm text-[#706D6A] mb-6">Chef-App · Verwaltung</p>
+        <h1 className="text-xl font-bold mb-1 text-[#111827]">Anmelden</h1>
+        <p className="text-sm text-[#6B7280] mb-6">Chef-App · Verwaltung</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -55,7 +53,7 @@ export default function Login() {
               onChange={e => setEmail(e.target.value)}
               required
               autoFocus
-              className="mt-1 border-[#EDE7DC] focus:border-[#BA7517] focus:ring-[#BA7517]"
+              className="mt-1"
             />
           </div>
           <div>
@@ -66,7 +64,7 @@ export default function Login() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
-              className="mt-1 border-[#EDE7DC] focus:border-[#BA7517] focus:ring-[#BA7517]"
+              className="mt-1"
             />
           </div>
 
@@ -79,7 +77,7 @@ export default function Login() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-[#BA7517] hover:bg-[#9E6312] text-white font-semibold"
+            className="w-full"
           >
             {isLoading ? 'Anmelden …' : 'Anmelden'}
           </Button>

@@ -7,9 +7,10 @@ vi.mock('../../lib/pb', () => ({
 }))
 
 const mockLogin = vi.fn()
+let authStoreState = { user: null as { role: string } | null, isLoading: false }
 vi.mock('../../stores/auth', () => ({
-  useAuthStore: (selector: (s: { user: null; isLoading: boolean; login: typeof mockLogin }) => unknown) =>
-    selector({ user: null, isLoading: false, login: mockLogin }),
+  useAuthStore: (selector: (s: { user: { role: string } | null; isLoading: boolean; login: typeof mockLogin }) => unknown) =>
+    selector({ user: authStoreState.user, isLoading: authStoreState.isLoading, login: mockLogin }),
 }))
 
 import Login from '../Login'
@@ -41,5 +42,22 @@ describe('Login', () => {
     fireEvent.change(screen.getByLabelText(/Passwort/i), { target: { value: 'wrong' } })
     fireEvent.click(screen.getByRole('button', { name: /Anmelden/i }))
     await waitFor(() => expect(screen.getByText(/falsch/i)).toBeInTheDocument())
+  })
+
+  it('redirected einen eingeloggten GF-User ohne React-Render-Warnung', () => {
+    authStoreState = { user: { role: 'gf' }, isLoading: false }
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    render(<MemoryRouter initialEntries={['/login']}><Login /></MemoryRouter>)
+
+    // Verify no "navigate() in render" warning occurred
+    // The warning from react-router-dom is: "You should call navigate() in a React.useEffect(), not when your component is first rendered."
+    const hadNavigateWarning = warnSpy.mock.calls.some(call =>
+      /navigate.*useEffect/i.test(String(call[0]))
+    )
+    expect(hadNavigateWarning).toBe(false)
+
+    warnSpy.mockRestore()
+    authStoreState = { user: null, isLoading: false }
   })
 })
