@@ -3,6 +3,7 @@ import { pb } from '@/lib/pb'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 
 interface User {
   id: string
@@ -206,32 +207,18 @@ export default function GamificationApprovals() {
 
       {/* Tabs */}
       {!loading && (
-        <div className="space-y-6">
-          <div className="flex gap-4 border-b border-gray-200">
-            <button
-              onClick={() => setActiveTab('submissions')}
-              className={`px-4 py-2 font-medium text-sm border-b-2 -mb-px transition-colors ${
-                activeTab === 'submissions'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ActiveTab)} className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="submissions">
               Einreichungen ({submissions.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('orders')}
-              className={`px-4 py-2 font-medium text-sm border-b-2 -mb-px transition-colors ${
-                activeTab === 'orders'
-                  ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
+            </TabsTrigger>
+            <TabsTrigger value="orders">
               Bestellungen ({orders.length})
-            </button>
-          </div>
+            </TabsTrigger>
+          </TabsList>
 
           {/* Submissions Tab */}
-          {activeTab === 'submissions' && (
+          <TabsContent value="submissions">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -276,10 +263,10 @@ export default function GamificationApprovals() {
                 </tbody>
               </table>
             </div>
-          )}
+          </TabsContent>
 
           {/* Orders Tab */}
-          {activeTab === 'orders' && (
+          <TabsContent value="orders">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -324,8 +311,8 @@ export default function GamificationApprovals() {
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
       )}
 
       {/* Approval Dialog */}

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { pb } from '@/lib/pb'
 import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import type { RecordModel } from 'pocketbase'
 
 interface GamSettings extends RecordModel {
@@ -116,19 +117,11 @@ export default function GamificationSettings() {
               </span>
             </p>
           </div>
-          <button
-            onClick={handleToggle}
+          <Switch
+            checked={settings.enabled}
+            onCheckedChange={handleToggle}
             disabled={toggling}
-            className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-              settings.enabled ? 'bg-indigo-600' : 'bg-gray-300'
-            } ${toggling ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-          >
-            <span
-              className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                settings.enabled ? 'translate-x-7' : 'translate-x-1'
-              }`}
-            />
-          </button>
+          />
         </div>
 
         {/* Status Text */}
