@@ -15,9 +15,9 @@ export function useGamificationEnabled(): UseGamificationEnabledReturn {
 
     const loadGamificationSettings = async () => {
       try {
-        const records = await pb.collection('gam_settings').getFullList({ limit: 1 })
+        const records = await pb.collection('gam_settings').getFullList()
         if (records.length > 0) {
-          setEnabled(records[0].get('enabled') ?? false)
+          setEnabled(records[0].enabled ?? false)
         } else {
           setEnabled(false)
         }
@@ -32,8 +32,8 @@ export function useGamificationEnabled(): UseGamificationEnabledReturn {
     const subscribeToSettings = async () => {
       try {
         unsubscribe = await pb.collection('gam_settings').subscribe('*', (e) => {
-          setEnabled(e.record.get('enabled') ?? false)
-        })
+          setEnabled(e.record.enabled ?? false)
+        }, { requestKey: null })
       } catch (err) {
         console.error('[useGamificationEnabled] subscription error', err)
       }

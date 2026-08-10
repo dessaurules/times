@@ -22,7 +22,7 @@ export function useUserPoints(): UseUserPointsReturn {
         }
 
         const user = await pb.collection('users').getOne(pb.authStore.record.id)
-        setPoints(user.get('points') ?? 0)
+        setPoints(user.points ?? 0)
       } catch (err) {
         console.error('[useUserPoints]', err)
         setPoints(0)
@@ -38,7 +38,7 @@ export function useUserPoints(): UseUserPointsReturn {
         }
 
         unsubscribe = await pb.collection('users').subscribe(pb.authStore.record.id, (e) => {
-          setPoints(e.record.get('points') ?? 0)
+          setPoints(e.record.points ?? 0)
         })
       } catch (err) {
         console.error('[useUserPoints] subscription error', err)

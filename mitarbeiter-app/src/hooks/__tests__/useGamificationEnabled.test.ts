@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@testing-library/react'
 
 vi.mock('../../lib/pb', () => ({
   pb: {
@@ -26,11 +26,8 @@ describe('useGamificationEnabled', () => {
 
   it('should load enabled status from gam_settings', async () => {
     const col = getCollectionMock()
-    col.getFullList.mockResolvedValue([
-      {
-        get: (key: string) => (key === 'enabled' ? true : undefined),
-      },
-    ])
+    // PocketBase SDK 0.26 returns plain record objects — no .get() accessor.
+    col.getFullList.mockResolvedValue([{ id: 'set1', enabled: true }])
     col.subscribe.mockResolvedValue(() => {})
 
     const { result } = renderHook(() => useGamificationEnabled())
@@ -57,6 +54,32 @@ describe('useGamificationEnabled', () => {
     })
 
     expect(result.current.enabled).toBe(false)
+  })
+
+  it('should apply real-time updates via the record property', async () => {
+    const col = getCollectionMock()
+    col.getFullList.mockResolvedValue([{ id: 'set1', enabled: false }])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let emit: ((e: any) => void) | undefined
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    col.subscribe.mockImplementation(async (_topic: string, cb: (e: any) => void) => {
+      emit = cb
+      return () => {}
+    })
+
+    const { result } = renderHook(() => useGamificationEnabled())
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
+    await waitFor(() => expect(emit).toBeDefined())
+    expect(result.current.enabled).toBe(false)
+
+    act(() => {
+      emit!({ action: 'update', record: { id: 'set1', enabled: true } })
+    })
+
+    expect(result.current.enabled).toBe(true)
   })
 
   it('should handle errors gracefully', async () => {
