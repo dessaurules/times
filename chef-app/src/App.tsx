@@ -15,6 +15,7 @@ import ShiftTemplatesPage from '@/pages/Admin/ShiftTemplates'
 import GameTasks from './pages/Admin/GameTasks'
 import GameRewards from './pages/Admin/GameRewards'
 import GameApprovals from './pages/Admin/GameApprovals'
+import GameSettings from './pages/Admin/GameSettings'
 import { useAuthStore } from './stores/auth'
 import { pb } from './lib/pb'
 
@@ -45,6 +46,7 @@ export default function App() {
               <Route path="/admin/gamification/tasks"    element={<GameTasks />} />
               <Route path="/admin/gamification/rewards"  element={<GameRewards />} />
               <Route path="/admin/gamification/approvals" element={<GameApprovals />} />
+              <Route path="/admin/gamification/settings" element={<GameSettings />} />
             </Route>
           </Route>
         </Route>
