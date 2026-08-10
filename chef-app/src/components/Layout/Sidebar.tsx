@@ -32,6 +32,7 @@ const NAV: NavItem[] = [
       { to: '/admin/gamification/tasks', icon: Sparkles, label: 'Aufgaben', gfOnly: true },
       { to: '/admin/gamification/rewards', icon: Sparkles, label: 'Prämien', gfOnly: true },
       { to: '/admin/gamification/approvals', icon: Sparkles, label: 'Genehmigungen', gfOnly: true },
+      { to: '/admin/gamification/settings', icon: Sparkles, label: 'Einstellungen', gfOnly: true },
     ],
   },
 ]
