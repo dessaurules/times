@@ -24,7 +24,7 @@ export default function GamificationSettings() {
     try {
       setLoading(true)
       setError(null)
-      let list = await pb.collection('gam_settings').getFullList<RecordModel>({ limit: 1 })
+      const list = await pb.collection('gam_settings').getFullList<RecordModel>()
 
       if (list.length === 0) {
         // Create default settings if none exist
@@ -48,7 +48,7 @@ export default function GamificationSettings() {
   useEffect(() => {
     pb.collection('gam_settings').subscribe('*', async () => {
       await loadSettings()
-    }).then(fn => { unsubRef.current = fn })
+    }, { requestKey: null }).then(fn => { unsubRef.current = fn })
       .catch(err => console.warn('Real-Time Subscription nicht verfügbar:', err))
     return () => {
       unsubRef.current?.()
