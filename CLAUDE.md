@@ -297,32 +297,56 @@ Gamification-Hooks mit `catch`-Blöcken.
 Kette ab — **nichts wird gespeichert, die API antwortet mit 200 und leerem Body**
 (in den PB-Logs sichtbar als `status: 0`).
 
-Behoben sind die beiden **Create**-Hooks:
-- ✅ Hook 1 `gam_assignments` create (Commit `59c3afa`) — „Annehmen"-Button
-- ✅ Hook 2 `gam_submissions` create (Commit `c0ca9c5`) — Einreichen
+✅ **Alle vier Hooks sind umgebaut:**
+- Hook 1 `gam_assignments` create (Commit `59c3afa`) — „Annehmen"-Button
+- Hook 2 `gam_submissions` create (Commit `c0ca9c5`) — Einreichen
+- Hook 3 `gam_submissions` update + Hook 4 `gam_orders` update (Commit `14a10cd`)
 
-Offen sind die beiden **Update**-Hooks:
-- Zeile ~222 `onRecordUpdateRequest` (`gam_submissions`) → Genehmigen/Ablehnen
-- Zeile ~342 `onRecordUpdateRequest` (`gam_orders`) → Prämien-Freigabe
+**Muster für die Update-Hooks (wichtig bei künftigen Änderungen):** Sie speicherten
+`e.record` selbst per `txApp.save()`. Jetzt übernimmt das `e.next()` — und damit es
+**innerhalb** der Transaktion speichert, wird das Event umgebogen:
 
-Bei den beiden Update-Hooks ist Vorsicht nötig: sie speichern `e.record` **selbst** per
-`txApp.save()`. Ein blindes `e.next()` würde doppelt speichern (bei `gam_submissions`
-approve auch die Punktevergabe). Diese zwei brauchen einen eigenen, sorgfältigen Durchgang.
-Zusatzbefund: bei `status = 'rejected'` speichert Hook 3 den Record gar nicht — die
-Status-Änderung dürfte dort verloren gehen.
+```js
+$app.runInTransaction((txApp) => {
+  e.app = txApp        // sonst schreibt e.next() ausserhalb der Transaktion
+  txApp.save(user)
+  e.next()             // statt txApp.save(e.record)
+})
+```
+Ohne `e.app = txApp` lägen Punktevergabe und Record-Schreibvorgang in getrennten
+Transaktionen — ein Fehler danach würde die Punkte nicht zurücknehmen.
+
+Zusätzlich behoben: Jeder frühe `return` (kein Statuswechsel, Record nicht gefunden,
+Status unverändert) verwarf das Update stillschweigend und ruft jetzt vorher `e.next()`.
+Und der `rejected`-Pfad speicherte `e.record` **gar nicht** — Ablehnen ließ den Status
+auf `pending` stehen.
+
+⚠️ **Sicherheitslücke, die dabei geschlossen wurde** (Migration `1786460634`):
+`gam_submissions.updateRule` war `@request.auth.id != ''` — **jeder** angemeldete Nutzer
+durfte jede Einreichung auf `approved` setzen, und Hook 3 vergibt daraufhin Punkte.
+Unerreichbar war das nur, weil das fehlende `e.next()` das Speichern verhinderte; der
+Hook-Fix hätte die Lücke scharf gemacht. Jetzt `@request.auth.role = 'gf'` (wie
+`gam_orders`). Der Mitarbeiter-Flow braucht kein Update, nur `create`.
 
 **Merke:** `onRecordAfter*Success`-Hooks (die übrigen Dateien in `pb_hooks/`) brauchen
 kein `e.next()`, deshalb funktionieren Push-Notifications & Co. unauffällig.
 Bestätigt: Hook 2b (`gam_submissions` AfterCreateSuccess) setzt das Assignment
 zuverlässig auf `completed`, ohne `e.next()`.
 
-**Verifizierter Ablauf in der Mitarbeiter-App (2026-08-11, User `maria@test.de`):**
+**✅ Vollständig verifizierter Ablauf (2026-08-11, `maria@test.de` + GF):**
 Aufgabe „Annehmen" → Assignment (`active`, `expires_at` +8h) → erscheint unter „Aktiv"
 mit Countdown → „Abschließen" + Notiz → Submission (`pending`) → Assignment auf
-`completed`, verschwindet aus „Aktiv" → Datensatz trifft den Approvals-Filter der
-Chef-App (`status = "pending"`).
-Noch offen: die Genehmigung in der Chef-App selbst — sie läuft über den
-`onRecordUpdateRequest`-Hook, der noch kein `e.next()` hat (siehe oben).
+`completed`, verschwindet aus „Aktiv" → erscheint in den Genehmigungen der Chef-App →
+GF genehmigt → Submission `approved` mit `points_awarded = 100`, `users.points` 0 → **100**,
+`gam_events`-Eintrag `submission_approved`, Genehmigungsliste wieder leer.
+Punktevergabe erfolgte **genau einmal** — keine Doppelbuchung durch `e.next()`.
+
+**Noch nicht getestet:**
+- Der `rejected`-Pfad in Hook 3 und Hook 4 (Ablehnen).
+- Hook 4 komplett (Prämien-Freigabe). Braucht eine Prämie mit `status = 'active'` —
+  beide `gam_rewards` stehen auf `draft`, `gam_orders` ist leer. Für einen Test:
+  Prämie in der Chef-App aktivieren, als Mitarbeiter im Shop bestellen, dann freigeben.
+  maria hat jetzt 100 Punkte, kann also bestellen.
 
 ---
 
