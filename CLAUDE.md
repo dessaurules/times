@@ -291,12 +291,26 @@ einen Fehler und fällt auf `enabled: false` zurück. Aktuell harmlos (der erste
 gewinnt), aber dasselbe Muster wie der Auth-Bug. Gleiches gilt für die übrigen
 Gamification-Hooks mit `catch`-Blöcken.
 
-**TODO 6 — Mitarbeiter-App: Gamification-Schreibpfade noch nicht getestet.**
-Verifiziert ist nur das Lesen (Tabs laden). Offen: Aufgabe „Annehmen" →
-`gam_assignments`-Create, Einreichung → `gam_submissions`-Create, und der
-Genehmigungs-Durchstich in der Chef-App. Siehe Plan
-`docs/superpowers/plans/2026-08-11-mitarbeiter-app-gamification.md`, Task 4 Schritt 6–8.
-Braucht Login als `maria@test.de` (Rolle `mitarbeiter`).
+**TODO 6 — `pb_hooks/gamification.pb.js` ist durchgängig für PocketBase v0.22 geschrieben.**
+⚠️ **Systematischer Befund, gleiche Wurzel wie die Auth-Rules:** In der Datei fehlt
+überall `e.next()`. Ab v0.23 bricht ein `onRecord*Request`-Hook ohne diesen Aufruf die
+Kette ab — **nichts wird gespeichert, die API antwortet mit 200 und leerem Body**
+(in den PB-Logs sichtbar als `status: 0`).
+
+Behoben ist nur Hook 1 (`gam_assignments` create, Commit `59c3afa`) — das war der
+„Annehmen"-Button. Offen:
+- Zeile ~128 `onRecordCreateRequest` (`gam_submissions`) → **Einreichen funktioniert nicht**
+- Zeile ~218 `onRecordUpdateRequest` (`gam_submissions`) → Genehmigen/Ablehnen
+- Zeile ~338 `onRecordUpdateRequest` (`gam_orders`) → Prämien-Freigabe
+
+Bei den beiden Update-Hooks ist Vorsicht nötig: sie speichern `e.record` **selbst** per
+`txApp.save()`. Ein blindes `e.next()` würde doppelt speichern (bei `gam_submissions`
+approve auch die Punktevergabe). Diese zwei brauchen einen eigenen, sorgfältigen Durchgang.
+Zusatzbefund: bei `status = 'rejected'` speichert Hook 3 den Record gar nicht — die
+Status-Änderung dürfte dort verloren gehen.
+
+**Merke:** `onRecordAfter*Success`-Hooks (die übrigen Dateien in `pb_hooks/`) brauchen
+kein `e.next()`, deshalb funktionieren Push-Notifications & Co. unauffällig.
 
 ---
 
