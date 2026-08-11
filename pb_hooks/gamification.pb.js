@@ -222,8 +222,11 @@ onRecordUpdateRequest((e) => {
   // Get the new status from the request body
   const newStatus = String(e.requestInfo().body.status ?? '')
 
-  // Only process when status changes to 'approved' or 'rejected'
+  // Nur ein Wechsel auf 'approved'/'rejected' loest die Sonderlogik aus. Jeder
+  // andere Update-Pfad muss die Kette per e.next() weiterlaufen lassen — ein
+  // blankes return verwirft das Update stillschweigend (200, leerer Body).
   if (!newStatus || (newStatus !== 'approved' && newStatus !== 'rejected')) {
+    e.next()
     return
   }
 
@@ -233,6 +236,7 @@ onRecordUpdateRequest((e) => {
     oldRecord = $app.findRecordById('gam_submissions', e.record.id)
   } catch (err) {
     console.error('[gamification:submission:approve] Could not fetch old record:', err)
+    e.next()
     return
   }
 
@@ -240,12 +244,19 @@ onRecordUpdateRequest((e) => {
 
   // Only process if status actually changed
   if (oldStatus === newStatus) {
+    e.next()
     return
   }
 
   if (newStatus === 'approved') {
     // ATOMIC TRANSACTION for approval
     $app.runInTransaction((txApp) => {
+      // Das Event auf die Transaktion umbiegen, damit das e.next() unten den
+      // Record innerhalb DIESER Transaktion speichert. Sonst laege die
+      // Punktevergabe in der Transaktion, das Speichern der Einreichung aber
+      // ausserhalb — ein Fehler danach wuerde die Punkte nicht zuruecknehmen.
+      e.app = txApp
+
       // Check: System enabled?
       let settings
       try {
@@ -303,29 +314,37 @@ onRecordUpdateRequest((e) => {
         task_title: taskTitle,
       }))
 
-      // Save all changes in transaction
+      // Save all changes in transaction. Die Einreichung selbst speichert
+      // e.next() — ein txApp.save(e.record) hier wuerde doppelt schreiben.
       txApp.save(user)
       txApp.save(event)
-      txApp.save(e.record)
+      e.next()
 
       console.log(`[gamification:submission:approve] User ${userId} awarded ${points} points for task ${taskId}`)
     })
   } else if (newStatus === 'rejected') {
     // Rejection - create event, no points operation
     try {
-      const event = new Record($app.findCollectionByNameOrId('gam_events'))
-      const userId = String(e.record.get('user_id') ?? '')
-      const taskId = String(e.record.get('task_id') ?? '')
-      const adminFeedback = String(e.record.get('admin_feedback') ?? '')
+      $app.runInTransaction((txApp) => {
+        e.app = txApp
 
-      event.set('type', 'submission_rejected')
-      event.set('user_id', userId)
-      event.set('related_task_id', taskId)
-      event.set('data', JSON.stringify({
-        feedback: adminFeedback,
-      }))
+        const event = new Record(txApp.findCollectionByNameOrId('gam_events'))
+        const userId = String(e.record.get('user_id') ?? '')
+        const taskId = String(e.record.get('task_id') ?? '')
+        const adminFeedback = String(e.record.get('admin_feedback') ?? '')
 
-      $app.save(event)
+        event.set('type', 'submission_rejected')
+        event.set('user_id', userId)
+        event.set('related_task_id', taskId)
+        event.set('data', JSON.stringify({
+          feedback: adminFeedback,
+        }))
+
+        txApp.save(event)
+        // Fehlte bisher komplett: die Ablehnung wurde nie gespeichert, der
+        // Status blieb auf 'pending'.
+        e.next()
+      })
       console.log(`[gamification:submission:approve] Submission ${e.record.id} rejected`)
     } catch (err) {
       console.error('[gamification:submission:approve] Failed to create rejection event:', err)
@@ -342,8 +361,11 @@ onRecordUpdateRequest((e) => {
   // Get the new status from the request body
   const newStatus = String(e.requestInfo().body.status ?? '')
 
-  // Only process when status changes to 'approved' or 'rejected'
+  // Nur ein Wechsel auf 'approved'/'rejected' loest die Sonderlogik aus. Jeder
+  // andere Update-Pfad muss die Kette per e.next() weiterlaufen lassen — ein
+  // blankes return verwirft das Update stillschweigend (200, leerer Body).
   if (!newStatus || (newStatus !== 'approved' && newStatus !== 'rejected')) {
+    e.next()
     return
   }
 
@@ -353,6 +375,7 @@ onRecordUpdateRequest((e) => {
     oldRecord = $app.findRecordById('gam_orders', e.record.id)
   } catch (err) {
     console.error('[gamification:order:approve] Could not fetch old record:', err)
+    e.next()
     return
   }
 
@@ -360,12 +383,19 @@ onRecordUpdateRequest((e) => {
 
   // Only process if status actually changed
   if (oldStatus === newStatus) {
+    e.next()
     return
   }
 
   if (newStatus === 'approved') {
     // ATOMIC TRANSACTION for approval
     $app.runInTransaction((txApp) => {
+      // Das Event auf die Transaktion umbiegen, damit das e.next() unten den
+      // Record innerhalb DIESER Transaktion speichert. Sonst lagen Punktabzug
+      // und Zaehler in der Transaktion, das Speichern der Bestellung aber
+      // ausserhalb.
+      e.app = txApp
+
       // Check: System enabled?
       let settings
       try {
@@ -449,30 +479,38 @@ onRecordUpdateRequest((e) => {
         remaining_points: remainingPoints,
       }))
 
-      // Save all changes in transaction
+      // Save all changes in transaction. Die Bestellung selbst speichert
+      // e.next() — ein txApp.save(e.record) hier wuerde doppelt schreiben.
       txApp.save(user)
       txApp.save(reward)
       txApp.save(event)
-      txApp.save(e.record)
+      e.next()
 
       console.log(`[gamification:order:approve] User ${userId} redeemed reward ${rewardId}, cost ${cost} points`)
     })
   } else if (newStatus === 'rejected') {
     // Rejection - create event
     try {
-      const event = new Record($app.findCollectionByNameOrId('gam_events'))
-      const userId = String(e.record.get('user_id') ?? '')
-      const rewardId = String(e.record.get('reward_id') ?? '')
-      const adminFeedback = String(e.record.get('admin_feedback') ?? '')
+      $app.runInTransaction((txApp) => {
+        e.app = txApp
 
-      event.set('type', 'reward_rejected')
-      event.set('user_id', userId)
-      event.set('related_reward_id', rewardId)
-      event.set('data', JSON.stringify({
-        feedback: adminFeedback,
-      }))
+        const event = new Record(txApp.findCollectionByNameOrId('gam_events'))
+        const userId = String(e.record.get('user_id') ?? '')
+        const rewardId = String(e.record.get('reward_id') ?? '')
+        const adminFeedback = String(e.record.get('admin_feedback') ?? '')
 
-      $app.save(event)
+        event.set('type', 'reward_rejected')
+        event.set('user_id', userId)
+        event.set('related_reward_id', rewardId)
+        event.set('data', JSON.stringify({
+          feedback: adminFeedback,
+        }))
+
+        txApp.save(event)
+        // Fehlte bisher komplett: die Ablehnung wurde nie gespeichert, der
+        // Status blieb auf 'pending'.
+        e.next()
+      })
       console.log(`[gamification:order:approve] Order ${e.record.id} rejected`)
     } catch (err) {
       console.error('[gamification:order:approve] Failed to create rejection event:', err)
