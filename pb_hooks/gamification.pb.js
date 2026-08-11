@@ -190,6 +190,10 @@ onRecordCreateRequest((e) => {
   e.record.set('user_id', userId)
 
   console.log(`[gamification:submission:create] Submission pending for assignment ${assignmentId}`)
+
+  // PFLICHT ab PocketBase v0.23: ohne e.next() bricht die Hook-Kette ab, der
+  // Record wird nie gespeichert und die API antwortet mit 200 und leerem Body.
+  e.next()
 }, 'gam_submissions')
 
 // ─────────────────────────────────────────────────────────────────────────────
