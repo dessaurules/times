@@ -64,14 +64,27 @@ export default function GamificationRewardList() {
     }
   }
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time updates (delayed to avoid race condition)
   const unsubRef = useRef<(() => void) | null>(null)
   useEffect(() => {
-    pb.collection('gam_rewards').subscribe('*', () => {
-      loadRewards()
-    }).then(fn => { unsubRef.current = fn })
-      .catch(err => console.warn('Real-Time Subscription nicht verfügbar:', err))
+    const timer = setTimeout(() => {
+      pb.collection('gam_rewards').subscribe('*', (e) => {
+        if (e.action === 'delete') {
+          setRewards(r => r.filter(reward => reward.id !== e.record.id))
+        } else {
+          setRewards(r => {
+            const idx = r.findIndex(reward => reward.id === e.record.id)
+            if (idx >= 0) r[idx] = e.record as unknown as GamReward
+            else r.push(e.record as unknown as GamReward)
+            return [...r]
+          })
+        }
+      }, { requestKey: null }).then(fn => { unsubRef.current = fn })
+        .catch(err => console.warn('Real-Time Subscription nicht verfügbar:', err))
+    }, 100)
+
     return () => {
+      clearTimeout(timer)
       unsubRef.current?.()
       pb.collection('gam_rewards').unsubscribe('*')
     }
@@ -149,8 +162,8 @@ export default function GamificationRewardList() {
         </Button>
       </div>
 
-      {/* Error Message */}
-      {error && (
+      {/* Error Message - nur wenn keine Daten vorhanden sind */}
+      {error && rewards.length === 0 && (
         <div className="bg-red-50 border border-red-200 text-red-800 text-sm p-3 rounded-lg">
           {error}
         </div>

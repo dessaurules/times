@@ -27,17 +27,22 @@ export default function GamificationSettings() {
       const list = await pb.collection('gam_settings').getFullList<RecordModel>()
 
       if (list.length === 0) {
-        // Create default settings if none exist
-        const newSettings = await pb.collection('gam_settings').create({
-          enabled: false,
-        })
-        setSettings(newSettings as unknown as GamSettings)
+        // Try to create default settings if none exist
+        try {
+          const newSettings = await pb.collection('gam_settings').create({
+            enabled: false,
+          })
+          setSettings(newSettings as unknown as GamSettings)
+        } catch (createErr) {
+          setError(`Fehler: Einstellungen existieren nicht und konnten nicht erstellt werden. ${createErr}`)
+          console.error('Create error:', createErr)
+        }
       } else {
         setSettings(list[0] as unknown as GamSettings)
       }
     } catch (err) {
       setError(`Fehler beim Laden der Einstellungen: ${err}`)
-      console.error(err)
+      console.error('Load error:', err)
     } finally {
       setLoading(false)
     }
@@ -46,8 +51,8 @@ export default function GamificationSettings() {
   // Subscribe to real-time updates
   const unsubRef = useRef<(() => void) | null>(null)
   useEffect(() => {
-    pb.collection('gam_settings').subscribe('*', async () => {
-      await loadSettings()
+    pb.collection('gam_settings').subscribe('*', (e) => {
+      setSettings(e.record as unknown as GamSettings)
     }, { requestKey: null }).then(fn => { unsubRef.current = fn })
       .catch(err => console.warn('Real-Time Subscription nicht verfügbar:', err))
     return () => {
@@ -98,8 +103,8 @@ export default function GamificationSettings() {
         <p className="text-sm text-gray-600 mt-1">Gamification-System konfigurieren</p>
       </div>
 
-      {/* Error Message */}
-      {error && (
+      {/* Error Message - nur wenn keine Daten vorhanden sind */}
+      {error && !settings && (
         <div className="bg-red-50 border border-red-200 text-red-800 text-sm p-3 rounded-lg">
           {error}
         </div>

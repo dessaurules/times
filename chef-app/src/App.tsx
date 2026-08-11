@@ -13,6 +13,7 @@ import Berichte          from './pages/Berichte'
 import Dienstplan        from './pages/Dienstplan'
 import ShiftTemplatesPage from '@/pages/Admin/ShiftTemplates'
 import GameTasks from './pages/Admin/GameTasks'
+import GameTasksTest from './pages/Admin/GameTasksTest'
 import GameRewards from './pages/Admin/GameRewards'
 import GameApprovals from './pages/Admin/GameApprovals'
 import GameSettings from './pages/Admin/GameSettings'
@@ -43,10 +44,11 @@ export default function App() {
               <Route path="/mitarbeiter"              element={<Mitarbeiterliste />} />
               <Route path="/einstellungen"            element={<Einstellungen />} />
               <Route path="/admin/shift-templates"    element={<ShiftTemplatesPage />} />
-              <Route path="/admin/gamification/tasks"    element={<GameTasks />} />
-              <Route path="/admin/gamification/rewards"  element={<GameRewards />} />
-              <Route path="/admin/gamification/approvals" element={<GameApprovals />} />
-              <Route path="/admin/gamification/settings" element={<GameSettings />} />
+              <Route path="/admin/gamification/tasks"      element={<GameTasks />} />
+              <Route path="/admin/gamification/tasks/test" element={<GameTasksTest />} />
+              <Route path="/admin/gamification/rewards"    element={<GameRewards />} />
+              <Route path="/admin/gamification/approvals"  element={<GameApprovals />} />
+              <Route path="/admin/gamification/settings"   element={<GameSettings />} />
             </Route>
           </Route>
         </Route>

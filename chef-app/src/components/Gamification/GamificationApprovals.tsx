@@ -99,17 +99,45 @@ export default function GamificationApprovals() {
     }
   }
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time updates (delayed to avoid race condition)
   const unsubRef1 = useRef<(() => void) | null>(null)
   const unsubRef2 = useRef<(() => void) | null>(null)
   useEffect(() => {
-    pb.collection('gam_submissions').subscribe('*', () => loadData())
-      .then(fn => { unsubRef1.current = fn })
-      .catch(err => console.warn('Real-Time Subscription nicht verfügbar:', err))
-    pb.collection('gam_orders').subscribe('*', () => loadData())
-      .then(fn => { unsubRef2.current = fn })
-      .catch(err => console.warn('Real-Time Subscription nicht verfügbar:', err))
+    const timer = setTimeout(() => {
+      pb.collection('gam_submissions').subscribe('*', (e) => {
+        if (e.action === 'delete') {
+          setSubmissions(s => s.filter(sub => sub.id !== e.record.id))
+        } else if (e.record.status === 'pending') {
+          setSubmissions(s => {
+            const idx = s.findIndex(sub => sub.id === e.record.id)
+            if (idx >= 0) s[idx] = e.record as unknown as GamSubmission
+            else s.push(e.record as unknown as GamSubmission)
+            return [...s]
+          })
+        } else {
+          setSubmissions(s => s.filter(sub => sub.id !== e.record.id))
+        }
+      }, { requestKey: null }).then(fn => { unsubRef1.current = fn })
+        .catch(err => console.warn('Real-Time Subscription nicht verfügbar:', err))
+      pb.collection('gam_orders').subscribe('*', (e) => {
+        if (e.action === 'delete') {
+          setOrders(o => o.filter(ord => ord.id !== e.record.id))
+        } else if (e.record.status === 'pending_admin') {
+          setOrders(o => {
+            const idx = o.findIndex(ord => ord.id === e.record.id)
+            if (idx >= 0) o[idx] = e.record as unknown as GamOrder
+            else o.push(e.record as unknown as GamOrder)
+            return [...o]
+          })
+        } else {
+          setOrders(o => o.filter(ord => ord.id !== e.record.id))
+        }
+      }, { requestKey: null }).then(fn => { unsubRef2.current = fn })
+        .catch(err => console.warn('Real-Time Subscription nicht verfügbar:', err))
+    }, 100)
+
     return () => {
+      clearTimeout(timer)
       unsubRef1.current?.()
       unsubRef2.current?.()
       pb.collection('gam_submissions').unsubscribe('*')
@@ -191,8 +219,8 @@ export default function GamificationApprovals() {
         <p className="text-sm text-gray-600 mt-1">Überprüfen und genehmigen Sie Aufgaben-Einreichungen und Prämien-Bestellungen</p>
       </div>
 
-      {/* Error Message */}
-      {error && (
+      {/* Error Message - nur wenn keine Daten vorhanden sind */}
+      {error && submissions.length === 0 && orders.length === 0 && (
         <div className="bg-red-50 border border-red-200 text-red-800 text-sm p-3 rounded-lg">
           {error}
         </div>

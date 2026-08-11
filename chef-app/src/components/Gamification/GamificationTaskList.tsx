@@ -49,7 +49,7 @@ export default function GamificationTaskList() {
   })
   const [submitting, setSubmitting] = useState(false)
 
-  // Load tasks
+  // Load tasks and subscribe (separate effects to avoid race conditions)
   useEffect(() => {
     loadTasks()
   }, [])
@@ -68,14 +68,28 @@ export default function GamificationTaskList() {
     }
   }
 
-  // Subscribe to real-time updates
+  // Subscribe to real-time updates (separate effect, starts AFTER component mounts)
   const unsubRef = useRef<(() => void) | null>(null)
   useEffect(() => {
-    pb.collection('gam_tasks').subscribe('*', () => {
-      loadTasks()
-    }).then(fn => { unsubRef.current = fn })
-      .catch(err => console.warn('Real-Time Subscription nicht verfügbar:', err))
+    // Delay subscribe to avoid race condition with initial load
+    const timer = setTimeout(() => {
+      pb.collection('gam_tasks').subscribe('*', (e) => {
+        if (e.action === 'delete') {
+          setTasks(t => t.filter(task => task.id !== e.record.id))
+        } else {
+          setTasks(t => {
+            const idx = t.findIndex(task => task.id === e.record.id)
+            if (idx >= 0) t[idx] = e.record as unknown as GamTask
+            else t.push(e.record as unknown as GamTask)
+            return [...t]
+          })
+        }
+      }, { requestKey: null }).then(fn => { unsubRef.current = fn })
+        .catch(err => console.warn('Real-Time Subscription nicht verfügbar:', err))
+    }, 100)
+
     return () => {
+      clearTimeout(timer)
       unsubRef.current?.()
       pb.collection('gam_tasks').unsubscribe('*')
     }
@@ -151,8 +165,8 @@ export default function GamificationTaskList() {
         </Button>
       </div>
 
-      {/* Error Message */}
-      {error && (
+      {/* Error Message - nur wenn keine Daten vorhanden sind */}
+      {error && tasks.length === 0 && (
         <div className="bg-red-50 border border-red-200 text-red-800 text-sm p-3 rounded-lg">
           {error}
         </div>
