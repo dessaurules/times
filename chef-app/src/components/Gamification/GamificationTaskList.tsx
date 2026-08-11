@@ -5,7 +5,8 @@ import { Dialog, DialogHeader, DialogTitle, DialogBody } from '@/components/ui/d
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Plus } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { Plus, Trash2 } from 'lucide-react'
 
 interface GamTask {
   id: string
@@ -17,6 +18,7 @@ interface GamTask {
   requires_media: boolean
   daily_limit_per_user: number
   expires_at: string
+  active: boolean
   created: string
   updated: string
 }
@@ -30,6 +32,19 @@ interface FormData {
   requires_media: boolean
   daily_limit_per_user: number
   expires_at: string
+  active: boolean
+}
+
+const EMPTY_FORM: FormData = {
+  title: '',
+  description: '',
+  points: 10,
+  category: '',
+  difficulty: 'easy',
+  requires_media: false,
+  daily_limit_per_user: 0,
+  expires_at: '',
+  active: true,
 }
 
 export default function GamificationTaskList() {
@@ -37,17 +52,13 @@ export default function GamificationTaskList() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [formData, setFormData] = useState<FormData>({
-    title: '',
-    description: '',
-    points: 10,
-    category: '',
-    difficulty: 'easy',
-    requires_media: false,
-    daily_limit_per_user: 0,
-    expires_at: '',
-  })
+  const [formData, setFormData] = useState<FormData>(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
+  // Gesetzt = Bearbeiten-Modus, null = Anlegen. Steuert Titel, Aktion und
+  // Sichtbarkeit des Loeschen-Bereichs im selben Dialog.
+  const [editingTask, setEditingTask] = useState<GamTask | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   // Load tasks and subscribe (separate effects to avoid race conditions)
   useEffect(() => {
@@ -95,6 +106,40 @@ export default function GamificationTaskList() {
     }
   }, [])
 
+  function openCreateDialog() {
+    setEditingTask(null)
+    setConfirmDelete(false)
+    setFormData(EMPTY_FORM)
+    setError(null)
+    setDialogOpen(true)
+  }
+
+  function openEditDialog(task: GamTask) {
+    setEditingTask(task)
+    setConfirmDelete(false)
+    setFormData({
+      title: task.title ?? '',
+      description: task.description ?? '',
+      points: task.points ?? 0,
+      category: task.category ?? '',
+      difficulty: task.difficulty ?? 'easy',
+      requires_media: task.requires_media ?? false,
+      daily_limit_per_user: task.daily_limit_per_user ?? 0,
+      // Ein leeres Ablaufdatum bleibt leer — <input type="date"> braucht
+      // YYYY-MM-DD, PocketBase liefert einen vollen Zeitstempel.
+      expires_at: task.expires_at ? task.expires_at.slice(0, 10) : '',
+      active: task.active ?? true,
+    })
+    setError(null)
+    setDialogOpen(true)
+  }
+
+  function closeDialog() {
+    if (submitting || deleting) return
+    setDialogOpen(false)
+    setConfirmDelete(false)
+  }
+
   async function handleSubmit() {
     if (!formData.title.trim()) {
       setError('Titel ist erforderlich')
@@ -104,24 +149,44 @@ export default function GamificationTaskList() {
     try {
       setSubmitting(true)
       setError(null)
-      await pb.collection('gam_tasks').create(formData)
-      setFormData({
-        title: '',
-        description: '',
-        points: 10,
-        category: '',
-        difficulty: 'easy',
-        requires_media: false,
-        daily_limit_per_user: 0,
-        expires_at: '',
-      })
+      if (editingTask) {
+        await pb.collection('gam_tasks').update(editingTask.id, formData)
+      } else {
+        await pb.collection('gam_tasks').create(formData)
+      }
+      setFormData(EMPTY_FORM)
+      setEditingTask(null)
       setDialogOpen(false)
       await loadTasks()
     } catch (err) {
-      setError(`Fehler beim Erstellen der Aufgabe: ${err}`)
+      setError(
+        editingTask
+          ? `Fehler beim Speichern der Aufgabe: ${err}`
+          : `Fehler beim Erstellen der Aufgabe: ${err}`
+      )
       console.error(err)
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!editingTask) return
+
+    try {
+      setDeleting(true)
+      setError(null)
+      await pb.collection('gam_tasks').delete(editingTask.id)
+      setEditingTask(null)
+      setConfirmDelete(false)
+      setDialogOpen(false)
+      await loadTasks()
+    } catch (err) {
+      setError(`Fehler beim Löschen der Aufgabe: ${err}`)
+      console.error(err)
+      setConfirmDelete(false)
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -159,7 +224,7 @@ export default function GamificationTaskList() {
           <h2 className="text-2xl font-bold text-gray-900">Aufgaben</h2>
           <p className="text-sm text-gray-600 mt-1">Verwalten Sie verfügbare Gamification-Aufgaben</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} size="sm">
+        <Button onClick={openCreateDialog} size="sm">
           <Plus className="w-4 h-4 mr-2" />
           Neue Aufgabe
         </Button>
@@ -201,7 +266,11 @@ export default function GamificationTaskList() {
                 </tr>
               ) : (
                 tasks.map((task) => (
-                  <tr key={task.id} className="border-b border-gray-200 hover:bg-gray-50">
+                  <tr
+                    key={task.id}
+                    onClick={() => openEditDialog(task)}
+                    className="border-b border-gray-200 hover:bg-gray-50 cursor-pointer"
+                  >
                     <td className="px-4 py-3 text-sm text-gray-900">{task.title}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{task.points}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{task.category}</td>
@@ -211,7 +280,9 @@ export default function GamificationTaskList() {
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      <Badge className="bg-green-100 text-green-800">Aktiv</Badge>
+                      <Badge className={task.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}>
+                        {task.active ? 'Aktiv' : 'Inaktiv'}
+                      </Badge>
                     </td>
                   </tr>
                 ))
@@ -221,10 +292,10 @@ export default function GamificationTaskList() {
         </div>
       )}
 
-      {/* Dialog: New Task */}
-      <Dialog open={dialogOpen} onClose={() => { if (!submitting) setDialogOpen(false) }}>
+      {/* Dialog: Aufgabe anlegen oder bearbeiten */}
+      <Dialog open={dialogOpen} onClose={closeDialog}>
         <DialogHeader>
-          <DialogTitle>Neue Aufgabe erstellen</DialogTitle>
+          <DialogTitle>{editingTask ? 'Aufgabe bearbeiten' : 'Neue Aufgabe erstellen'}</DialogTitle>
         </DialogHeader>
         <DialogBody>
           <div className="space-y-4">
@@ -326,17 +397,64 @@ export default function GamificationTaskList() {
                 onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
               />
             </div>
+
+            {/* Status: steuert, ob Mitarbeiter die Aufgabe im Shop sehen */}
+            <div className="flex items-start justify-between gap-4 pt-3 border-t border-[#E5E7EB]">
+              <div>
+                <Label htmlFor="task-active">Status</Label>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  {formData.active
+                    ? 'Aktiv — Mitarbeiter können die Aufgabe annehmen'
+                    : 'Inaktiv — die Aufgabe wird Mitarbeitern nicht angezeigt'}
+                </p>
+              </div>
+              <Switch
+                id="task-active"
+                checked={formData.active}
+                onCheckedChange={(checked) => setFormData({ ...formData, active: checked })}
+              />
+            </div>
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 mt-6">
-            <Button variant="outline" size="sm" onClick={() => setDialogOpen(false)} disabled={submitting}>
-              Abbrechen
-            </Button>
-            <Button size="sm" onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Wird erstellt…' : 'Erstellen'}
-            </Button>
-          </div>
+          {confirmDelete ? (
+            /* Inline-Rückfrage statt zweitem Overlay — Muster aus Einstellungen.tsx */
+            <div className="flex items-center gap-2 mt-6">
+              <span className="flex-1 text-sm text-red-600">
+                „{editingTask?.title}" wirklich löschen?
+              </span>
+              <Button size="sm" variant="destructive" onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'Wird gelöscht…' : 'Ja'}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setConfirmDelete(false)} disabled={deleting}>
+                Nein
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 mt-6">
+              {editingTask && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setConfirmDelete(true)}
+                  disabled={submitting}
+                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                >
+                  <Trash2 className="w-4 h-4 mr-1.5" />
+                  Löschen
+                </Button>
+              )}
+              <div className="flex-1" />
+              <Button variant="outline" size="sm" onClick={closeDialog} disabled={submitting}>
+                Abbrechen
+              </Button>
+              <Button size="sm" onClick={handleSubmit} disabled={submitting}>
+                {submitting
+                  ? (editingTask ? 'Wird gespeichert…' : 'Wird erstellt…')
+                  : (editingTask ? 'Speichern' : 'Erstellen')}
+              </Button>
+            </div>
+          )}
         </DialogBody>
       </Dialog>
     </div>

@@ -15,6 +15,22 @@ import GamificationApprovals from '@/components/Gamification/GamificationApprova
 
 const mockPb = vi.mocked(pb)
 
+// Vollstaendiger gam_tasks-Datensatz; einzelne Felder pro Test ueberschreiben.
+const baseTask = {
+  id: 'task-base',
+  title: 'Basis-Aufgabe',
+  description: 'Beschreibung',
+  points: 10,
+  category: 'Test',
+  difficulty: 'easy' as const,
+  requires_media: false,
+  daily_limit_per_user: 0,
+  expires_at: '',
+  active: true,
+  created: '2026-08-07T00:00:00Z',
+  updated: '2026-08-07T00:00:00Z',
+}
+
 describe('Gamification Admin Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -128,6 +144,101 @@ describe('Gamification Admin Integration', () => {
       await screen.findByText('Easy Task')
       expect(screen.getByText('Einfach')).toBeInTheDocument()
       expect(screen.getByText('Schwer')).toBeInTheDocument()
+    })
+
+    it('zeigt den Status aus den Daten, nicht hartkodiert "Aktiv"', async () => {
+      mockPb.collection.mockReturnValue({
+        getFullList: vi.fn().mockResolvedValue([
+          { ...baseTask, id: 'task-on', title: 'Aktive Aufgabe', active: true },
+          { ...baseTask, id: 'task-off', title: 'Inaktive Aufgabe', active: false },
+        ]),
+        subscribe: vi.fn().mockResolvedValue(() => {}),
+        unsubscribe: vi.fn(),
+        create: vi.fn(),
+      } as any)
+
+      render(<GamificationTaskList />)
+
+      await screen.findByText('Aktive Aufgabe')
+      expect(screen.getByText('Aktiv')).toBeInTheDocument()
+      expect(screen.getByText('Inaktiv')).toBeInTheDocument()
+    })
+
+    it('öffnet den Bearbeiten-Dialog per Klick auf die Zeile', async () => {
+      mockPb.collection.mockReturnValue({
+        getFullList: vi.fn().mockResolvedValue([
+          { ...baseTask, id: 'task-1', title: 'Zu bearbeiten', points: 42 },
+        ]),
+        subscribe: vi.fn().mockResolvedValue(() => {}),
+        unsubscribe: vi.fn(),
+        create: vi.fn(),
+      } as any)
+
+      const user = userEvent.setup()
+      render(<GamificationTaskList />)
+
+      await user.click(await screen.findByText('Zu bearbeiten'))
+
+      expect(await screen.findByText('Aufgabe bearbeiten')).toBeInTheDocument()
+      // Formular ist mit den Werten der Aufgabe vorbelegt
+      expect(screen.getByDisplayValue('Zu bearbeiten')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('42')).toBeInTheDocument()
+    })
+
+    it('speichert Änderungen per update() mit der Task-ID', async () => {
+      const mockUpdate = vi.fn().mockResolvedValue({ id: 'task-1' })
+      mockPb.collection.mockReturnValue({
+        getFullList: vi.fn().mockResolvedValue([
+          { ...baseTask, id: 'task-1', title: 'Alt', active: true },
+        ]),
+        update: mockUpdate,
+        subscribe: vi.fn().mockResolvedValue(() => {}),
+        unsubscribe: vi.fn(),
+        create: vi.fn(),
+      } as any)
+
+      const user = userEvent.setup()
+      render(<GamificationTaskList />)
+
+      await user.click(await screen.findByText('Alt'))
+      const titel = screen.getByDisplayValue('Alt')
+      await user.clear(titel)
+      await user.type(titel, 'Neu')
+      await user.click(screen.getByText('Speichern'))
+
+      await waitFor(() => {
+        expect(mockUpdate).toHaveBeenCalledWith(
+          'task-1',
+          expect.objectContaining({ title: 'Neu' })
+        )
+      })
+    })
+
+    it('löscht erst nach Bestätigung', async () => {
+      const mockDelete = vi.fn().mockResolvedValue(true)
+      mockPb.collection.mockReturnValue({
+        getFullList: vi.fn().mockResolvedValue([
+          { ...baseTask, id: 'task-1', title: 'Wegwerfen' },
+        ]),
+        delete: mockDelete,
+        update: vi.fn(),
+        subscribe: vi.fn().mockResolvedValue(() => {}),
+        unsubscribe: vi.fn(),
+        create: vi.fn(),
+      } as any)
+
+      const user = userEvent.setup()
+      render(<GamificationTaskList />)
+
+      await user.click(await screen.findByText('Wegwerfen'))
+      await user.click(screen.getByText('Löschen'))
+
+      // Erst die Rückfrage, noch kein delete()
+      expect(await screen.findByText(/wirklich löschen/i)).toBeInTheDocument()
+      expect(mockDelete).not.toHaveBeenCalled()
+
+      await user.click(screen.getByText('Ja'))
+      await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('task-1'))
     })
   })
 
