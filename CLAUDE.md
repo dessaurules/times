@@ -297,11 +297,13 @@ Gamification-Hooks mit `catch`-Blöcken.
 Kette ab — **nichts wird gespeichert, die API antwortet mit 200 und leerem Body**
 (in den PB-Logs sichtbar als `status: 0`).
 
-Behoben ist nur Hook 1 (`gam_assignments` create, Commit `59c3afa`) — das war der
-„Annehmen"-Button. Offen:
-- Zeile ~128 `onRecordCreateRequest` (`gam_submissions`) → **Einreichen funktioniert nicht**
-- Zeile ~218 `onRecordUpdateRequest` (`gam_submissions`) → Genehmigen/Ablehnen
-- Zeile ~338 `onRecordUpdateRequest` (`gam_orders`) → Prämien-Freigabe
+Behoben sind die beiden **Create**-Hooks:
+- ✅ Hook 1 `gam_assignments` create (Commit `59c3afa`) — „Annehmen"-Button
+- ✅ Hook 2 `gam_submissions` create (Commit `c0ca9c5`) — Einreichen
+
+Offen sind die beiden **Update**-Hooks:
+- Zeile ~222 `onRecordUpdateRequest` (`gam_submissions`) → Genehmigen/Ablehnen
+- Zeile ~342 `onRecordUpdateRequest` (`gam_orders`) → Prämien-Freigabe
 
 Bei den beiden Update-Hooks ist Vorsicht nötig: sie speichern `e.record` **selbst** per
 `txApp.save()`. Ein blindes `e.next()` würde doppelt speichern (bei `gam_submissions`
@@ -311,6 +313,16 @@ Status-Änderung dürfte dort verloren gehen.
 
 **Merke:** `onRecordAfter*Success`-Hooks (die übrigen Dateien in `pb_hooks/`) brauchen
 kein `e.next()`, deshalb funktionieren Push-Notifications & Co. unauffällig.
+Bestätigt: Hook 2b (`gam_submissions` AfterCreateSuccess) setzt das Assignment
+zuverlässig auf `completed`, ohne `e.next()`.
+
+**Verifizierter Ablauf in der Mitarbeiter-App (2026-08-11, User `maria@test.de`):**
+Aufgabe „Annehmen" → Assignment (`active`, `expires_at` +8h) → erscheint unter „Aktiv"
+mit Countdown → „Abschließen" + Notiz → Submission (`pending`) → Assignment auf
+`completed`, verschwindet aus „Aktiv" → Datensatz trifft den Approvals-Filter der
+Chef-App (`status = "pending"`).
+Noch offen: die Genehmigung in der Chef-App selbst — sie läuft über den
+`onRecordUpdateRequest`-Hook, der noch kein `e.next()` hat (siehe oben).
 
 ---
 
