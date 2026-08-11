@@ -19,8 +19,11 @@ export default function App() {
     })
   }, [])
 
+  // basename aus Vites `base` ('/ma/'): ohne ihn matcht /ma/ keine Route, die
+  // Catch-all schreibt die URL auf '/' um — und der naechste Reload laedt dort
+  // die Chef-App statt der Mitarbeiter-App.
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route element={<ProtectedRoute />}>

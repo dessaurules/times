@@ -36,7 +36,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const fresh = await pb.collection('users').authRefresh()
       set({ user: fresh.record as unknown as User })
-    } catch {
+    } catch (err) {
+      // Auto-Cancellation ist kein Auth-Fehler: das SDK bricht den laufenden
+      // Request ab, sobald ein zweiter mit gleichem requestKey startet.
+      // Ohne diesen Guard wirft ein paralleler Refresh den User aus der App,
+      // obwohl sein Token gültig ist.
+      if ((err as { isAbort?: boolean })?.isAbort) return
       pb.authStore.clear()
       set({ user: null })
     }
