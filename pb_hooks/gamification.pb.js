@@ -38,9 +38,16 @@ onRecordCreateRequest((e) => {
     throw new Error('Task is not active')
   }
 
-  const expiresAt = new Date(String(task.get('expires_at') ?? ''))
-  if (isNaN(expiresAt.getTime()) || expiresAt <= new Date()) {
-    throw new Error('Task has expired')
+  // Ein leeres expires_at bedeutet "kein Ablaufdatum" — so behandeln es der
+  // Frontend-Filter (mitarbeiter-app GamificationTaskList.tsx:34) und der
+  // Chef-App-Dialog, wo das Feld optional ist. Ohne diese Unterscheidung wird
+  // new Date('') zu Invalid Date und JEDE Aufgabe gilt als abgelaufen.
+  const expiresAtRaw = String(task.get('expires_at') ?? '')
+  if (expiresAtRaw !== '') {
+    const expiresAt = new Date(expiresAtRaw)
+    if (isNaN(expiresAt.getTime()) || expiresAt <= new Date()) {
+      throw new Error('Task has expired')
+    }
   }
 
   // Check: No duplicate active assignment?
@@ -97,6 +104,10 @@ onRecordCreateRequest((e) => {
   e.record.set('status', 'active')
 
   console.log(`[gamification:assignment:create] User ${userId} assigned task ${taskId}`)
+
+  // PFLICHT ab PocketBase v0.23: ohne e.next() bricht die Hook-Kette ab, der
+  // Record wird nie gespeichert und die API antwortet mit 200 und leerem Body.
+  e.next()
 }, 'gam_assignments')
 
 // ─────────────────────────────────────────────────────────────────────────────
