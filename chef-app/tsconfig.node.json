@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
     "composite": true,
+    // Emit in einen temporaeren Ordner umleiten: sonst legt `tsc -b` ein
+    // vite.config.js neben die .ts-Datei, und Vite laedt .js VOR .ts —
+    // wodurch die server.proxy-Konfig (/ma/) stillschweigend verloren geht.
+    "outDir": "./node_modules/.tmp/tsconfig.node",
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
