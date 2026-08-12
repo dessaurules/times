@@ -1,5 +1,15 @@
 pocketbase
+pocketbase-linux
 pb_data/
+
+# Laufzeit-Logs (pb.log, mitarbeiter-app.log, push-service.log)
+*.log
+
+# Prozess-Artefakte der Brainstorm-Sessions (server.pid, server-info, ...).
+# Die Ergebnisse unter content/ bleiben versioniert.
+# Mit **/ voran, damit auch chef-app/.superpowers/... erfasst wird.
+**/.superpowers/**/state/
+
 .env
 *.local
 .DS_Store
