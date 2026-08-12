@@ -41,9 +41,19 @@ export default function MonatsstundenGauge({
       className="rounded-xl bg-white border border-[#E5E7EB] shadow-sm p-3 cursor-pointer select-none active:border-indigo-300"
       onClick={() => setMode(m => m === 'month' ? 'week' : 'month')}
     >
-      {/* Body: Gauge links, Header + Zahlen rechts */}
-      <div className="flex items-start gap-3">
-        <svg width={64} height={56} viewBox="0 0 88 64" style={{ overflow: 'visible', flexShrink: 0 }}>
+      {/* Body: unter sm gestapelt (Gauge oben), ab sm nebeneinander.
+          In der 2-Spalten-Kachel auf dem Handy ist die Karte nur ~166px breit;
+          neben dem 64px-Gauge blieben 77px fuer den Text — zu wenig fuer
+          dreistellige Sollstunden wie "128:45 / 173:00 h". Gestapelt steht die
+          volle Kartenbreite zur Verfuegung. */}
+      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-3">
+        <svg
+          width={64}
+          height={56}
+          viewBox="0 0 88 64"
+          className="w-14 h-11 shrink-0 self-center sm:w-16 sm:h-14 sm:self-auto"
+          style={{ overflow: 'visible' }}
+        >
           <defs>
             <linearGradient id="gaugeGradStunden" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#4F46E5" />
@@ -62,7 +72,8 @@ export default function MonatsstundenGauge({
           />
         </svg>
 
-        <div className="flex-1 relative">
+        {/* min-w-0: ohne das darf ein Flex-Kind seinen Container ueberragen */}
+        <div className="flex-1 min-w-0 relative">
           {/* Header */}
           <div className="mb-1.5">
             <span className="text-xs font-semibold text-[#374151] capitalize">
@@ -71,7 +82,7 @@ export default function MonatsstundenGauge({
           </div>
 
           {/* Stunden */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 whitespace-nowrap">
             <div className="text-sm font-bold text-[#111827] tabular-nums">{formatHM(displayActual)}</div>
             <span className="text-sm font-bold text-[#111827]">/</span>
             <div className="text-sm font-bold text-[#111827] tabular-nums">{formatHM(displayTarget)} h</div>

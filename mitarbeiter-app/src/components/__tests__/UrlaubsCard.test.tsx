@@ -180,4 +180,34 @@ describe('UrlaubsCard (red/green ring with toggle)', () => {
     const card = container.firstChild as HTMLElement
     expect(card.className).toContain('cursor-pointer')
   })
+
+  describe('Responsive-Layout (Handy)', () => {
+    it('stapelt unter sm und stellt erst ab sm nebeneinander', () => {
+      const { container } = render(
+        <UrlaubsCard taken={10} planned={3} entitlement={25} />
+      )
+      const card = container.firstChild as HTMLElement
+      expect(card.className).toContain('flex-col')
+      expect(card.className).toContain('sm:flex-row')
+    })
+
+    it('verkleinert den Gauge unter sm', () => {
+      const { container } = render(
+        <UrlaubsCard taken={10} planned={3} entitlement={25} />
+      )
+      const svg = container.querySelector('svg')!
+      expect(svg.getAttribute('class')).toContain('w-14')
+      expect(svg.getAttribute('class')).toContain('sm:w-16')
+    })
+
+    it('laesst die Zahlenzeile nicht umbrechen und begrenzt die Textspalte', () => {
+      const { container } = render(
+        <UrlaubsCard taken={10} planned={3} entitlement={25} />
+      )
+      const textspalte = container.querySelector('.flex-1')!
+      expect(textspalte.className).toContain('min-w-0')
+      const zahlen = container.querySelector('.flex.items-center.gap-1')!
+      expect(zahlen.className).toContain('whitespace-nowrap')
+    })
+  })
 })

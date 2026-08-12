@@ -87,4 +87,35 @@ describe('MonatsstundenGauge (mini-ring variant B)', () => {
     fireEvent.click(card)
     await screen.findByText('KW 37')
   })
+
+  describe('Responsive-Layout (Handy)', () => {
+    it('stapelt unter sm und stellt erst ab sm nebeneinander', () => {
+      const { container } = render(<MonatsstundenGauge {...baseProps} />)
+      const body = container.querySelector('.rounded-xl > div')!
+      // In der 2-Spalten-Kachel bleiben auf 375px nur ~77px neben dem Gauge.
+      expect(body.className).toContain('flex-col')
+      expect(body.className).toContain('sm:flex-row')
+    })
+
+    it('verkleinert den Gauge unter sm', () => {
+      const { container } = render(<MonatsstundenGauge {...baseProps} />)
+      const svg = container.querySelector('svg')!
+      expect(svg.getAttribute('class')).toContain('w-14')
+      expect(svg.getAttribute('class')).toContain('sm:w-16')
+    })
+
+    it('laesst die Zahlenzeile nicht umbrechen und begrenzt die Textspalte', () => {
+      // Ohne whitespace-nowrap brach "128:45 / 173:00 h" auf zwei Zeilen um;
+      // ohne min-w-0 ragte die Spalte aus der Karte heraus.
+      const { container } = render(
+        <MonatsstundenGauge {...baseProps} actualMins={7725} targetMins={10380} />
+      )
+      const textspalte = container.querySelector('.flex-1')!
+      expect(textspalte.className).toContain('min-w-0')
+      const zahlen = container.querySelector('.flex.items-center.gap-1')!
+      expect(zahlen.className).toContain('whitespace-nowrap')
+      expect(screen.getByText('128:45')).toBeInTheDocument()
+      expect(screen.getByText('173:00 h')).toBeInTheDocument()
+    })
+  })
 })

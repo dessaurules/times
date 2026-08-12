@@ -24,13 +24,22 @@ export default function UrlaubsCard({ taken, planned, entitlement }: Props) {
   const displayNum = mode === 'taken' ? taken : open
   const displayLabel = mode === 'taken' ? 'genommen' : 'verfügbar'
 
+  // Unter sm gestapelt (Gauge oben), ab sm nebeneinander — siehe
+  // MonatsstundenGauge: in der 2-Spalten-Kachel bleiben auf dem Handy neben
+  // dem 64px-Gauge nur ~77px fuer den Text.
   return (
     <div
-      className="rounded-xl bg-white border border-[#E5E7EB] shadow-sm p-3 flex items-start gap-3 cursor-pointer select-none active:border-indigo-300"
+      className="rounded-xl bg-white border border-[#E5E7EB] shadow-sm p-3 flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-3 cursor-pointer select-none active:border-indigo-300"
       onClick={() => setMode(m => m === 'available' ? 'taken' : 'available')}
     >
       {/* Dreiviertelkreis SVG gauge */}
-      <svg width={64} height={56} viewBox="0 0 88 64" style={{ overflow: 'visible', flexShrink: 0 }}>
+      <svg
+        width={64}
+        height={56}
+        viewBox="0 0 88 64"
+        className="w-14 h-11 shrink-0 self-center sm:w-16 sm:h-14 sm:self-auto"
+        style={{ overflow: 'visible' }}
+      >
         <defs>
           <linearGradient id="gRed" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#DC2626" />
@@ -71,15 +80,16 @@ export default function UrlaubsCard({ taken, planned, entitlement }: Props) {
         )}
       </svg>
 
-      {/* Header + Zahlen rechts */}
-      <div className="flex-1">
+      {/* Header + Zahlen rechts.
+          min-w-0: ohne das darf ein Flex-Kind seinen Container ueberragen */}
+      <div className="flex-1 min-w-0">
         {/* Header oben */}
         <div className="mb-1.5">
           <span className="text-xs font-semibold text-[#374151]">Urlaub {year}</span>
         </div>
         {/* Zahlen unten */}
         <div className="flex flex-col gap-0.5">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 whitespace-nowrap">
             <span className="text-sm font-bold text-[#111827] tabular-nums">{displayNum}</span>
             <span className="text-sm font-bold text-[#111827]">/</span>
             <span className="text-sm font-bold text-[#111827] tabular-nums">{entitlement} Tage</span>
