@@ -1,0 +1,170 @@
+<h2>Σ Stunden-Spalte — Design-Optionen</h2>
+<p class="subtitle">Alle Varianten machen die Spalte schmaler als die aktuellen 110px. Klicke auf deine bevorzugte Option.</p>
+
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-top: 1.5rem; align-items: start;">
+
+  <!-- AKTUELL (Referenz) -->
+  <div style="border: 2px solid #E5E7EB; border-radius: 12px; overflow: hidden; opacity: 0.7;">
+    <div style="background: #F9FAFB; padding: 0.6rem; text-align: center; border-bottom: 1px solid #E5E7EB;">
+      <span style="font-size: 0.65rem; color: #9CA3AF; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Aktuell · 110px</span>
+    </div>
+    <!-- Header -->
+    <div style="background: #EEF2FF; padding: 0.4rem 0.5rem; text-align: center; border-bottom: 1px solid #C7D2FE;">
+      <span style="display: block; font-size: 0.6rem; font-weight: 700; color: #4F46E5; text-transform: uppercase; letter-spacing: 0.08em;">Σ Stunden</span>
+      <span style="display: block; font-size: 0.55rem; color: #818CF8;">Brutto</span>
+    </div>
+    <!-- Zeile 1 -->
+    <div style="background: rgba(238,242,255,0.8); padding: 0.4rem 0.5rem; text-align: center; border-bottom: 1px solid #E5E7EB;">
+      <p style="font-size: 0.875rem; font-weight: 700; color: #1F2937; margin: 0; line-height: 1;">38:30</p>
+      <div style="margin-top: 4px; height: 4px; background: #E5E7EB; border-radius: 99px; overflow: hidden;">
+        <div style="height: 100%; width: 96%; background: #818CF8; border-radius: 99px;"></div>
+      </div>
+      <span style="display: inline-block; margin-top: 4px; font-size: 0.625rem; font-weight: 500; padding: 1px 6px; border-radius: 99px; background: #FFF7ED; color: #B45309;">+0:30</span>
+    </div>
+    <!-- Zeile 2 -->
+    <div style="background: rgba(238,242,255,0.8); padding: 0.4rem 0.5rem; text-align: center; border-bottom: 1px solid #E5E7EB;">
+      <p style="font-size: 0.875rem; font-weight: 700; color: #1F2937; margin: 0; line-height: 1;">32:00</p>
+      <div style="margin-top: 4px; height: 4px; background: #E5E7EB; border-radius: 99px; overflow: hidden;">
+        <div style="height: 100%; width: 80%; background: #818CF8; border-radius: 99px;"></div>
+      </div>
+      <span style="display: inline-block; margin-top: 4px; font-size: 0.625rem; font-weight: 500; padding: 1px 6px; border-radius: 99px; background: #FEF2F2; color: #DC2626;">−8:00</span>
+    </div>
+    <!-- Zeile 3 -->
+    <div style="background: rgba(238,242,255,0.8); padding: 0.4rem 0.5rem; text-align: center;">
+      <p style="font-size: 0.875rem; font-weight: 700; color: #1F2937; margin: 0; line-height: 1;">40:00</p>
+      <div style="margin-top: 4px; height: 4px; background: #E5E7EB; border-radius: 99px; overflow: hidden;">
+        <div style="height: 100%; width: 100%; background: #34D399; border-radius: 99px;"></div>
+      </div>
+      <span style="display: inline-block; margin-top: 4px; font-size: 0.625rem; font-weight: 500; padding: 1px 6px; border-radius: 99px; background: #F0FDF4; color: #16A34A;">±0 h</span>
+    </div>
+  </div>
+
+  <!-- OPTION A -->
+  <div class="option" data-choice="a" onclick="toggleSelect(this)" style="border: 2px solid #E5E7EB; border-radius: 12px; overflow: hidden; cursor: pointer;">
+    <div style="background: #EFF6FF; padding: 0.6rem; text-align: center; border-bottom: 1px solid #BFDBFE;">
+      <span style="font-size: 0.65rem; color: #3B82F6; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">A · ~80px</span>
+    </div>
+    <!-- Header -->
+    <div style="background: #EEF2FF; padding: 0.4rem 0.4rem; text-align: center; border-bottom: 1px solid #C7D2FE;">
+      <span style="display: block; font-size: 0.65rem; font-weight: 700; color: #4F46E5; text-transform: uppercase; letter-spacing: 0.08em;">Σ h</span>
+    </div>
+    <!-- Zeile 1 -->
+    <div style="background: rgba(238,242,255,0.8); padding: 0.35rem 0.4rem; border-bottom: 1px solid #E5E7EB;">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+        <span style="font-size: 0.8rem; font-weight: 700; color: #1F2937;">38:30</span>
+        <span style="font-size: 0.6rem; font-weight: 600; color: #B45309; background: #FFF7ED; padding: 1px 4px; border-radius: 4px;">+0:30</span>
+      </div>
+      <div style="margin-top: 3px; height: 3px; background: #E5E7EB; border-radius: 99px; overflow: hidden;">
+        <div style="height: 100%; width: 96%; background: #818CF8; border-radius: 99px;"></div>
+      </div>
+    </div>
+    <!-- Zeile 2 -->
+    <div style="background: rgba(238,242,255,0.8); padding: 0.35rem 0.4rem; border-bottom: 1px solid #E5E7EB;">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+        <span style="font-size: 0.8rem; font-weight: 700; color: #1F2937;">32:00</span>
+        <span style="font-size: 0.6rem; font-weight: 600; color: #DC2626; background: #FEF2F2; padding: 1px 4px; border-radius: 4px;">−8:00</span>
+      </div>
+      <div style="margin-top: 3px; height: 3px; background: #E5E7EB; border-radius: 99px; overflow: hidden;">
+        <div style="height: 100%; width: 80%; background: #818CF8; border-radius: 99px;"></div>
+      </div>
+    </div>
+    <!-- Zeile 3 -->
+    <div style="background: rgba(238,242,255,0.8); padding: 0.35rem 0.4rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">
+        <span style="font-size: 0.8rem; font-weight: 700; color: #1F2937;">40:00</span>
+        <span style="font-size: 0.6rem; font-weight: 600; color: #16A34A; background: #F0FDF4; padding: 1px 4px; border-radius: 4px;">±0</span>
+      </div>
+      <div style="margin-top: 3px; height: 3px; background: #E5E7EB; border-radius: 99px; overflow: hidden;">
+        <div style="height: 100%; width: 100%; background: #34D399; border-radius: 99px;"></div>
+      </div>
+    </div>
+    <div style="padding: 0.6rem; background: #F0F9FF; border-top: 1px solid #E0F2FE;">
+      <p style="font-size: 0.7rem; color: #0369A1; margin: 0; line-height: 1.4;"><strong>Zeit + Saldo nebeneinander</strong><br>Balken dünner (3px), alles in einer Zeile</p>
+    </div>
+  </div>
+
+  <!-- OPTION B -->
+  <div class="option" data-choice="b" onclick="toggleSelect(this)" style="border: 2px solid #E5E7EB; border-radius: 12px; overflow: hidden; cursor: pointer;">
+    <div style="background: #F0FDF4; padding: 0.6rem; text-align: center; border-bottom: 1px solid #BBF7D0;">
+      <span style="font-size: 0.65rem; color: #16A34A; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">B · ~75px</span>
+    </div>
+    <!-- Header -->
+    <div style="background: #EEF2FF; padding: 0.4rem 0.4rem; text-align: center; border-bottom: 1px solid #C7D2FE;">
+      <span style="display: block; font-size: 0.65rem; font-weight: 700; color: #4F46E5; text-transform: uppercase; letter-spacing: 0.08em;">Std.</span>
+    </div>
+    <!-- Zeile 1 -->
+    <div style="background: rgba(238,242,255,0.8); padding: 0.35rem 0.4rem; text-align: center; border-bottom: 1px solid #E5E7EB;">
+      <p style="font-size: 0.8rem; font-weight: 700; color: #1F2937; margin: 0; line-height: 1;">38:30</p>
+      <div style="margin-top: 3px; height: 3px; background: #E5E7EB; border-radius: 99px; overflow: hidden;">
+        <div style="height: 100%; width: 96%; background: #818CF8; border-radius: 99px;"></div>
+      </div>
+      <p style="font-size: 0.6rem; color: #B45309; font-weight: 600; margin: 2px 0 0 0; line-height: 1;">+0:30</p>
+    </div>
+    <!-- Zeile 2 -->
+    <div style="background: rgba(238,242,255,0.8); padding: 0.35rem 0.4rem; text-align: center; border-bottom: 1px solid #E5E7EB;">
+      <p style="font-size: 0.8rem; font-weight: 700; color: #1F2937; margin: 0; line-height: 1;">32:00</p>
+      <div style="margin-top: 3px; height: 3px; background: #E5E7EB; border-radius: 99px; overflow: hidden;">
+        <div style="height: 100%; width: 80%; background: #818CF8; border-radius: 99px;"></div>
+      </div>
+      <p style="font-size: 0.6rem; color: #DC2626; font-weight: 600; margin: 2px 0 0 0; line-height: 1;">−8:00</p>
+    </div>
+    <!-- Zeile 3 -->
+    <div style="background: rgba(238,242,255,0.8); padding: 0.35rem 0.4rem; text-align: center;">
+      <p style="font-size: 0.8rem; font-weight: 700; color: #1F2937; margin: 0; line-height: 1;">40:00</p>
+      <div style="margin-top: 3px; height: 3px; background: #E5E7EB; border-radius: 99px; overflow: hidden;">
+        <div style="height: 100%; width: 100%; background: #34D399; border-radius: 99px;"></div>
+      </div>
+      <p style="font-size: 0.6rem; color: #16A34A; font-weight: 600; margin: 2px 0 0 0; line-height: 1;">±0</p>
+    </div>
+    <div style="padding: 0.6rem; background: #F0FDF4; border-top: 1px solid #BBF7D0;">
+      <p style="font-size: 0.7rem; color: #166534; margin: 0; line-height: 1.4;"><strong>Zentriert gestapelt</strong><br>Saldo als einfache farbige Zahl, kein Badge</p>
+    </div>
+  </div>
+
+  <!-- OPTION C -->
+  <div class="option" data-choice="c" onclick="toggleSelect(this)" style="border: 2px solid #E5E7EB; border-radius: 12px; overflow: hidden; cursor: pointer;">
+    <div style="background: #FFF7ED; padding: 0.6rem; text-align: center; border-bottom: 1px solid #FED7AA;">
+      <span style="font-size: 0.65rem; color: #EA580C; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">C · ~70px</span>
+    </div>
+    <!-- Header -->
+    <div style="background: #EEF2FF; padding: 0.4rem 0.4rem; text-align: center; border-bottom: 1px solid #C7D2FE;">
+      <span style="display: block; font-size: 0.65rem; font-weight: 700; color: #4F46E5; text-transform: uppercase; letter-spacing: 0.08em;">Σ</span>
+    </div>
+    <!-- Zeile 1 -->
+    <div style="background: rgba(238,242,255,0.8); padding: 0.3rem 0.35rem; border-bottom: 1px solid #E5E7EB; position: relative;">
+      <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #FCD34D; border-radius: 0 2px 2px 0;"></div>
+      <p style="font-size: 0.75rem; font-weight: 700; color: #1F2937; margin: 0 0 2px 6px; line-height: 1;">38:30</p>
+      <div style="margin-left: 6px; height: 2px; background: #E5E7EB; border-radius: 99px; overflow: hidden;">
+        <div style="height: 100%; width: 96%; background: #818CF8; border-radius: 99px;"></div>
+      </div>
+    </div>
+    <!-- Zeile 2 -->
+    <div style="background: rgba(238,242,255,0.8); padding: 0.3rem 0.35rem; border-bottom: 1px solid #E5E7EB; position: relative;">
+      <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #F87171; border-radius: 0 2px 2px 0;"></div>
+      <p style="font-size: 0.75rem; font-weight: 700; color: #1F2937; margin: 0 0 2px 6px; line-height: 1;">32:00</p>
+      <div style="margin-left: 6px; height: 2px; background: #E5E7EB; border-radius: 99px; overflow: hidden;">
+        <div style="height: 100%; width: 80%; background: #818CF8; border-radius: 99px;"></div>
+      </div>
+    </div>
+    <!-- Zeile 3 -->
+    <div style="background: rgba(238,242,255,0.8); padding: 0.3rem 0.35rem; position: relative;">
+      <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #34D399; border-radius: 0 2px 2px 0;"></div>
+      <p style="font-size: 0.75rem; font-weight: 700; color: #1F2937; margin: 0 0 2px 6px; line-height: 1;">40:00</p>
+      <div style="margin-left: 6px; height: 2px; background: #E5E7EB; border-radius: 99px; overflow: hidden;">
+        <div style="height: 100%; width: 100%; background: #34D399; border-radius: 99px;"></div>
+      </div>
+    </div>
+    <div style="padding: 0.6rem; background: #FFF7ED; border-top: 1px solid #FED7AA;">
+      <p style="font-size: 0.7rem; color: #9A3412; margin: 0; line-height: 1.4;"><strong>Linker Farbstreifen</strong><br>Saldo als linke Linie kodiert, kein Text-Overhead</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top: 1.5rem; background: #F8FAFC; border-radius: 10px; padding: 1rem 1.25rem;">
+  <h3 style="font-size: 0.8rem; margin: 0 0 0.5rem 0; color: #374151;">Meine Empfehlung</h3>
+  <p style="font-size: 0.8rem; color: #6B7280; margin: 0; line-height: 1.5;">
+    <strong style="color: #1F2937;">Option A</strong> — Zeit und Saldo in einer Zeile nebeneinander, mit schmalem Balken darunter.
+    Spart ~30px Breite, behält aber alle Infos. Option B ist die sauberste Mitte. Option C wäre maximal schmal, verliert aber den Saldo-Zahlenwert.
+  </p>
+</div>

@@ -1,0 +1,115 @@
+<h2>Welche Farbpalette soll die Chef-App bekommen?</h2>
+<p class="subtitle">Die Mitarbeiter-App nutzt Indigo/Violett — die Chef-App hat aktuell Amber/Gold. Wohin soll es gehen?</p>
+
+<div class="cards">
+  <div class="card" data-choice="amber-modern" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #F5F2EE 0%, #EDE7DC 100%); padding: 20px; border-bottom: 1px solid #EDE7DC;">
+      <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:8px;background:#BA7517;"></div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#1A1917;">Chef-App</div>
+          <div style="font-size:10px;color:#706D6A;">Zeiterfassung</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="background:white;border-radius:10px;padding:10px;border:1px solid #EDE7DC;">
+          <div style="font-size:9px;color:#706D6A;">Mitarbeiter</div>
+          <div style="font-size:18px;font-weight:700;color:#1A1917;">12</div>
+          <div style="height:3px;background:#BA7517;border-radius:2px;margin-top:6px;width:60%;"></div>
+        </div>
+        <div style="background:white;border-radius:10px;padding:10px;border:1px solid #EDE7DC;">
+          <div style="font-size:9px;color:#706D6A;">Heute aktiv</div>
+          <div style="font-size:18px;font-weight:700;color:#1A1917;">8</div>
+          <div style="height:3px;background:#10B981;border-radius:2px;margin-top:6px;width:70%;"></div>
+        </div>
+        <div style="background:white;border-radius:10px;padding:10px;border:1px solid #EDE7DC;">
+          <div style="font-size:9px;color:#706D6A;">Offene Anträge</div>
+          <div style="font-size:18px;font-weight:700;color:#1A1917;">3</div>
+          <div style="height:3px;background:#F59E0B;border-radius:2px;margin-top:6px;width:40%;"></div>
+        </div>
+        <div style="background:#BA7517;border-radius:10px;padding:10px;">
+          <div style="font-size:9px;color:rgba(255,255,255,0.8);">Aktion</div>
+          <div style="font-size:11px;font-weight:700;color:white;margin-top:4px;">Antrag prüfen →</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Amber/Gold modernisiert</h3>
+      <p>Warme Farben behalten (Markenidentität), aber moderner Stil: scharfe Karten, keine Glasoptik, klares Layout wie Mitarbeiter-App</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="indigo-match" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #EEF2FF 0%, #F5F3FF 100%); padding: 20px; border-bottom: 1px solid #E0E7FF;">
+      <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:8px;background:#4F46E5;"></div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#111827;">Chef-App</div>
+          <div style="font-size:10px;color:#6B7280;">Zeiterfassung</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="background:white;border-radius:10px;padding:10px;border:1px solid #E5E7EB;">
+          <div style="font-size:9px;color:#6B7280;">Mitarbeiter</div>
+          <div style="font-size:18px;font-weight:700;color:#111827;">12</div>
+          <div style="height:3px;background:#4F46E5;border-radius:2px;margin-top:6px;width:60%;"></div>
+        </div>
+        <div style="background:white;border-radius:10px;padding:10px;border:1px solid #E5E7EB;">
+          <div style="font-size:9px;color:#6B7280;">Heute aktiv</div>
+          <div style="font-size:18px;font-weight:700;color:#111827;">8</div>
+          <div style="height:3px;background:#10B981;border-radius:2px;margin-top:6px;width:70%;"></div>
+        </div>
+        <div style="background:white;border-radius:10px;padding:10px;border:1px solid #E5E7EB;">
+          <div style="font-size:9px;color:#6B7280;">Offene Anträge</div>
+          <div style="font-size:18px;font-weight:700;color:#111827;">3</div>
+          <div style="height:3px;background:#F59E0B;border-radius:2px;margin-top:6px;width:40%;"></div>
+        </div>
+        <div style="background:#4F46E5;border-radius:10px;padding:10px;">
+          <div style="font-size:9px;color:rgba(255,255,255,0.8);">Aktion</div>
+          <div style="font-size:11px;font-weight:700;color:white;margin-top:4px;">Antrag prüfen →</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Indigo/Violett (wie Mitarbeiter-App)</h3>
+      <p>Beide Apps nutzen exakt die gleiche Farbpalette — maximale Einheitlichkeit, identisches Look & Feel</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="amber-indigo-split" onclick="toggleSelect(this)">
+    <div class="card-image" style="background: linear-gradient(135deg, #F5F2EE 0%, #EDE7DC 100%); padding: 20px; border-bottom: 1px solid #EDE7DC;">
+      <div style="display:flex; gap:10px; align-items:center; margin-bottom:12px;">
+        <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#BA7517,#7C3AED);"></div>
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#1A1917;">Chef-App</div>
+          <div style="font-size:10px;color:#706D6A;">Zeiterfassung</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="background:white;border-radius:10px;padding:10px;border:1px solid #EDE7DC;">
+          <div style="font-size:9px;color:#706D6A;">Mitarbeiter</div>
+          <div style="font-size:18px;font-weight:700;color:#1A1917;">12</div>
+          <div style="height:3px;background:#BA7517;border-radius:2px;margin-top:6px;width:60%;"></div>
+        </div>
+        <div style="background:white;border-radius:10px;padding:10px;border:1px solid #EDE7DC;">
+          <div style="font-size:9px;color:#706D6A;">Heute aktiv</div>
+          <div style="font-size:18px;font-weight:700;color:#1A1917;">8</div>
+          <div style="height:3px;background:#7C3AED;border-radius:2px;margin-top:6px;width:70%;"></div>
+        </div>
+        <div style="background:white;border-radius:10px;padding:10px;border:1px solid #EDE7DC;">
+          <div style="font-size:9px;color:#706D6A;">Offene Anträge</div>
+          <div style="font-size:18px;font-weight:700;color:#1A1917;">3</div>
+          <div style="height:3px;background:#F59E0B;border-radius:2px;margin-top:6px;width:40%;"></div>
+        </div>
+        <div style="background:linear-gradient(135deg,#BA7517,#7C3AED);border-radius:10px;padding:10px;">
+          <div style="font-size:9px;color:rgba(255,255,255,0.8);">Aktion</div>
+          <div style="font-size:11px;font-weight:700;color:white;margin-top:4px;">Antrag prüfen →</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Amber bleibt, Akzente Indigo</h3>
+      <p>Chef-App behält warmes Amber als Primärfarbe, nutzt aber dieselben modernen Komponenten und Indigo als sekundäre Akzentfarbe</p>
+    </div>
+  </div>
+</div>

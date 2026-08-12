@@ -124,7 +124,9 @@ export default function Dashboard() {
   }, [employeeId, viewMonth])
 
   useEffect(() => {
-    timerRef.current = setInterval(() => setNow(new Date()), 10_000)
+    // 1s-Takt, damit die Stempeluhr die Minuten live mitzaehlt (aus master,
+    // Commit 011c919 — der 10s-Takt hier stammte noch aus der Alpha-Version).
+    timerRef.current = setInterval(() => setNow(new Date()), 1_000)
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [])
 

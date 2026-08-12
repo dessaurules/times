@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zeiterfassung — 3 Design-Optionen</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F3F4F6; color: #111827; }
+
+  .page-header { background: white; border-bottom: 1px solid #E5E7EB; padding: 1rem 2rem; position: sticky; top: 0; z-index: 10; }
+  .page-header h1 { font-size: 1rem; font-weight: 700; }
+  .page-header p { font-size: 0.72rem; color: #6B7280; margin-top: 2px; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem; display: flex; flex-direction: column; gap: 2.5rem; }
+
+  /* Card */
+  .card { background: white; border-radius: 14px; overflow: hidden; cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s; border: 2px solid #E5E7EB; }
+  .card:hover { border-color: #6366F1; }
+  .card.selected { border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); }
+  .card-header { padding: 1rem 1.25rem; border-bottom: 1px solid #E5E7EB; display: flex; align-items: flex-start; gap: 12px; }
+  .badge { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 10px; border-radius: 99px; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+  .card-title { font-size: 0.85rem; font-weight: 700; }
+  .card-desc { font-size: 0.7rem; color: #6B7280; margin-top: 3px; line-height: 1.5; }
+  .card-body { padding: 1.25rem; background: #F9FAFB; }
+  .card-footer { padding: 0.7rem 1.25rem; border-top: 1px solid #E5E7EB; font-size: 0.7rem; color: #374151; line-height: 1.6; background: white; }
+
+  /* Tabelle gemeinsam */
+  .zt-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #E5E7EB; }
+  .zt-table th { background: #F9FAFB; font-weight: 600; color: #6B7280; padding: 7px 10px; border-bottom: 1px solid #E5E7EB; text-align: center; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .zt-table th.col-name { text-align: left; }
+  .zt-table td { border-bottom: 1px solid #F3F4F6; padding: 7px 10px; text-align: center; vertical-align: middle; }
+  .zt-table td.col-name { text-align: left; }
+  .zt-table tr:last-child td { border-bottom: none; }
+  .zt-table tr:hover td { background: #FAFAFA; }
+
+  /* Blink-Animation */
+  @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+  .blink { animation: blink 1.6s step-start infinite; }
+
+  /* Puls-Animation für aktive Zeilen */
+  @keyframes pulse-green { 0%,100%{background:#F0FDF4} 50%{background:#DCFCE7} }
+  .row-active-pulse td { animation: pulse-green 2s ease-in-out infinite; }
+
+  .col-name { width: 130px; }
+  .col-day { width: 72px; }
+  .col-sum { width: 68px; }
+
+  /* Timer-Varianten */
+  .timer-a { font-size: 0.7rem; font-weight: 700; color: #16A34A; font-variant-numeric: tabular-nums; }
+  .timer-b { font-size: 0.7rem; font-weight: 700; color: #4F46E5; font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 2px; background: #EEF2FF; padding: 2px 6px; border-radius: 4px; }
+  .timer-c { font-size: 0.75rem; font-weight: 800; color: #16A34A; font-variant-numeric: tabular-nums; }
+  .dot-active { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #22C55E; margin-right: 4px; flex-shrink: 0; animation: blink 1.2s step-start infinite; }
+
+  .highlight-row-b td { background: #EEF2FF !important; }
+  .highlight-row-c td { background: #F0FDF4 !important; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Zeiterfassung — 3 Design-Optionen</h1>
+  <p>shadcn-Tabellenstil wie Mitarbeiter · schmale Spalten · laufende Schicht mit Live-Timer statt "HH:mm…"</p>
+</div>
+
+<div class="container">
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- OPTION A                                   -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card" id="card-a" onclick="select('a')">
+    <div class="card-header">
+      <span class="badge" style="background:#4F46E5;color:white;">A</span>
+      <div>
+        <div class="card-title">Grüner Live-Timer · Zelle neutral</div>
+        <div class="card-desc">Laufende Schicht zeigt grünen Timer mit blinkendem ":"  — die Zelle selbst bleibt weiß wie alle anderen. Nur die Farbe signalisiert "aktiv".</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <table class="zt-table">
+        <thead>
+          <tr>
+            <th class="col-name">Mitarbeiter</th>
+            <th class="col-day">Mo<br><span style="font-weight:400;font-size:0.6rem;color:#9CA3AF;">19.05.</span></th>
+            <th class="col-day">Di<br><span style="font-weight:400;font-size:0.6rem;color:#9CA3AF;">20.05.</span></th>
+            <th class="col-day">Mi<br><span style="font-weight:400;font-size:0.6rem;color:#9CA3AF;">21.05.</span></th>
+            <th class="col-day">Do<br><span style="font-weight:400;font-size:0.6rem;color:#9CA3AF;">22.05.</span></th>
+            <th class="col-day" style="color:#4F46E5;">Fr<br><span style="font-weight:400;font-size:0.6rem;">23.05.</span></th>
+            <th class="col-sum">Σ Woche</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- MA 1: aktive Schicht heute -->
+          <tr>
+            <td class="col-name"><div style="font-weight:600;color:#111827;font-size:0.75rem;">Beckmann, Ronny</div><div style="font-size:0.65rem;color:#6B7280;">Restaurant</div></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">8:30 h</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">8:00 h</span></td>
+            <td><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">7:45 h</span></td>
+            <!-- AKTIVE SCHICHT: grüner Timer mit Blink -->
+            <td>
+              <span class="timer-a">3<span class="blink">:</span>42 h</span>
+            </td>
+            <td><div style="font-size:0.7rem;font-weight:600;color:#111827;">27:57 h</div><div style="font-size:0.6rem;color:#6B7280;">Soll: 40 h</div></td>
+          </tr>
+          <!-- MA 2: abgeschlossen -->
+          <tr>
+            <td class="col-name"><div style="font-weight:600;color:#111827;font-size:0.75rem;">Hofmann, Steffi</div><div style="font-size:0.65rem;color:#6B7280;">Service</div></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">6:15 h</span></td>
+            <td><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">8:00 h</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#16A34A;">8:30 h</span></td>
+            <td><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td><div style="font-size:0.7rem;font-weight:600;color:#111827;">22:45 h</div><div style="font-size:0.6rem;color:#6B7280;">Soll: 40 h</div></td>
+          </tr>
+          <!-- MA 3: abgeschlossen -->
+          <tr>
+            <td class="col-name"><div style="font-weight:600;color:#111827;font-size:0.75rem;">Bienert, Sandy</div><div style="font-size:0.65rem;color:#6B7280;">Küche</div></td>
+            <td><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">9:00 h</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">8:15 h</span></td>
+            <td><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">7:30 h</span></td>
+            <td><div style="font-size:0.7rem;font-weight:600;color:#111827;">24:45 h</div><div style="font-size:0.6rem;color:#6B7280;">Soll: 30 h</div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <strong>Timer:</strong> Grün + blinkendes ":"  — wie im Dashboard-Panel. Zelle neutral (kein Hintergrund). Sauberste Lösung, minimaler visueller Unterschied zu abgeschlossenen Zeilen.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- OPTION B                                   -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card" id="card-b" onclick="select('b')">
+    <div class="card-header">
+      <span class="badge" style="background:#0891B2;color:white;">B</span>
+      <div>
+        <div class="card-title">Indigo-Badge Timer · Zeile hervorgehoben</div>
+        <div class="card-desc">Laufende Schicht: Timer in einem Indigo-Badge ("3:42 h") — die gesamte Zeile bekommt einen leichten Indigo-Hintergrund, damit man schnell sieht wer gerade arbeitet.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <table class="zt-table">
+        <thead>
+          <tr>
+            <th class="col-name">Mitarbeiter</th>
+            <th class="col-day">Mo<br><span style="font-weight:400;font-size:0.6rem;color:#9CA3AF;">19.05.</span></th>
+            <th class="col-day">Di<br><span style="font-weight:400;font-size:0.6rem;color:#9CA3AF;">20.05.</span></th>
+            <th class="col-day">Mi<br><span style="font-weight:400;font-size:0.6rem;color:#9CA3AF;">21.05.</span></th>
+            <th class="col-day">Do<br><span style="font-weight:400;font-size:0.6rem;color:#9CA3AF;">22.05.</span></th>
+            <th class="col-day" style="color:#4F46E5;">Fr<br><span style="font-weight:400;font-size:0.6rem;">23.05.</span></th>
+            <th class="col-sum">Σ Woche</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- MA 1: aktiv → Zeile hervorgehoben -->
+          <tr class="highlight-row-b">
+            <td class="col-name" style="background:#EEF2FF!important;">
+              <div style="display:flex;align-items:center;gap:5px;">
+                <span class="dot-active"></span>
+                <div><div style="font-weight:600;color:#111827;font-size:0.75rem;">Beckmann, Ronny</div><div style="font-size:0.65rem;color:#6B7280;">Restaurant</div></div>
+              </div>
+            </td>
+            <td style="background:#EEF2FF!important;"><span style="font-size:0.7rem;font-weight:600;color:#111827;">8:30 h</span></td>
+            <td style="background:#EEF2FF!important;"><span style="font-size:0.7rem;font-weight:600;color:#111827;">8:00 h</span></td>
+            <td style="background:#EEF2FF!important;"><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td style="background:#EEF2FF!important;"><span style="font-size:0.7rem;font-weight:600;color:#111827;">7:45 h</span></td>
+            <td style="background:#EEF2FF!important;">
+              <span class="timer-b">3<span class="blink">:</span>42 h</span>
+            </td>
+            <td style="background:#EEF2FF!important;"><div style="font-size:0.7rem;font-weight:600;color:#111827;">27:57 h</div><div style="font-size:0.6rem;color:#6B7280;">Soll: 40 h</div></td>
+          </tr>
+          <tr>
+            <td class="col-name"><div style="font-weight:600;color:#111827;font-size:0.75rem;">Hofmann, Steffi</div><div style="font-size:0.65rem;color:#6B7280;">Service</div></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">6:15 h</span></td>
+            <td><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">8:00 h</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#16A34A;">8:30 h</span></td>
+            <td><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td><div style="font-size:0.7rem;font-weight:600;color:#111827;">22:45 h</div><div style="font-size:0.6rem;color:#6B7280;">Soll: 40 h</div></td>
+          </tr>
+          <tr>
+            <td class="col-name"><div style="font-weight:600;color:#111827;font-size:0.75rem;">Bienert, Sandy</div><div style="font-size:0.65rem;color:#6B7280;">Küche</div></td>
+            <td><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">9:00 h</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">8:15 h</span></td>
+            <td><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">7:30 h</span></td>
+            <td><div style="font-size:0.7rem;font-weight:600;color:#111827;">24:45 h</div><div style="font-size:0.6rem;color:#6B7280;">Soll: 30 h</div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <strong>Timer:</strong> Indigo-Badge mit blinkendem ":"  + blinkender grüner Punkt vor dem Namen + Indigo-Zeilenhintergrund. Aktive MA fallen sofort ins Auge.
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- OPTION C                                   -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="card" id="card-c" onclick="select('c')">
+    <div class="card-header">
+      <span class="badge" style="background:#16A34A;color:white;">C</span>
+      <div>
+        <div class="card-title">Grüner Timer · Zeile grün hervorgehoben</div>
+        <div class="card-desc">Wie Option A (grüner Timer), aber die aktive Zeile bekommt einen grünen Hintergrund — visuell konsistent mit dem grünen "eingestempelt"-Punkt im Dashboard.</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <table class="zt-table">
+        <thead>
+          <tr>
+            <th class="col-name">Mitarbeiter</th>
+            <th class="col-day">Mo<br><span style="font-weight:400;font-size:0.6rem;color:#9CA3AF;">19.05.</span></th>
+            <th class="col-day">Di<br><span style="font-weight:400;font-size:0.6rem;color:#9CA3AF;">20.05.</span></th>
+            <th class="col-day">Mi<br><span style="font-weight:400;font-size:0.6rem;color:#9CA3AF;">21.05.</span></th>
+            <th class="col-day">Do<br><span style="font-weight:400;font-size:0.6rem;color:#9CA3AF;">22.05.</span></th>
+            <th class="col-day" style="color:#4F46E5;">Fr<br><span style="font-weight:400;font-size:0.6rem;">23.05.</span></th>
+            <th class="col-sum">Σ Woche</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- MA 1: aktiv → grüne Zeile -->
+          <tr class="highlight-row-c">
+            <td class="col-name" style="background:#F0FDF4!important;">
+              <div style="display:flex;align-items:center;gap:5px;">
+                <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#22C55E;flex-shrink:0;"></span>
+                <div><div style="font-weight:600;color:#111827;font-size:0.75rem;">Beckmann, Ronny</div><div style="font-size:0.65rem;color:#6B7280;">Restaurant</div></div>
+              </div>
+            </td>
+            <td style="background:#F0FDF4!important;"><span style="font-size:0.7rem;font-weight:600;color:#111827;">8:30 h</span></td>
+            <td style="background:#F0FDF4!important;"><span style="font-size:0.7rem;font-weight:600;color:#111827;">8:00 h</span></td>
+            <td style="background:#F0FDF4!important;"><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td style="background:#F0FDF4!important;"><span style="font-size:0.7rem;font-weight:600;color:#111827;">7:45 h</span></td>
+            <td style="background:#F0FDF4!important;">
+              <span class="timer-c">3<span class="blink">:</span>42 h</span>
+            </td>
+            <td style="background:#F0FDF4!important;"><div style="font-size:0.7rem;font-weight:600;color:#111827;">27:57 h</div><div style="font-size:0.6rem;color:#6B7280;">Soll: 40 h</div></td>
+          </tr>
+          <tr>
+            <td class="col-name"><div style="font-weight:600;color:#111827;font-size:0.75rem;">Hofmann, Steffi</div><div style="font-size:0.65rem;color:#6B7280;">Service</div></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">6:15 h</span></td>
+            <td><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">8:00 h</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#16A34A;">8:30 h</span></td>
+            <td><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td><div style="font-size:0.7rem;font-weight:600;color:#111827;">22:45 h</div><div style="font-size:0.6rem;color:#6B7280;">Soll: 30 h</div></td>
+          </tr>
+          <tr>
+            <td class="col-name"><div style="font-weight:600;color:#111827;font-size:0.75rem;">Bienert, Sandy</div><div style="font-size:0.65rem;color:#6B7280;">Küche</div></td>
+            <td><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">9:00 h</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">8:15 h</span></td>
+            <td><span style="font-size:0.7rem;color:#D1D5DB;">—</span></td>
+            <td><span style="font-size:0.7rem;font-weight:600;color:#111827;">7:30 h</span></td>
+            <td><div style="font-size:0.7rem;font-weight:600;color:#111827;">24:45 h</div><div style="font-size:0.6rem;color:#6B7280;">Soll: 30 h</div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <strong>Timer:</strong> Grüner Timer mit blinkendem ":"  + grüner Punkt vor dem Namen + grüner Zeilenhintergrund. Konsistent mit dem Dashboard-Grün. Meine Empfehlung.
+    </div>
+  </div>
+
+  <div style="background:white;border-radius:10px;padding:1rem 1.25rem;border:1px solid #E5E7EB;font-size:0.72rem;color:#374151;line-height:1.6;">
+    <strong>Gemeinsam in allen Optionen:</strong>
+    Tabelle nutzt shadcn/ui-Stil wie Mitarbeiterliste · Spalten schmaler (Name 130px, Tag 72px) ·
+    Timer aktualisiert sich jede Minute via <code>setInterval</code> · <code>.blink</code> CSS-Animation auf dem Doppelpunkt
+  </div>
+
+</div>
+
+<script>
+function select(id) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'))
+  document.getElementById('card-' + id).classList.add('selected')
+  if (window.recordChoice) recordChoice(id)
+}
+</script>
+</body>
+</html>
