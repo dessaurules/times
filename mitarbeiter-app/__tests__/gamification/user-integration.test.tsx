@@ -276,6 +276,20 @@ describe('Gamification User Integration', () => {
       const badge = await screen.findByText('100')
       expect(badge).toBeInTheDocument()
     })
+
+    it('waechst mit dreistelligen Punktzahlen statt zu ueberlaufen', async () => {
+      // w-5 (20px) fest war zu schmal: "100" braucht 21px. Gleiches Muster
+      // wie die NotificationBell (min-w-[14px] + px-0.5).
+      render(<GamificationHeader />)
+
+      const badge = await screen.findByText('100')
+      expect(badge.className).toContain('min-w-5')
+      expect(badge.className).toContain('px-1')
+      expect(badge.className).not.toMatch(/(^|\s)w-5(\s|$)/)
+      // Die Hoehe bleibt fest, damit einstellige Werte kreisrund bleiben
+      expect(badge.className).toContain('h-5')
+      expect(badge.className).toContain('rounded-full')
+    })
   })
 
   describe('GamificationFeed - Activity Feed', () => {
