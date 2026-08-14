@@ -495,7 +495,14 @@ export function useGamificationSignal(): UseGamificationSignalReturn {
     let cancelled = false
     const since = seenAt || EPOCH
 
+    // Mit `requestKey: null` bricht das SDK ueberlappende Anfragen nicht mehr
+    // ab. Feuern zwei Ereignisse kurz hintereinander, koennen sich die
+    // Antworten ueberholen — die aeltere wuerde die neuere mit "kein Signal"
+    // ueberschreiben. Nur die juengste Runde darf schreiben.
+    let runde = 0
+
     const check = async () => {
+      const meine = ++runde
       try {
         const [tasks, rewards, events] = await Promise.all([
           pb.collection('gam_tasks').getList(1, 1, {
@@ -512,10 +519,10 @@ export function useGamificationSignal(): UseGamificationSignalReturn {
           }),
         ])
 
-        if (cancelled) return
+        if (cancelled || meine !== runde) return
         setHasNew(tasks.totalItems > 0 || rewards.totalItems > 0 || events.totalItems > 0)
       } catch (err) {
-        if (cancelled || isAbort(err)) return
+        if (cancelled || meine !== runde || isAbort(err)) return
         // Ein verpasstes Funkeln ist harmlos, ein Fehler in der Kopfleiste nicht.
         setHasNew(false)
       }
