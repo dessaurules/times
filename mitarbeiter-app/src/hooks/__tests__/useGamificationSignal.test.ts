@@ -342,4 +342,58 @@ describe('useGamificationSignal', () => {
 
     expect(result.current.sparkle).toBe(false)
   })
+
+  it('laesst eine langsame aeltere Antwort eine schnellere neuere nicht ueberschreiben', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const emitters: Record<string, (e: any) => void> = {}
+    let gamTasksCalls = 0
+    let resolveFirst: (() => void) | null = null
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(pb.collection as any).mockImplementation((name: string) => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      getList: vi.fn().mockImplementation(async () => {
+        if (name !== 'gam_tasks') return { totalItems: 0, items: [] }
+        gamTasksCalls++
+        if (gamTasksCalls === 1) {
+          // Erste (aeltere) Runde: haengt, bis wir sie explizit freigeben,
+          // und meldet dann "kein Treffer".
+          await new Promise<void>((resolve) => {
+            resolveFirst = resolve
+          })
+          return { totalItems: 0, items: [] }
+        }
+        // Zweite (juengere) Runde: antwortet sofort und mit Treffer.
+        return { totalItems: 1, items: [] }
+      }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      subscribe: vi.fn().mockImplementation(async (_topic: string, cb: (e: any) => void) => {
+        emitters[name] = cb
+        return () => {}
+      }),
+      update: vi.fn(),
+    }))
+
+    const { result } = renderHook(() => useGamificationSignal())
+
+    // Runde 1 laeuft (haengt in gam_tasks fest). Warten, bis die Subscription
+    // steht, dann ein `create` feuern — das stoesst Runde 2 an, die schneller
+    // antwortet als die noch haengende Runde 1.
+    await waitFor(() => expect(emitters['gam_tasks']).toBeDefined())
+    await waitFor(() => expect(resolveFirst).not.toBeNull())
+
+    await act(async () => {
+      emitters['gam_tasks']({ action: 'create', record: { id: 'task-neu' } })
+    })
+
+    await waitFor(() => expect(result.current.sparkle).toBe(true))
+
+    // Jetzt loest sich die aeltere Runde 1 auf — mit "kein Treffer". Sie darf
+    // das Ergebnis der juengeren Runde 2 nicht mehr ueberschreiben.
+    await act(async () => {
+      resolveFirst?.()
+    })
+
+    expect(result.current.sparkle).toBe(true)
+  })
 })
