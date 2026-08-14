@@ -15,7 +15,8 @@
 - Ruhefarbe `#6B7280` (Tailwind `text-gray-500`), Signalfarbe `#4F46E5`, Glanzstrich `#C7D2FE`.
 - Fristgrenze: 60 Minuten. Animationsdauer: 2,6 s, `cubic-bezier(.4,0,.5,1)`, endlos.
 - Jede PocketBase-Abfrage und jede Subscription bekommt `requestKey: null`.
-- Jeder `catch`-Block prüft zuerst auf `isAbort` und schweigt dann — kein `console.error`, kein Fehlerzustand.
+- Jeder `catch`-Block prüft zuerst auf `isAbort` und kehrt bei einem Abbruch **still** zurück — kein `console.error`, kein Fehlerzustand. Abbrüche sind Normalbetrieb des SDK. Echte Fehler dürfen protokolliert werden, wo sonst jede Spur fehlt (`markSeen`); in den Lesepfaden bleibt es beim stillen Rückfall auf „kein Signal".
+- Zeitstempel, die in einen PocketBase-Filter oder in ein `date`-Feld geschrieben werden, nutzen das Format des Servers (`2026-08-14 15:50:00.000Z`), nicht das ISO-`T`-Format. Bei reinem String-Vergleich sortiert `T` hinter dem Leerzeichen, wodurch ein neuerer Datensatz als älter gälte.
 - Bei `prefers-reduced-motion: reduce` entfällt die Animation; der Farbwechsel bleibt.
 - Ein Fehler darf nie zu einer sichtbaren Fehlermeldung im Header führen. Im Zweifel kein Signal.
 - Alle Arbeit findet in `mitarbeiter-app/` statt, ausgenommen die Migration in `pb_migrations/`.
@@ -528,7 +529,10 @@ export function useGamificationSignal(): UseGamificationSignalReturn {
   }, [enabled, seenAt])
 
   const markSeen = useCallback(async () => {
-    const jetzt = new Date().toISOString()
+    // Format des Servers, nicht ISO mit "T": PocketBase speichert
+    // "2026-08-14 15:50:00.000Z", und bei einem String-Vergleich sortiert
+    // "T" hinter dem Leerzeichen — ein neuerer Datensatz gaelte als aelter.
+    const jetzt = new Date().toISOString().replace('T', ' ')
     setSeenAt(jetzt)
     setHasNew(false)
 
