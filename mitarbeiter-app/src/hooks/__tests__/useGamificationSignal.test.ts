@@ -42,21 +42,30 @@ function seitWann(filter: string): number {
 function mockCounts(counts: { tasks?: number; rewards?: number; events?: number }) {
   const update = vi.fn().mockResolvedValue({})
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const emitters: Record<string, (e: any) => void> = {}
+  const zaehler = { ...counts }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ;(pb.collection as any).mockImplementation((name: string) => ({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getList: vi.fn().mockImplementation(async (_p: number, _n: number, opts: any) => {
       const konfiguriert =
-        name === 'gam_tasks' ? counts.tasks ?? 0
-        : name === 'gam_rewards' ? counts.rewards ?? 0
-        : name === 'gam_events' ? counts.events ?? 0
+        name === 'gam_tasks' ? zaehler.tasks ?? 0
+        : name === 'gam_rewards' ? zaehler.rewards ?? 0
+        : name === 'gam_events' ? zaehler.events ?? 0
         : 0
       const sichtbar = seitWann(opts?.filter ?? '') < new Date(RECORD_CREATED).getTime()
       return { totalItems: sichtbar ? konfiguriert : 0, items: [] }
     }),
-    subscribe: vi.fn().mockResolvedValue(() => {}),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    subscribe: vi.fn().mockImplementation(async (_topic: string, cb: (e: any) => void) => {
+      emitters[name] = cb
+      return () => {}
+    }),
     update,
   }))
-  return { update }
+
+  return { update, emitters, zaehler }
 }
 
 describe('useGamificationSignal', () => {
@@ -301,5 +310,36 @@ describe('useGamificationSignal', () => {
 
     expect(result.current.sparkle).toBe(true)
     vi.useRealTimers()
+  })
+
+  it('prueft erneut, wenn eine neue Aufgabe eintrifft', async () => {
+    const { emitters, zaehler } = mockCounts({})
+
+    const { result } = renderHook(() => useGamificationSignal())
+
+    await waitFor(() => expect(emitters['gam_tasks']).toBeDefined())
+    expect(result.current.sparkle).toBe(false)
+
+    zaehler.tasks = 1
+    await act(async () => {
+      emitters['gam_tasks']({ action: 'create', record: { id: 'task-neu' } })
+    })
+
+    await waitFor(() => expect(result.current.sparkle).toBe(true))
+  })
+
+  it('ignoriert Aenderungen an bestehenden Datensaetzen', async () => {
+    const { emitters, zaehler } = mockCounts({})
+
+    const { result } = renderHook(() => useGamificationSignal())
+
+    await waitFor(() => expect(emitters['gam_tasks']).toBeDefined())
+
+    zaehler.tasks = 1
+    await act(async () => {
+      emitters['gam_tasks']({ action: 'update', record: { id: 'task-alt' } })
+    })
+
+    expect(result.current.sparkle).toBe(false)
   })
 })

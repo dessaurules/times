@@ -78,8 +78,38 @@ export function useGamificationSignal(): UseGamificationSignalReturn {
 
     check()
 
+    const unsubs: Array<() => void> = []
+
+    const abonniere = async () => {
+      for (const name of ['gam_tasks', 'gam_rewards', 'gam_events'] as const) {
+        try {
+          const unsub = await pb.collection(name).subscribe(
+            '*',
+            (e) => {
+              // Nur neue Datensaetze sind ein Signal: eine bestehende Aufgabe
+              // zu bearbeiten aendert ihr `created` nicht.
+              if (e.action === 'create') check()
+            },
+            { requestKey: null },
+          )
+          if (cancelled) {
+            unsub()
+            return
+          }
+          unsubs.push(unsub)
+        } catch (err) {
+          if (isAbort(err)) return
+          // Ohne Subscription bleibt der Stand von `check()` stehen — das ist
+          // schlechter als Live, aber besser als ein Fehler in der Kopfleiste.
+        }
+      }
+    }
+
+    abonniere()
+
     return () => {
       cancelled = true
+      unsubs.forEach((unsub) => unsub())
     }
   }, [enabled, seenAt])
 
