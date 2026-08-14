@@ -260,35 +260,22 @@ describe('Gamification User Integration', () => {
     })
   })
 
-  describe('GamificationHeader - Points Badge', () => {
-    it('should display points in header badge', async () => {
-      render(<GamificationHeader />)
+  describe('GamificationHeader', () => {
+    it('zeigt den Button zum Oeffnen des Sheets', async () => {
+      const { container } = render(<GamificationHeader />)
 
-      // Should display the gem icon and points
-      const badge = await screen.findByText('100')
-      expect(badge).toBeInTheDocument()
+      await waitFor(() => {
+        expect(container.querySelector('button')).toBeInTheDocument()
+      })
     })
 
-    it('should display points badge', async () => {
-      render(<GamificationHeader />)
+    it('zeigt kein Punkte-Badge am Edelstein-Icon', async () => {
+      const { container } = render(<GamificationHeader />)
 
-      // Should display the points badge
-      const badge = await screen.findByText('100')
-      expect(badge).toBeInTheDocument()
-    })
-
-    it('waechst mit dreistelligen Punktzahlen statt zu ueberlaufen', async () => {
-      // w-5 (20px) fest war zu schmal: "100" braucht 21px. Gleiches Muster
-      // wie die NotificationBell (min-w-[14px] + px-0.5).
-      render(<GamificationHeader />)
-
-      const badge = await screen.findByText('100')
-      expect(badge.className).toContain('min-w-5')
-      expect(badge.className).toContain('px-1')
-      expect(badge.className).not.toMatch(/(^|\s)w-5(\s|$)/)
-      // Die Hoehe bleibt fest, damit einstellige Werte kreisrund bleiben
-      expect(badge.className).toContain('h-5')
-      expect(badge.className).toContain('rounded-full')
+      await waitFor(() => {
+        expect(container.querySelector('button')).toBeInTheDocument()
+      })
+      expect(screen.queryByText('100')).not.toBeInTheDocument()
     })
   })
 
