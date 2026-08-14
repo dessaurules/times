@@ -71,7 +71,10 @@ export function useGamificationSignal(): UseGamificationSignalReturn {
   }, [enabled, seenAt])
 
   const markSeen = useCallback(async () => {
-    const jetzt = new Date().toISOString()
+    // Format des Servers, nicht ISO mit "T": PocketBase speichert
+    // "2026-08-14 15:50:00.000Z", und bei einem String-Vergleich sortiert
+    // "T" hinter dem Leerzeichen — ein neuerer Datensatz gaelte als aelter.
+    const jetzt = new Date().toISOString().replace('T', ' ')
     setSeenAt(jetzt)
     setHasNew(false)
 

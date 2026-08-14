@@ -169,4 +169,44 @@ describe('useGamificationSignal', () => {
     expect(pb.collection).not.toHaveBeenCalled()
     expect(result.current.sparkle).toBe(false)
   })
+
+  it('schweigt, wenn der Schreibvorgang abgebrochen wird', async () => {
+    const fehler = vi.spyOn(console, 'error').mockImplementation(() => {})
+    mockCounts({})
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const bisher = (pb.collection as any).getMockImplementation()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(pb.collection as any).mockImplementation((name: string) => ({
+      ...bisher(name),
+      update: vi.fn().mockRejectedValue({ isAbort: true }),
+    }))
+
+    const { result } = renderHook(() => useGamificationSignal())
+    await act(async () => {
+      await result.current.markSeen()
+    })
+
+    expect(fehler).not.toHaveBeenCalled()
+    fehler.mockRestore()
+  })
+
+  it('protokolliert einen echten Fehler beim Schreiben des Merkers', async () => {
+    const fehler = vi.spyOn(console, 'error').mockImplementation(() => {})
+    mockCounts({})
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const bisher = (pb.collection as any).getMockImplementation()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(pb.collection as any).mockImplementation((name: string) => ({
+      ...bisher(name),
+      update: vi.fn().mockRejectedValue(new Error('offline')),
+    }))
+
+    const { result } = renderHook(() => useGamificationSignal())
+    await act(async () => {
+      await result.current.markSeen()
+    })
+
+    expect(fehler).toHaveBeenCalledWith('[useGamificationSignal] markSeen', expect.any(Error))
+    fehler.mockRestore()
+  })
 })
