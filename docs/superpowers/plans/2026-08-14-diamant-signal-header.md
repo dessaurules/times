@@ -290,22 +290,40 @@ vi.mock('../useAssignments', () => ({
 import { pb } from '../../lib/pb'
 import { useGamificationSignal } from '../useGamificationSignal'
 
+/**
+ * Zeitpunkt, zu dem die fiktiven Datensaetze angelegt wurden: nach dem
+ * Merker im Testprofil (08:00), aber vor "jetzt". Der Mock wertet den
+ * `created > "…"`-Teil des Filters wirklich aus — ein Mock, der den Filter
+ * ignoriert, wuerde nach markSeen weiterhin Treffer melden und damit genau
+ * das Verhalten unterschlagen, das der Test beweisen soll.
+ */
+const RECORD_CREATED = '2026-08-14T09:00:00.000Z'
+
+/** Liest den Merker aus dem Filterstring und normalisiert ihn auf ISO. */
+function seitWann(filter: string): number {
+  const treffer = filter.match(/created > "([^"]+)"/)
+  if (!treffer) return 0
+  return new Date(treffer[1].replace(' ', 'T')).getTime()
+}
+
 /** Zaehlt pro Collection, wieviele Treffer die Existenzpruefung melden soll. */
 function mockCounts(counts: { tasks?: number; rewards?: number; events?: number }) {
   const update = vi.fn().mockResolvedValue({})
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ;(pb.collection as any).mockImplementation((name: string) => {
-    const totalItems =
-      name === 'gam_tasks' ? counts.tasks ?? 0
-      : name === 'gam_rewards' ? counts.rewards ?? 0
-      : name === 'gam_events' ? counts.events ?? 0
-      : 0
-    return {
-      getList: vi.fn().mockResolvedValue({ totalItems, items: [] }),
-      subscribe: vi.fn().mockResolvedValue(() => {}),
-      update,
-    }
-  })
+  ;(pb.collection as any).mockImplementation((name: string) => ({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getList: vi.fn().mockImplementation(async (_p: number, _n: number, opts: any) => {
+      const konfiguriert =
+        name === 'gam_tasks' ? counts.tasks ?? 0
+        : name === 'gam_rewards' ? counts.rewards ?? 0
+        : name === 'gam_events' ? counts.events ?? 0
+        : 0
+      const sichtbar = seitWann(opts?.filter ?? '') < new Date(RECORD_CREATED).getTime()
+      return { totalItems: sichtbar ? konfiguriert : 0, items: [] }
+    }),
+    subscribe: vi.fn().mockResolvedValue(() => {}),
+    update,
+  }))
   return { update }
 }
 
@@ -789,13 +807,15 @@ function mockCounts(counts: { tasks?: number; rewards?: number; events?: number 
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ;(pb.collection as any).mockImplementation((name: string) => ({
-    getList: vi.fn().mockImplementation(async () => {
-      const totalItems =
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    getList: vi.fn().mockImplementation(async (_p: number, _n: number, opts: any) => {
+      const konfiguriert =
         name === 'gam_tasks' ? zaehler.tasks ?? 0
         : name === 'gam_rewards' ? zaehler.rewards ?? 0
         : name === 'gam_events' ? zaehler.events ?? 0
         : 0
-      return { totalItems, items: [] }
+      const sichtbar = seitWann(opts?.filter ?? '') < new Date(RECORD_CREATED).getTime()
+      return { totalItems: sichtbar ? konfiguriert : 0, items: [] }
     }),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     subscribe: vi.fn().mockImplementation(async (_topic: string, cb: (e: any) => void) => {
