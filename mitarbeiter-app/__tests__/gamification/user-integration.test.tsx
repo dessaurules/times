@@ -34,6 +34,12 @@ vi.mock('@/hooks/useActivityFeed', () => ({
   }),
 }))
 
+const markSeenSpy = vi.fn().mockResolvedValue(undefined)
+let mockSparkle = false
+vi.mock('@/hooks/useGamificationSignal', () => ({
+  useGamificationSignal: () => ({ sparkle: mockSparkle, markSeen: markSeenSpy }),
+}))
+
 import { pb } from '@/lib/pb'
 import { GamificationTaskList } from '@/components/Gamification/GamificationTaskList'
 import { GamificationShop } from '@/components/Gamification/GamificationShop'
@@ -46,6 +52,8 @@ describe('Gamification User Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockPb.authStore.record = { id: 'user-1', username: 'john' }
+    mockSparkle = false
+    markSeenSpy.mockClear()
   })
 
   describe('GamificationTaskList - Task Discovery', () => {
@@ -276,6 +284,36 @@ describe('Gamification User Integration', () => {
         expect(container.querySelector('button')).toBeInTheDocument()
       })
       expect(screen.queryByText('100')).not.toBeInTheDocument()
+    })
+
+    it('zeigt den Diamanten grau, solange nichts Neues vorliegt', async () => {
+      const { container } = render(<GamificationHeader />)
+
+      await waitFor(() => {
+        expect(container.querySelector('svg')).toBeInTheDocument()
+      })
+      expect(container.querySelector('.gem-sweep')).not.toBeInTheDocument()
+    })
+
+    it('laesst den Diamanten funkeln, wenn es Neues gibt', async () => {
+      mockSparkle = true
+
+      const { container } = render(<GamificationHeader />)
+
+      await waitFor(() => {
+        expect(container.querySelector('.gem-sweep')).toBeInTheDocument()
+      })
+    })
+
+    it('markiert als gesehen, sobald das Sheet geoeffnet wird', async () => {
+      const { container } = render(<GamificationHeader />)
+
+      const button = container.querySelector('button')
+      await waitFor(() => expect(button).toBeInTheDocument())
+
+      fireEvent.click(button!)
+
+      expect(markSeenSpy).toHaveBeenCalledTimes(1)
     })
   })
 
