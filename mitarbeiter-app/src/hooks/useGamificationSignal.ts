@@ -1,9 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { pb } from '@/lib/pb'
 import { useGamificationEnabled } from './useGamificationEnabled'
+import { useAssignments } from './useAssignments'
 
 /** Merker-Ersatz fuer "noch nie gesehen" — so bleibt der Filter in einem Codepfad. */
 const EPOCH = '1970-01-01 00:00:00.000Z'
+
+/** Ab hier gilt eine Frist als knapp. Auftraege laufen 8 Stunden. */
+const EXPIRY_WARNING_MS = 60 * 60 * 1000
+const TICK_MS = 60 * 1000
 
 interface UseGamificationSignalReturn {
   sparkle: boolean
@@ -27,6 +32,14 @@ export function useGamificationSignal(): UseGamificationSignalReturn {
     () => (pb.authStore.record?.gam_seen_at as string | undefined) ?? '',
   )
   const [hasNew, setHasNew] = useState(false)
+  const { assignments } = useAssignments()
+  const [, tick] = useState(0)
+
+  useEffect(() => {
+    if (!enabled) return
+    const id = setInterval(() => tick((n) => n + 1), TICK_MS)
+    return () => clearInterval(id)
+  }, [enabled])
 
   useEffect(() => {
     if (!enabled) return
@@ -91,8 +104,17 @@ export function useGamificationSignal(): UseGamificationSignalReturn {
     }
   }, [])
 
+  // Zustand, kein Ereignis: die Warnung ueberlebt markSeen und endet erst,
+  // wenn der Auftrag eingereicht oder abgelaufen ist.
+  const jetzt = Date.now()
+  const deadlineNear = assignments.some((a) => {
+    if (a.status !== 'active' || !a.expires_at) return false
+    const rest = new Date(a.expires_at).getTime() - jetzt
+    return rest > 0 && rest < EXPIRY_WARNING_MS
+  })
+
   return {
-    sparkle: hasNew,
+    sparkle: hasNew || deadlineNear,
     markSeen,
   }
 }

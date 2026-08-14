@@ -13,8 +13,10 @@ vi.mock('../useGamificationEnabled', () => ({
   useGamificationEnabled: () => ({ enabled: mockEnabled, loading: false }),
 }))
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let mockAssignments: any[] = []
 vi.mock('../useAssignments', () => ({
-  useAssignments: () => ({ assignments: [], loading: false }),
+  useAssignments: () => ({ assignments: mockAssignments, loading: false }),
 }))
 
 import { pb } from '../../lib/pb'
@@ -61,6 +63,7 @@ describe('useGamificationSignal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockEnabled = true
+    mockAssignments = []
     pb.authStore.record = { id: 'user-1', gam_seen_at: '2026-08-14 08:00:00.000Z' }
   })
 
@@ -208,5 +211,95 @@ describe('useGamificationSignal', () => {
 
     expect(fehler).toHaveBeenCalledWith('[useGamificationSignal] markSeen', expect.any(Error))
     fehler.mockRestore()
+  })
+
+  it('funkelt, wenn ein eigener Auftrag in unter 60 Minuten ablaeuft', async () => {
+    mockCounts({})
+    mockAssignments = [
+      {
+        id: 'a1',
+        status: 'active',
+        expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      },
+    ]
+
+    const { result } = renderHook(() => useGamificationSignal())
+
+    await waitFor(() => expect(result.current.sparkle).toBe(true))
+  })
+
+  it('funkelt nicht bei einer Frist jenseits der 60 Minuten', async () => {
+    mockCounts({})
+    mockAssignments = [
+      {
+        id: 'a1',
+        status: 'active',
+        expires_at: new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(),
+      },
+    ]
+
+    const { result } = renderHook(() => useGamificationSignal())
+
+    await waitFor(() => expect(pb.collection).toHaveBeenCalledWith('gam_tasks'))
+    expect(result.current.sparkle).toBe(false)
+  })
+
+  it('ignoriert Auftraege, die nicht mehr aktiv sind', async () => {
+    mockCounts({})
+    mockAssignments = [
+      {
+        id: 'a1',
+        status: 'completed',
+        expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+      },
+    ]
+
+    const { result } = renderHook(() => useGamificationSignal())
+
+    await waitFor(() => expect(pb.collection).toHaveBeenCalledWith('gam_tasks'))
+    expect(result.current.sparkle).toBe(false)
+  })
+
+  it('laesst die Fristwarnung markSeen ueberleben', async () => {
+    mockCounts({ tasks: 1 })
+    mockAssignments = [
+      {
+        id: 'a1',
+        status: 'active',
+        expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+      },
+    ]
+
+    const { result } = renderHook(() => useGamificationSignal())
+    await waitFor(() => expect(result.current.sparkle).toBe(true))
+
+    await act(async () => {
+      await result.current.markSeen()
+    })
+
+    // Die Aufgabe ist abgehakt, die Frist laeuft weiter.
+    expect(result.current.sparkle).toBe(true)
+  })
+
+  it('erkennt eine ablaufende Frist beim Minuten-Ticker', async () => {
+    vi.useFakeTimers()
+    mockCounts({})
+    mockAssignments = [
+      {
+        id: 'a1',
+        status: 'active',
+        expires_at: new Date(Date.now() + 61 * 60 * 1000).toISOString(),
+      },
+    ]
+
+    const { result } = renderHook(() => useGamificationSignal())
+    expect(result.current.sparkle).toBe(false)
+
+    await act(async () => {
+      vi.advanceTimersByTime(2 * 60 * 1000)
+    })
+
+    expect(result.current.sparkle).toBe(true)
+    vi.useRealTimers()
   })
 })
