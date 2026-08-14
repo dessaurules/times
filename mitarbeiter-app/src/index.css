@@ -10,6 +10,24 @@
   animation: blink 1.6s step-start infinite;
 }
 
+/* Glanzstrich des Gamification-Diamanten: ein Lichtpunkt wandert die Kontur
+   entlang. Bei reduzierter Bewegung wird der Pfad ausgeblendet statt
+   eingefroren — ein stehender Lichtpunkt sieht aus wie ein Rendering-Fehler. */
+@keyframes gem-sweep {
+  0%        { stroke-dashoffset: 100; }
+  55%, 100% { stroke-dashoffset: -20; }
+}
+.gem-sweep {
+  animation: gem-sweep 2.6s cubic-bezier(.4,0,.5,1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gem-sweep {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 @layer utilities {
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
