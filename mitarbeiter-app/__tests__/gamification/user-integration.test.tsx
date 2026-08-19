@@ -34,10 +34,10 @@ vi.mock('@/hooks/useActivityFeed', () => ({
   }),
 }))
 
-const markSeenSpy = vi.fn().mockResolvedValue(undefined)
+let mockMarkSeen = vi.fn().mockResolvedValue(undefined)
 let mockSparkle = false
 vi.mock('@/hooks/useGamificationSignal', () => ({
-  useGamificationSignal: () => ({ sparkle: mockSparkle, markSeen: markSeenSpy }),
+  useGamificationSignal: () => ({ sparkle: mockSparkle, markSeen: mockMarkSeen }),
 }))
 
 import { pb } from '@/lib/pb'
@@ -53,7 +53,7 @@ describe('Gamification User Integration', () => {
     vi.clearAllMocks()
     mockPb.authStore.record = { id: 'user-1', username: 'john' }
     mockSparkle = false
-    markSeenSpy.mockClear()
+    mockMarkSeen.mockClear()
   })
 
   describe('GamificationTaskList - Task Discovery', () => {
@@ -313,7 +313,7 @@ describe('Gamification User Integration', () => {
 
       fireEvent.click(button!)
 
-      expect(markSeenSpy).toHaveBeenCalledTimes(1)
+      expect(mockMarkSeen).toHaveBeenCalledTimes(1)
     })
   })
 
