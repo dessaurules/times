@@ -1,0 +1,110 @@
+<style>
+  body { background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 16px; }
+
+  .card { background: #fff; border: 1.5px solid #E5E7EB; border-radius: 14px; padding: 16px; }
+
+  /* Three-column top stats */
+  .stats-row { display: flex; justify-content: space-around; align-items: flex-start; margin-bottom: 16px; }
+  .stat-box { text-align: center; flex: 1; }
+  .stat-box .number { font-size: 16px; font-weight: 700; color: #111827; line-height: 1; }
+  .stat-box .label { font-size: 11px; color: #6B7280; margin-top: 3px; }
+
+  /* Center gauge */
+  .gauge-center { display: flex; justify-content: center; align-items: center; margin: 12px 0 20px; }
+  .gauge-center svg { width: 100px; height: 100px; }
+  .gauge-text-center { position: absolute; text-align: center; z-index: 10; }
+  .gauge-text-center .number { font-size: 28px; font-weight: 700; color: #111827; line-height: 1; }
+  .gauge-text-center .label { font-size: 10px; color: #6B7280; margin-top: 2px; }
+
+  /* Progress bars below */
+  .progress-section { margin-top: 16px; }
+  .progress-item { margin-bottom: 12px; }
+  .progress-item .label { font-size: 11px; font-weight: 600; color: #374151; margin-bottom: 4px; display: flex; align-items: center; }
+  .progress-item .dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .progress-bar { background: #E5E7EB; border-radius: 6px; height: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 6px; transition: width .3s; }
+  .progress-stat { font-size: 10px; color: #6B7280; margin-top: 2px; }
+</style>
+
+<h2>Option A — Referenz-Layout</h2>
+<p class="subtitle">Großer zentraler ¾-Kreis mit Statistiken oben (3-spaltig) und Fortschrittsbalken unten.</p>
+
+<div class="card">
+  <!-- Top: 3 Statistics (Left | Center | Right) -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="number">142:30</div>
+      <div class="label">Stunden<br>Juni</div>
+    </div>
+    <div class="stat-box">
+      <div class="number">18</div>
+      <div class="label">Urlaub<br>Verfügbar</div>
+    </div>
+    <div class="stat-box">
+      <div class="number">89%</div>
+      <div class="label">Ziel<br>erreicht</div>
+    </div>
+  </div>
+
+  <!-- Center: Large Gauge -->
+  <div class="gauge-center" style="position: relative; height: 120px; justify-content: center;">
+    <svg width="100" height="100" viewBox="0 0 88 72" style="overflow: visible;">
+      <defs>
+        <linearGradient id="gCenter" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#4F46E5"/>
+          <stop offset="100%" stop-color="#7C3AED"/>
+        </linearGradient>
+      </defs>
+      <!-- Background track -->
+      <path d="M 76 8 A 32 32 0 1 1 12 40" fill="none" stroke="#E5E7EB" stroke-width="12" stroke-linecap="round"/>
+      <!-- Progress fill (89%) -->
+      <path d="M 76 8 A 32 32 0 1 1 12 40" fill="none" stroke="url(#gCenter)" stroke-width="12" stroke-linecap="round"
+        stroke-dasharray="150.796" stroke-dashoffset="-16.587"/>
+    </svg>
+    <div class="gauge-text-center" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
+      <div class="number">89%</div>
+      <div class="label">Stunden-Ziel</div>
+    </div>
+  </div>
+
+  <!-- Bottom: Progress Bars -->
+  <div class="progress-section">
+    <!-- Stunden Progress -->
+    <div class="progress-item">
+      <div class="label">
+        <span class="dot" style="background: #4F46E5;"></span>
+        Stunden Juni
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="background: linear-gradient(90deg, #4F46E5, #7C3AED); width: 89%;"></div>
+      </div>
+      <div class="progress-stat">142:30 / 160 h</div>
+    </div>
+
+    <!-- Urlaub Progress -->
+    <div class="progress-item">
+      <div class="label">
+        <span class="dot" style="background: #10B981;"></span>
+        Urlaub verfügbar
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="background: #10B981; width: 64%;"></div>
+      </div>
+      <div class="progress-stat">18 / 28 Tage</div>
+    </div>
+
+    <!-- Genommene Tage Progress -->
+    <div class="progress-item">
+      <div class="label">
+        <span class="dot" style="background: #DC2626;"></span>
+        Genommene Tage
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="background: #DC2626; width: 21%;"></div>
+      </div>
+      <div class="progress-stat">6 / 28 Tage</div>
+    </div>
+  </div>
+</div>
+
+<p style="color:#6B7280;font-size:12px;margin-top:12px;"><strong>Layout basierend auf Referenzbild:</strong><br>✓ Großer zentraler ¾-Kreis<br>✓ 3 Statistiken oben (3-spaltig)<br>✓ Fortschrittsbalken unten (horizontal)<br>✓ Kompakte Schriftgrößen (10–12px)</p>

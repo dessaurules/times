@@ -95,4 +95,44 @@ describe('useGamificationEnabled', () => {
 
     expect(result.current.enabled).toBe(false)
   })
+
+  it('should not treat aborted requests as errors', async () => {
+    const col = getCollectionMock()
+    const abortError = { isAbort: true }
+    col.getFullList.mockRejectedValue(abortError)
+    col.subscribe.mockResolvedValue(() => {})
+
+    const consoleSpy = vi.spyOn(console, 'error')
+
+    const { result } = renderHook(() => useGamificationEnabled())
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
+
+    // Abort errors should not set enabled to false or log errors
+    expect(result.current.enabled).toBe(false) // Initial state, not changed by abort
+    expect(consoleSpy).not.toHaveBeenCalled()
+
+    consoleSpy.mockRestore()
+  })
+
+  it('should still log real errors and set enabled to false', async () => {
+    const col = getCollectionMock()
+    col.getFullList.mockRejectedValue(new Error('Real collection error'))
+    col.subscribe.mockResolvedValue(() => {})
+
+    const consoleSpy = vi.spyOn(console, 'error')
+
+    const { result } = renderHook(() => useGamificationEnabled())
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false)
+    })
+
+    expect(result.current.enabled).toBe(false)
+    expect(consoleSpy).toHaveBeenCalledWith('[useGamificationEnabled]', expect.any(Error))
+
+    consoleSpy.mockRestore()
+  })
 })

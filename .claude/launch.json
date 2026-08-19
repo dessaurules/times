@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mitarbeiter-app",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd /Users/ronnybeckmann/Projects/times/mitarbeiter-app && npm run dev -- --port 5174"],
+      "port": 5174
+    }
+  ]
+}

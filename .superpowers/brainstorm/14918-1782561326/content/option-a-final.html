@@ -1,0 +1,72 @@
+<style>
+  body { background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 16px; }
+  .section-label { font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: .08em; text-transform: uppercase; margin: 20px 0 8px; }
+
+  .gauge-row { display: flex; gap: 8px; align-items: flex-start; }
+  .gauge-col { flex: 1; display: flex; align-items: flex-start; gap: 8px; }
+  .gauge-divider { width: 1px; background: #E5E7EB; align-self: stretch; margin: 0 4px; }
+  .gauge-text h4 { font-size: 10px; font-weight: 600; color: #374151; margin: 0 0 3px; }
+  .gauge-text .val { font-size: 12px; font-weight: 700; color: #111827; font-variant-numeric: tabular-nums; }
+  .gauge-text .sub { font-size: 10px; color: #6B7280; margin-top: 1px; }
+</style>
+
+<h2>Option A — Final</h2>
+<p class="subtitle">¾-Kreis mit Öffnung unten. Fortschrittsbalken startet von rechts, füllt sich nach links (wie ursprüngliches Design).</p>
+
+<div style="background:#fff;border:1.5px solid #E5E7EB;border-radius:14px;padding:12px 14px;margin-bottom:10px;">
+  <div style="font-size:10px;font-weight:600;color:#374151;margin-bottom:8px">Schnellübersicht</div>
+  <div class="gauge-row">
+    <!-- Stunden Gauge (Indigo→Violet) -->
+    <div class="gauge-col">
+      <svg width="54" height="50" viewBox="0 0 88 64" style="flex-shrink:0;overflow:visible">
+        <defs>
+          <linearGradient id="gStunden" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#4F46E5"/>
+            <stop offset="100%" stop-color="#7C3AED"/>
+          </linearGradient>
+        </defs>
+        <!-- Hintergrund-Track: ¾-Kreis oben-rechts zu oben-links, Öffnung unten -->
+        <path d="M 76 16 A 32 32 0 1 0 12 16" fill="none" stroke="#E5E7EB" stroke-width="9" stroke-linecap="round"/>
+        <!-- Fortschritts-Bogen: 89% (142.5 von 160h) -->
+        <path d="M 76 16 A 32 32 0 1 0 12 16" fill="none" stroke="url(#gStunden)" stroke-width="9" stroke-linecap="round"
+          stroke-dasharray="150.796" stroke-dashoffset="-16.587"/>
+      </svg>
+      <div class="gauge-text">
+        <h4>Juni 2025</h4>
+        <div class="val">142:30 <span style="font-weight:400;color:#6B7280;font-size:9px">/ 160 h</span></div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="gauge-divider"></div>
+
+    <!-- Urlaub Gauge (Rot + Grün) -->
+    <div class="gauge-col">
+      <svg width="54" height="50" viewBox="0 0 88 64" style="flex-shrink:0;overflow:visible">
+        <defs>
+          <linearGradient id="gRot" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#DC2626"/>
+            <stop offset="100%" stop-color="#EF4444"/>
+          </linearGradient>
+        </defs>
+        <!-- Hintergrund-Track -->
+        <path d="M 76 16 A 32 32 0 1 0 12 16" fill="none" stroke="#E5E7EB" stroke-width="9" stroke-linecap="round"/>
+
+        <!-- ROT: Genommene Tage (6 von 28 = 21.4%) -->
+        <path d="M 76 16 A 32 32 0 1 0 12 16" fill="none" stroke="url(#gRot)" stroke-width="9" stroke-linecap="round"
+          stroke-dasharray="32.297" stroke-dashoffset="0"/>
+
+        <!-- GRÜN: Verfügbar (18 von 28 = 64.3%) -->
+        <path d="M 76 16 A 32 32 0 1 0 12 16" fill="none" stroke="#10B981" stroke-width="9" stroke-linecap="round"
+          stroke-dasharray="118.499" stroke-dashoffset="-32.297"/>
+      </svg>
+      <div class="gauge-text">
+        <h4>Urlaub 2025</h4>
+        <div class="val">18 <span style="font-weight:400;color:#6B7280;font-size:9px">/ 28 Tage</span></div>
+        <div class="sub">verfügbar</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p style="color:#6B7280;font-size:12px;margin-top:12px"><strong>Design:</strong><br>✓ ¾-Kreis mit Öffnung unten (wie Original)<br>✓ Fortschrittsbalken startet von rechts, füllt sich nach links<br>✓ Zwei Gauges nebeneinander in einer Karte<br>✓ Kompakte Schriftgrößen (10–12px) für Mobile-First</p>
