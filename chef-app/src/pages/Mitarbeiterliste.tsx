@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Search, Plus } from 'lucide-react'
 import { pb } from '../lib/pb'
-import type { Employee, Department, ContractType } from '@shared/types'
+import type { User, Department, ContractType } from '@shared/types'
 import { CONTRACT_LABELS } from '@shared/types'
 import { Button }    from '../components/ui/button'
 import { Input }     from '../components/ui/input'
@@ -12,7 +12,7 @@ import {
 import { AnimatePresence } from 'motion/react'
 import MitarbeiterModal from './MitarbeiterModal'
 
-type EmployeeRow = Employee & { expand?: { department?: Department } }
+type EmployeeRow = User & { expand?: { department?: Department } }
 
 export default function Mitarbeiterliste() {
   const [selectedId, setSelectedId] = useState<string | 'new' | null>(null)
@@ -55,7 +55,7 @@ export default function Mitarbeiterliste() {
     if (filterActive !== '') parts.push(`active = ${filterActive}`)
     const filter = parts.join(' && ')
 
-    pb.collection('employees')
+    pb.collection('users')
       .getList<EmployeeRow>(page, perPage, { filter, expand: 'department', sort: 'last_name,first_name' })
       .then(res => { if (!cancelled) { setRows(res.items); setTotal(res.totalItems) } })
       .catch(console.error)
@@ -146,7 +146,7 @@ export default function Mitarbeiterliste() {
                 </TableCell>
                 <TableCell>{emp.expand?.department?.name ?? '—'}</TableCell>
                 <TableCell>{emp.position || '—'}</TableCell>
-                <TableCell>{CONTRACT_LABELS[emp.contract_type]}</TableCell>
+                <TableCell>{emp.contract_type ? CONTRACT_LABELS[emp.contract_type] : '—'}</TableCell>
                 <TableCell>{emp.weekly_hours}</TableCell>
                 <TableCell>
                   <Badge variant={emp.active ? 'success' : 'secondary'}>

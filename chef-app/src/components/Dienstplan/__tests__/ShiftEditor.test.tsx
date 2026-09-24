@@ -8,6 +8,17 @@ vi.mock('../../../hooks/useShiftTemplates', () => ({
   useShiftTemplates: vi.fn(),
 }))
 
+// QuickSelectSections only renders once pb.authStore.model is set (SSO-Guard)
+vi.mock('@/lib/pb', () => ({
+  pb: {
+    authStore: { model: { id: 'user_1' } },
+    collection: vi.fn().mockReturnValue({
+      create: vi.fn(),
+      getFullList: vi.fn().mockResolvedValue([]),
+    }),
+  },
+}))
+
 import { useShiftTemplates } from '../../../hooks/useShiftTemplates'
 
 describe('ShiftEditor Header', () => {
@@ -37,8 +48,8 @@ describe('ShiftEditor Header', () => {
       />
     )
 
-    expect(screen.getByText('Schicht eintragen')).toBeInTheDocument()
-    expect(screen.getByText(/Max Mustermann · Mi, 25.06.2026/)).toBeInTheDocument()
+    expect(screen.getByText('Max Mustermann')).toBeInTheDocument()
+    expect(screen.getByText('Mi, 25.06.2026')).toBeInTheDocument()
   })
 
   it('renders gear icon button', () => {
@@ -110,7 +121,7 @@ describe('Quick Select Sections', () => {
 
     // Check Quick Select section
     expect(screen.getByText('Quick Select')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /🌴.*Frei/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'F' })).toBeInTheDocument()
     expect(screen.getByText('Frühschicht')).toBeInTheDocument()
   })
 
@@ -137,11 +148,11 @@ describe('Quick Select Sections', () => {
     )
 
     expect(screen.getByText('Abwesenheiten')).toBeInTheDocument()
-    // Check for emoji + label pairs
-    expect(screen.getByText(/🏥.*Krank/)).toBeInTheDocument()
-    expect(screen.getByText(/✈️.*Urlaub/)).toBeInTheDocument()
-    expect(screen.getByText(/📚.*Schulung/)).toBeInTheDocument()
-    expect(screen.getByText(/🩺.*Arzttermin/)).toBeInTheDocument()
+    // ABSENCE_TYPES = ['K', 'KK', 'U', 'RU', 'SU', 'AT', 'S', 'ÜA'] — buttons show the type code, title carries the label
+    expect(screen.getByRole('button', { name: 'K' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'U' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'S' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'AT' })).toBeInTheDocument()
   })
 })
 
@@ -172,7 +183,7 @@ describe('Shift 2 Expandable Section', () => {
       />
     )
 
-    expect(screen.getByText(/Zweite Schicht hinzufügen/)).toBeInTheDocument()
+    expect(screen.getByText(/Zweite Schicht$/)).toBeInTheDocument()
   })
 
   it('expands shift 2 section when button is clicked', async () => {
@@ -199,7 +210,7 @@ describe('Shift 2 Expandable Section', () => {
       />
     )
 
-    const expandBtn = screen.getByText(/Zweite Schicht hinzufügen/)
+    const expandBtn = screen.getByText(/Zweite Schicht$/)
     await user.click(expandBtn)
 
     // Should show shift 2 fields
@@ -237,7 +248,7 @@ describe('Shift 2 Expandable Section', () => {
     await user.click(collapseBtn)
 
     // Should show expand button again
-    expect(screen.getByText(/Zweite Schicht hinzufügen/)).toBeInTheDocument()
+    expect(screen.getByText(/Zweite Schicht$/)).toBeInTheDocument()
   })
 })
 

@@ -4,7 +4,7 @@ import { de } from 'date-fns/locale'
 import { Clock, Plus } from 'lucide-react'
 import { pb } from '../lib/pb'
 import { useAuthStore } from '../stores/auth'
-import type { TimeEntry, Absence, VacationAccount, Employee, AbsenceType } from '@shared/types'
+import type { TimeEntry, Absence, VacationAccount, AbsenceType } from '@shared/types'
 import { VACATION_TYPES, ABSENCE_COLORS } from '@shared/types'
 import { cn } from '@/lib/utils'
 import AntragDialog from './Abwesenheiten/AntragDialog'
@@ -60,7 +60,6 @@ function minutesBetween(from: string, to: string | undefined) {
 
 export default function Dashboard() {
   const user      = useAuthStore(s => s.user)
-  const [emp,     setEmp]     = useState<Employee | null>(null)
   const [entries, setEntries] = useState<TimeEntry[]>([])
   const [absences, setAbsences] = useState<Absence[]>([])
   const [vacAcc,  setVacAcc]  = useState<VacationAccount | null>(null)
@@ -75,7 +74,7 @@ export default function Dashboard() {
   const [monthEntries, setMonthEntries] = useState<TimeEntry[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const employeeId = user?.employee
+  const employeeId = user?.id
   const year       = now.getFullYear()
 
   useEffect(() => {
@@ -88,7 +87,6 @@ export default function Dashboard() {
     if (!employeeId) return
 
     Promise.all([
-      pb.collection('employees').getOne<Employee>(employeeId, { requestKey: null }),
       pb.collection('time_entries').getFullList<TimeEntry>({
         filter: `employee = "${employeeId}"`,
         sort: '-start_time',
@@ -104,8 +102,7 @@ export default function Dashboard() {
         `employee = "${employeeId}" && year = ${year}`,
         { requestKey: null }
       ).catch(() => null),
-    ]).then(([e, te, ab, va]) => {
-      setEmp(e)
+    ]).then(([te, ab, va]) => {
       setEntries(te)
       setAbsences(ab)
       setVacAcc(va)
@@ -189,8 +186,8 @@ export default function Dashboard() {
       start: startOfMonth(viewMonth),
       end:   endOfMonth(viewMonth),
     }).filter(d => !isWeekend(d) && !holidays.has(format(d, 'yyyy-MM-dd')))
-    return Math.round((emp?.weekly_hours ?? 0) / 5 * days.length * 60)
-  }, [viewMonth, emp, holidays])
+    return Math.round((user?.weekly_hours ?? 0) / 5 * days.length * 60)
+  }, [viewMonth, user, holidays])
 
   const actualMonthMins = useMemo(() => {
     return monthEntries.reduce((sum, e) => {
@@ -224,8 +221,8 @@ export default function Dashboard() {
     const wEnd   = endOfWeek(now, { weekStartsOn: 1 })
     const workdays = eachDayOfInterval({ start: wStart, end: wEnd })
       .filter(d => !isWeekend(d) && !holidays.has(format(d, 'yyyy-MM-dd')))
-    return Math.round((emp?.weekly_hours ?? 0) / 5 * workdays.length * 60)
-  }, [now, emp, holidays])
+    return Math.round((user?.weekly_hours ?? 0) / 5 * workdays.length * 60)
+  }, [now, user, holidays])
 
   const calendarWeek = getISOWeek(now)
 
@@ -245,7 +242,7 @@ export default function Dashboard() {
         .length
     }, 0), [absences, holidays])
 
-  const entitlement = (vacAcc?.entitlement ?? emp?.vacation_days ?? 0) + (vacAcc?.carry_over ?? 0)
+  const entitlement = (vacAcc?.entitlement ?? user?.vacation_days ?? 0) + (vacAcc?.carry_over ?? 0)
 
   const pendingCount = absences.filter(a => a.status === 'pending').length
 

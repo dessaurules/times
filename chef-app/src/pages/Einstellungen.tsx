@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Save, Plus, Trash2, ChevronUp, ChevronDown, Pencil, RotateCcw } from 'lucide-react'
 import { pb } from '../lib/pb'
-import type { Settings, Department, User, UserRole, Employee } from '@shared/types'
+import type { Settings, Department, User, UserRole } from '@shared/types'
 import { DEFAULT_BREAK_RULES, type BreakRule } from './Zeiterfassung'
 import { useAuthStore } from '../stores/auth'
 import { Button } from '../components/ui/button'
@@ -579,17 +579,15 @@ function ZeiterfassungSection() {
 
 // ── Nutzer & Rollen ───────────────────────────────────────────────────────────
 
-type UserRow = User & { expand?: { employee?: Employee } }
-
 function NutzerSection() {
   const currentUser = useAuthStore(s => s.user)
-  const [users,   setUsers]   = useState<UserRow[]>([])
+  const [users, setUsers]     = useState<User[]>([])
   const [loading, setLoading] = useState(true)
-  const [saving,  setSaving]  = useState<Record<string, boolean>>({})
-  const [error,   setError]   = useState<string | null>(null)
+  const [saving, setSaving]   = useState<Record<string, boolean>>({})
+  const [error, setError]     = useState<string | null>(null)
 
   useEffect(() => {
-    pb.collection('users').getFullList<UserRow>({ expand: 'employee', sort: 'last_name,first_name', requestKey: null })
+    pb.collection('users').getFullList<User>({ sort: 'last_name,first_name', requestKey: null })
       .then(setUsers)
       .catch(e => setError((e as Error).message))
       .finally(() => setLoading(false))
@@ -599,7 +597,7 @@ function NutzerSection() {
     setSaving(s => ({ ...s, [userId]: true }))
     setError(null)
     try {
-      const updated = await pb.collection('users').update<UserRow>(userId, { role }, { expand: 'employee' })
+      const updated = await pb.collection('users').update<User>(userId, { role })
       setUsers(prev => prev.map(u => u.id === userId ? updated : u))
     } catch (e) {
       setError((e as Error).message)
@@ -627,21 +625,16 @@ function NutzerSection() {
             <tr className="border-b border-[#E5E7EB]">
               <th className="text-left py-2 pr-4 text-xs font-medium text-[#6B7280]">Name</th>
               <th className="text-left py-2 pr-4 text-xs font-medium text-[#6B7280]">E-Mail</th>
-              <th className="text-left py-2 pr-4 text-xs font-medium text-[#6B7280]">Mitarbeiter</th>
               <th className="text-left py-2 text-xs font-medium text-[#6B7280]">Rolle</th>
             </tr>
           </thead>
           <tbody>
             {users.map(u => {
               const isSelf = u.id === currentUser?.id
-              const emp    = u.expand?.employee
               return (
                 <tr key={u.id} className="border-b border-[#E5E7EB] last:border-0">
                   <td className="py-2.5 pr-4 font-medium text-[#111827]">{u.last_name}, {u.first_name}</td>
                   <td className="py-2.5 pr-4 text-[#6B7280] text-xs">{u.email}</td>
-                  <td className="py-2.5 pr-4 text-[#6B7280]">
-                    {emp ? `${emp.last_name}, ${emp.first_name}` : <span className="text-[#9CA3AF]">—</span>}
-                  </td>
                   <td className="py-2.5">
                     {isSelf ? (
                       <span className="text-[#6B7280] text-xs">{ROLE_LABELS[u.role]} <span className="text-[#9CA3AF]">(du)</span></span>
@@ -670,12 +663,10 @@ function NutzerSection() {
 
 // ── Dienstplan-Berechtigungen ─────────────────────────────────────────────────
 
-type UserWithEmployee = User & { expand?: { employee?: Employee } }
-
 function DienstplanSection() {
-  const [users, setUsers]             = useState<UserWithEmployee[]>([])
+  const [users, setUsers]             = useState<User[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
-  const [empDepts, setEmpDepts]       = useState<Record<string, string[]>>({})  // employeeId → deptIds
+  const [empDepts, setEmpDepts]       = useState<Record<string, string[]>>({})  // userId → deptIds
   const [saving, setSaving]           = useState<Record<string, boolean>>({})
   const [loading, setLoading]         = useState(true)
 
@@ -683,36 +674,37 @@ function DienstplanSection() {
 
   useEffect(() => {
     Promise.all([
-      pb.collection('users').getFullList<UserWithEmployee>({ expand: 'employee', sort: 'last_name,first_name', requestKey: null }),
+      pb.collection('users').getFullList<User>({ sort: 'last_name,first_name', requestKey: null }),
       pb.collection('departments').getFullList<Department>({ sort: 'sort_order', requestKey: null }),
-      pb.collection('employees').getFullList<Employee>({ requestKey: null }),
-    ]).then(([us, ds, emps]) => {
+    ]).then(([us, ds]) => {
       setUsers(us)
       setDepartments(ds)
       const map: Record<string, string[]> = {}
-      emps.forEach(e => { map[e.id] = e.planner_departments ?? [] })
+      us.forEach(u => {
+        map[u.id] = Array.isArray(u.planner_departments) ? u.planner_departments : u.planner_departments ? [u.planner_departments] : []
+      })
       setEmpDepts(map)
     }).finally(() => setLoading(false))
   }, [])
 
-  function toggleDept(empId: string, deptId: string) {
-    const current = empDepts[empId] ?? []
-    const updated = current.includes(deptId)
-      ? current.filter(d => d !== deptId)
-      : [...current, deptId]
+  async function toggleDept(empId: string, deptId: string) {
+      const current = empDepts[empId] ?? []
+      const updated = current.includes(deptId)
+        ? current.filter(d => d !== deptId)
+        : [...current, deptId]
 
-    setEmpDepts(prev => ({ ...prev, [empId]: updated }))
+      setEmpDepts(prev => ({ ...prev, [empId]: updated }))
 
-    clearTimeout(saveTimers[empId])
-    saveTimers[empId] = setTimeout(async () => {
-      setSaving(s => ({ ...s, [empId]: true }))
-      try {
-        await pb.collection('employees').update(empId, { planner_departments: updated }, { requestKey: null })
-      } finally {
-        setSaving(s => ({ ...s, [empId]: false }))
-      }
-    }, 500)
-  }
+      clearTimeout(saveTimers[empId])
+      saveTimers[empId] = setTimeout(async () => {
+        setSaving(s => ({ ...s, [empId]: true }))
+        try {
+          await pb.collection('users').update(empId, { planner_departments: updated }, { requestKey: null })
+        } finally {
+          setSaving(s => ({ ...s, [empId]: false }))
+        }
+      }, 500)
+    }
 
   if (loading) return <div className="text-sm text-[#6B7280]">Lade…</div>
 
@@ -730,49 +722,46 @@ function DienstplanSection() {
           </tr>
         </thead>
         <tbody>
-          {users.map(u => {
-            const emp = u.expand?.employee
-            return (
-              <tr key={u.id} className="border-b border-[#E5E7EB] last:border-0">
-                <td className="py-3 pr-4">
-                  <div className="font-medium text-[#111827]">{u.last_name}, {u.first_name}</div>
-                  <div className="text-[11px] text-[#6B7280]">{ROLE_LABELS[u.role]}</div>
-                </td>
-                <td className="py-3">
-                  {u.role === 'gf' ? (
-                    <span className="text-xs text-emerald-600 font-medium">Alle (automatisch)</span>
-                  ) : !emp ? (
-                    <span className="text-xs text-[#9CA3AF]">Kein Mitarbeiterprofil</span>
-                  ) : (
-                    <div className="flex flex-wrap gap-1.5 items-center">
-                      {departments.map(d => {
-                        const active = (empDepts[emp.id] ?? []).includes(d.id)
-                        return (
-                          <button
-                            key={d.id}
-                            type="button"
-                            disabled={saving[emp.id]}
-                            onClick={() => toggleDept(emp.id, d.id)}
-                            className={cn(
-                              'text-xs px-2.5 py-1 rounded-full border transition-colors disabled:opacity-50',
-                              active
-                                ? 'bg-indigo-600 text-white border-indigo-600'
-                                : 'bg-white text-[#6B7280] border-[#E5E7EB] hover:border-indigo-400 hover:text-indigo-600',
-                            )}
-                          >
-                            {d.name}
-                          </button>
-                        )
-                      })}
-                      {saving[emp.id] && (
-                        <span className="text-[10px] text-[#9CA3AF]">Speichern…</span>
-                      )}
-                    </div>
-                  )}
-                </td>
-              </tr>
-            )
-          })}
+          {users.map(u => (
+            <tr key={u.id} className="border-b border-[#E5E7EB] last:border-0">
+              <td className="py-3 pr-4">
+                <div className="font-medium text-[#111827]">{u.last_name}, {u.first_name}</div>
+                <div className="text-[11px] text-[#6B7280]">{ROLE_LABELS[u.role]}</div>
+              </td>
+              <td className="py-3">
+                {u.role === 'gf' ? (
+                  <span className="text-xs text-emerald-600 font-medium">Alle (automatisch)</span>
+                ) : u.role === 'mitarbeiter' ? (
+                  <span className="text-xs text-[#9CA3AF]">Nicht berechtigt</span>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5 items-center">
+                    {departments.map(d => {
+                      const active = (empDepts[u.id] ?? []).includes(d.id)
+                      return (
+                        <button
+                          key={d.id}
+                          type="button"
+                          disabled={saving[u.id]}
+                          onClick={() => toggleDept(u.id, d.id)}
+                          className={cn(
+                            'text-xs px-2.5 py-1 rounded-full border transition-colors disabled:opacity-50',
+                            active
+                              ? 'bg-indigo-600 text-white border-indigo-600'
+                              : 'bg-white text-[#6B7280] border-[#E5E7EB] hover:border-indigo-400 hover:text-indigo-600',
+                          )}
+                        >
+                          {d.name}
+                        </button>
+                      )
+                    })}
+                    {saving[u.id] && (
+                      <span className="text-[10px] text-[#9CA3AF]">Speichern…</span>
+                    )}
+                  </div>
+                )}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

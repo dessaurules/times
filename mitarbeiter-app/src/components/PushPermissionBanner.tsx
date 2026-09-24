@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Bell, X } from 'lucide-react'
 import { useAuthStore } from '../stores/auth'
 import { subscribePush } from '../lib/push'
-
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
 const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches
 
@@ -20,8 +19,8 @@ export default function PushPermissionBanner() {
   if (!show) return null
 
   async function handleAllow() {
-    if (!user?.employee) return
-    const ok = await subscribePush(user.employee)
+    if (!user?.id) return
+    const ok = await subscribePush(user.id)
     setShow(false)
     if (!ok) console.warn('Push-Subscription fehlgeschlagen')
   }

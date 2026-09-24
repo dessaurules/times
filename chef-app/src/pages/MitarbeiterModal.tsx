@@ -4,7 +4,7 @@ import { Trash2, Save, Upload, Download, ChevronLeft, ChevronRight, X } from 'lu
 import { format, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from 'date-fns'
 import { de } from 'date-fns/locale'
 import { pb } from '../lib/pb'
-import type { Employee, Department, ContractType, VacationAccount, Document, DocumentType, Absence, AbsenceType, TimeEntry } from '@shared/types'
+import type { User, Department, ContractType, VacationAccount, Document, DocumentType, Absence, AbsenceType, TimeEntry } from '@shared/types'
 import { CONTRACT_LABELS, ABSENCE_COLORS } from '@shared/types'
 import { Button } from '../components/ui/button'
 import { Input }  from '../components/ui/input'
@@ -90,7 +90,7 @@ export default function MitarbeiterModal({ employeeId, onClose, onSaved }: Props
   useEffect(() => {
     if (!id) return
     let cancelled = false
-    pb.collection('employees').getOne<Employee>(id)
+    pb.collection('users').getOne<User>(id)
       .then(emp => {
         if (cancelled) return
         setForm({
@@ -104,12 +104,12 @@ export default function MitarbeiterModal({ employeeId, onClose, onSaved }: Props
           city:          emp.city ?? '',
           department:    emp.department ?? '',
           position:      emp.position ?? '',
-          contract_type: emp.contract_type,
-          weekly_hours:  emp.weekly_hours,
+          contract_type: emp.contract_type ?? 'vz',
+          weekly_hours:  emp.weekly_hours ?? 40,
           start_date:    toDateInput(emp.start_date),
           end_date:      toDateInput(emp.end_date),
-          vacation_days: emp.vacation_days,
-          active:        emp.active,
+          vacation_days: emp.vacation_days ?? 25,
+          active:        emp.active ?? true,
         })
       })
       .catch((err: { isAbort?: boolean }) => {
@@ -184,22 +184,19 @@ export default function MitarbeiterModal({ employeeId, onClose, onSaved }: Props
         department: form.department || '',
       }
       if (isNew) {
-        const rec = await pb.collection('employees').create(data)
+        // Generate a secure temporary password for auth collection
+        const tempPassword = crypto.getRandomValues(new Uint8Array(12))
+          .reduce((acc, v) => acc + v.toString(16).padStart(2, '0'), '')
 
-        // User-Account automatisch anlegen
-        const tempPass = Math.random().toString(36).slice(2, 10) + 'Aa1!'
+        await pb.collection('users').create({
+          ...data,
+          role: 'mitarbeiter',
+          password: tempPassword,
+          passwordConfirm: tempPassword,
+        })
+
+        // Send password reset email so user can set their own password
         try {
-          await pb.collection('users').create({
-            email:           form.email,
-            password:        tempPass,
-            passwordConfirm: tempPass,
-            name:            `${form.first_name} ${form.last_name}`,
-            first_name:      form.first_name,
-            last_name:       form.last_name,
-            role:            'mitarbeiter',
-            employee:        rec.id,
-          })
-          // Einladungs-Mail (Passwort setzen) verschicken
           await pb.collection('users').requestPasswordReset(form.email).catch(() => {
             setUserWarn('Account angelegt, aber Einladungs-E-Mail konnte nicht gesendet werden. SMTP konfiguriert?')
           })
@@ -208,23 +205,14 @@ export default function MitarbeiterModal({ employeeId, onClose, onSaved }: Props
             ?.response?.data?.email?.message
           setUserWarn(
             msg?.includes('already')
-              ? `Mitarbeiter angelegt. E-Mail „${form.email}" hat bereits einen Account — Login-Daten bleiben unverändert.`
+              ? `Mitarbeiter angelegt. E-Mail \u201E${form.email}\u201C hat bereits einen Account \u2014 Login-Daten bleiben unver\u00E4ndert.`
               : `Mitarbeiter angelegt, aber Account konnte nicht erstellt werden: ${msg ?? 'Unbekannter Fehler'}`
           )
         }
 
         onClose()
       } else {
-        await pb.collection('employees').update(id!, data)
-        // users first_name / last_name / name synchron halten
-        pb.collection('users')
-          .getFirstListItem(`employee = "${id}"`, { requestKey: null })
-          .then(u => pb.collection('users').update(u.id, {
-            first_name: form.first_name,
-            last_name:  form.last_name,
-            name:       `${form.first_name} ${form.last_name}`,
-          }))
-          .catch(() => {/* kein User verknüpft — ignorieren */})
+        await pb.collection('users').update(id!, data)
         onSaved ? onSaved() : onClose()
       }
     } catch (err: unknown) {
@@ -241,15 +229,15 @@ export default function MitarbeiterModal({ employeeId, onClose, onSaved }: Props
   }
 
   async function handleDelete() {
-    if (!id) return
-    try {
-      await pb.collection('employees').delete(id)
-      onClose()
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Fehler beim Löschen')
-      setConfirmDel(false)
+      if (!id) return
+      try {
+        await pb.collection('users').delete(id)
+        onClose()
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Fehler beim L\u00F6schen')
+        setConfirmDel(false)
+      }
     }
-  }
 
   if (!employeeId) return null
 

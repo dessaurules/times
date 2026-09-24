@@ -6,7 +6,7 @@ import GridLayout, { WidthProvider } from 'react-grid-layout/legacy'
 import type { Layout, LayoutItem } from 'react-grid-layout/legacy'
 import { pb } from '../lib/pb'
 import { useAuthStore } from '../stores/auth'
-import type { Employee, Absence, TimeEntry } from '@shared/types'
+import type { User, Absence, TimeEntry } from '@shared/types'
 import { ABSENCE_COLORS } from '@shared/types'
 import { cn } from '@/lib/utils'
 import { notifyEmployee } from '../lib/notifications'
@@ -114,11 +114,11 @@ function useGridLayout() {
   return { layout, setLayout, visible, hidden, saveLayout, removeWidget, addWidget, manualResized, markManualResize }
 }
 
-type AbsenceExp   = Absence   & { expand?: { employee?: Employee } }
-type TimeEntryExp = TimeEntry & { expand?: { employee?: Employee } }
+type AbsenceExp   = Absence   & { expand?: { employee?: User } }
+type TimeEntryExp = TimeEntry & { expand?: { employee?: User } }
 
 interface StempelRow {
-  employee:    Employee
+  employee:    User
   sinceLabel:  string
   totalMins:   number
   isActive:    boolean
@@ -149,7 +149,7 @@ export default function Dashboard() {
   const [data,    setData]    = useState<DashData>({ activeTotal: 0, absentToday: [], pending: [], carryOverCount: 0 })
   const [loading, setLoading] = useState(true)
   const [timeEntries,  setTimeEntries]  = useState<TimeEntryExp[]>([])
-  const [allEmployees, setAllEmployees] = useState<Employee[]>([])
+  const [allEmployees, setAllEmployees] = useState<User[]>([])
   const [now,          setNow]          = useState(new Date())
 
   const [showClockInForm, setShowClockInForm] = useState(false)
@@ -186,7 +186,7 @@ export default function Dashboard() {
             filter: `start_time >= "${from}" && start_time <= "${to}"`,
             sort: 'employee,start_time', expand: 'employee', requestKey: null,
           }),
-          pb.collection('employees').getFullList<Employee>({
+          pb.collection('users').getFullList<User>({
             filter: 'active = true', sort: 'last_name,first_name', requestKey: null,
           }),
         ])
@@ -241,7 +241,7 @@ export default function Dashboard() {
   }, [antragTab])
 
   const stempel = useMemo(() => {
-    const byEmp = new Map<string, { emp: Employee; entries: TimeEntryExp[] }>()
+    const byEmp = new Map<string, { emp: User; entries: TimeEntryExp[] }>()
     for (const e of timeEntries) {
       const emp = e.expand?.employee
       if (!emp) continue
@@ -361,7 +361,7 @@ export default function Dashboard() {
   const absentSub = Object.entries(absentBreakdown).map(([t, n]) => `${t}: ${n}`).join(' · ') || '–'
 
   const verlaufEmployees = [...new Map(
-    verlauf.map(a => a.expand?.employee).filter((e): e is Employee => !!e).map(e => [e.id, e])
+    verlauf.map(a => a.expand?.employee).filter((e): e is User => !!e).map(e => [e.id, e])
   ).values()]
   const filteredVerlauf = verlaufFilter ? verlauf.filter(a => a.employee === verlaufFilter) : verlauf
 

@@ -8,7 +8,7 @@ import { de } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight, Plus, Trash2, Save, X } from 'lucide-react'
 import { pb } from '../lib/pb'
 import { useAuthStore } from '../stores/auth'
-import type { Employee, Department, TimeEntry } from '@shared/types'
+import type { User, Department, TimeEntry } from '@shared/types'
 import { Button } from '../components/ui/button'
 import { Input }  from '../components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -64,7 +64,7 @@ function dateKey(iso: string): string {
   return format(new Date(iso), 'yyyy-MM-dd')
 }
 
-type EmployeeRow = Employee & { expand?: { department?: Department } }
+type EmployeeRow = User & { expand?: { department?: Department } }
 type ActiveCell  = { empId: string; date: string }
 
 // ── Hauptkomponente ───────────────────────────────────────────────────────────
@@ -119,7 +119,7 @@ export default function Zeiterfassung() {
       : 'active = true'
 
     Promise.all([
-      pb.collection('employees').getFullList<EmployeeRow>({
+      pb.collection('users').getFullList<EmployeeRow>({
         filter: empFilter, expand: 'department', sort: 'last_name,first_name', requestKey: 'zt-emps',
       }),
       pb.collection('time_entries').getFullList<TimeEntry>({
@@ -213,9 +213,9 @@ export default function Zeiterfassung() {
                 // Mitarbeiter nach Abteilung gruppieren
                 const grouped = new Map<string, { deptName: string; deptId: string; emps: EmployeeRow[] }>()
                 for (const emp of employees) {
-                  const key      = emp.department || '__none__'
+                  const key      = emp.department ?? '__none__'
                   const deptName = emp.expand?.department?.name ?? 'Ohne Abteilung'
-                  if (!grouped.has(key)) grouped.set(key, { deptName, deptId: emp.department, emps: [] })
+                  if (!grouped.has(key)) grouped.set(key, { deptName, deptId: emp.department ?? '', emps: [] })
                   grouped.get(key)!.emps.push(emp)
                 }
                 return [...grouped.values()].flatMap(({ deptName, deptId, emps }) => {
@@ -278,13 +278,13 @@ export default function Zeiterfassung() {
                           )
                         })}
                         <TableCell className="w-[80px] text-right py-1.5 pr-3">
-                          <span className="text-xs font-semibold tabular-nums text-[#111827] whitespace-nowrap">
-                            {wTotal > 0 ? fmtH(wTotal) : '—'}
-                            {emp.weekly_hours > 0 && (
-                              <span className="text-[#9CA3AF] font-normal"> / {emp.weekly_hours} h</span>
-                            )}
-                          </span>
-                        </TableCell>
+                                                  <span className="text-xs font-semibold tabular-nums text-[#111827] whitespace-nowrap">
+                                                    {wTotal > 0 ? fmtH(wTotal) : '\u2014'}
+                                                    {(emp.weekly_hours ?? 0) > 0 && (
+                                                      <span className="text-[#9CA3AF] font-normal"> / {emp.weekly_hours} h</span>
+                                                    )}
+                                                  </span>
+                                                </TableCell>
                       </TableRow>,
                       activeCell?.empId === emp.id ? (
                         <TableRow key={`${emp.id}-detail`}>

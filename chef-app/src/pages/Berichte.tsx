@@ -7,7 +7,7 @@ import { de } from 'date-fns/locale'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { pb } from '../lib/pb'
 import { getHolidayDates } from '../lib/holidays'
-import type { Employee, Department, TimeEntry, Absence, VacationAccount, AbsenceType } from '@shared/types'
+import type { User, Department, TimeEntry, Absence, VacationAccount, AbsenceType } from '@shared/types'
 import { VACATION_TYPES } from '@shared/types'
 import { cn } from '@/lib/utils'
 import DruckModal from './DruckModal'
@@ -44,13 +44,13 @@ function absenceDaysInPeriod(
   return workingDays(from, to, holidays)
 }
 
-function sollHours(emp: Employee, periodFrom: Date, periodTo: Date, holidays: Set<string>): number {
-  const empStart = parseISO(emp.start_date)
+function sollHours(emp: User, periodFrom: Date, periodTo: Date, holidays: Set<string>): number {
+  const empStart = emp.start_date ? parseISO(emp.start_date) : periodFrom
   const empEnd   = emp.end_date ? parseISO(emp.end_date) : null
   const from     = empStart > periodFrom ? empStart : periodFrom
   const to       = empEnd && empEnd < periodTo ? empEnd : periodTo
   if (from > to) return 0
-  return (emp.weekly_hours / 5) * workingDays(from, to, holidays)
+  return ((emp.weekly_hours ?? 40) / 5) * workingDays(from, to, holidays)
 }
 
 function netMinutes(e: TimeEntry): number {
@@ -60,7 +60,7 @@ function netMinutes(e: TimeEntry): number {
 
 // ── Typen ─────────────────────────────────────────────────────────────────────
 
-type EmployeeRow = Employee & { expand?: { department?: Department } }
+type EmployeeRow = User & { expand?: { department?: Department } }
 
 const ABSENCE_COLS: AbsenceType[] = ['U', 'RU', 'U3', 'SU', 'K', 'KK', 'AT', 'S', 'ÜA']
 
@@ -104,7 +104,7 @@ export default function Berichte() {
 
   useEffect(() => {
     const filter = filterDept ? `active = true && department = "${filterDept}"` : 'active = true'
-    pb.collection('employees').getFullList<EmployeeRow>({
+    pb.collection('users').getFullList<EmployeeRow>({
       filter, expand: 'department', sort: 'last_name,first_name',
     }).then(setEmployees).catch(console.error)
   }, [filterDept])
@@ -148,7 +148,7 @@ export default function Berichte() {
 
   // ── Berechnungen pro Mitarbeiter ──────────────────────────────────────────
 
-  function empData(emp: Employee) {
+  function empData(emp: User) {
     const soll    = sollHours(emp, periodFrom, periodTo, holidays)
     const istMins = entries.filter(e => e.employee === emp.id).reduce((s, e) => s + netMinutes(e), 0)
     const ist     = istMins / 60

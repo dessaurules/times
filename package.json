@@ -7,7 +7,8 @@
     "start": "node serve.mjs"
   },
   "dependencies": {
+    "compression": "^1.7.4",
     "express": "^4.21.0",
-    "compression": "^1.7.4"
+    "pocketbase": "^0.28.0"
   }
 }

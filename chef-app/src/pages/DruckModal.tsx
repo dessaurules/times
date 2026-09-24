@@ -7,7 +7,7 @@ import { de } from 'date-fns/locale'
 import { X, Printer } from 'lucide-react'
 import { pb } from '../lib/pb'
 import { getHolidayMap, getHolidayDates } from '../lib/holidays'
-import type { Employee, Department, TimeEntry, Absence, VacationAccount, AbsenceType } from '@shared/types'
+import type { User, Department, TimeEntry, Absence, VacationAccount, AbsenceType } from '@shared/types'
 import { VACATION_TYPES, ABSENCE_COLORS } from '@shared/types'
 import { cn } from '@/lib/utils'
 
@@ -34,13 +34,13 @@ function absenceDaysInPeriod(a: Absence, from: Date, to: Date, holidays: Set<str
   return workingDays(start, end, holidays)
 }
 
-function sollHours(emp: Employee, from: Date, to: Date, holidays: Set<string>): number {
-  const empStart = parseISO(emp.start_date)
+function sollHours(emp: User, from: Date, to: Date, holidays: Set<string>): number {
+  const empStart = emp.start_date ? parseISO(emp.start_date) : from
   const empEnd   = emp.end_date ? parseISO(emp.end_date) : null
   const s = empStart > from ? empStart : from
   const e = empEnd && empEnd < to ? empEnd : to
   if (s > e) return 0
-  return (emp.weekly_hours / 5) * workingDays(s, e, holidays)
+  return ((emp.weekly_hours ?? 40) / 5) * workingDays(s, e, holidays)
 }
 
 function netMinutes(entry: TimeEntry): number {
@@ -85,7 +85,7 @@ const ALL_ABSENCE_TYPES: AbsenceType[] = ['U', 'RU', 'U3', 'SU', 'K', 'KK', 'AT'
 
 // ── Typen ─────────────────────────────────────────────────────────────────────
 
-type EmployeeRow = Employee & { expand?: { department?: Department } }
+type EmployeeRow = User & { expand?: { department?: Department } }
 
 type StundenRow =
   | { type: 'month-header'; month: Date }

@@ -2,14 +2,14 @@ import React, { useState } from 'react'
 import { ChevronDown, GripVertical } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SHIFT_COLOR_BG, SHIFT_COLOR_TEXT, ABSENCE_COLORS } from '@shared/types'
-import type { Department, Employee, ShiftEntry, Absence } from '@shared/types'
+import type { Department, User, ShiftEntry, Absence } from '@shared/types'
 import { sortEmployees, calcShiftMins, fmtMins, calcSollMins } from '@/lib/dienstplanUtils'
 import type { WeekDay } from '@/lib/dienstplanUtils'
 
 interface Props {
   days: WeekDay[]
   departments: Department[]
-  employees: Employee[]
+  employees: User[]
   entries: ShiftEntry[]
   absenceMap: Record<string, Absence>
   rowOrder: Record<string, string[]>

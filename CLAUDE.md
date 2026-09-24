@@ -35,11 +35,13 @@ Both React apps follow the same pattern:
 - Users stored in PocketBase `users` collection with `role` field.
   Gültige Werte: `gf` (Geschäftsführung), `sl` (Schichtleitung), `mitarbeiter`.
   ⚠️ Der Wert heißt `mitarbeiter`, **nicht** `ma` — `/ma/` ist nur der URL-Pfad.
+- **Note (2026-08-22)**: `users` collection now contains ALL employee data (auth + HR fields). `employees` collection was deprecated and consolidated into `users`. See "Database Consolidation" section above.
 
 ### Real-time & Push Notifications
 - PocketBase subscriptions via SDK for real-time updates (Dienstplan, Abwesenheiten, Zeiten)
 - Web Push Notifications: VAPID keys in `.env.production` → push-service sends notifications
-- Hooks in `pb_hooks/` (push_absences.pb.js, push_dienstplan.pb.js, sync_names.pb.js) trigger server-side actions
+- Hooks in `pb_hooks/` (push_absences.pb.js, push_dienstplan.pb.js) trigger server-side actions
+- Note: `sync_names.pb.js` was deleted in 2026-08-22 as part of employees→users consolidation
 
 ### Time Tracking (Stempeluhr)
 - **mitarbeiter-app only**: Swipe-based clock in/out on Dashboard
@@ -64,6 +66,21 @@ Both React apps follow the same pattern:
   - Applied Update-Migrations (2026-08-07) to correct API Rules
   - gam_settings.enabled = true to activate system
 - **Data**: Points system, task assignments, reward orders, employee submissions, approval workflow
+
+### Database Consolidation: Employees→Users (2026-08-22)
+- **Status**: ✅ CONSOLIDATION COMPLETE (Database 100%, App-Code 70% TS-errors remain)
+- **Goal**: Unify `employees` (HR data) and `users` (auth) collections into single `users` collection
+- **What was done**:
+  - ✅ Added 14 employee-fields to `users`: phone, birthday, street, zip, city, position, contract_type, weekly_hours, start_date, end_date, vacation_days, active, planner_departments, department
+  - ✅ Migrated employee data to users (email-based matching): Ronny Beckmann synced successfully
+  - ✅ Updated FK in 7 collections (absences, time_entries, shift_entries, etc.): field `employee` now points to `users` instead of `employees`
+  - ✅ Deleted obsolete `sync_names.pb.js` hook (bidirectional name sync no longer needed)
+  - ✅ Removed `employees` collection metadata from PocketBase
+- **What still needs work**:
+  - ⏳ Fix ~40 TypeScript errors in app code (mainly import paths, type compatibility)
+  - ⏳ Refactor MitarbeiterModal.tsx: change from 2-step (employees.create + users.create) to 1-step CRUD
+  - ⏳ Simplify Dienstplan.tsx: remove authEmployee lookup, use user.planner_departments directly
+- **Reference**: See `MIGRATION_STATUS.md` and memory `employees_users_migration.md` for full details
 
 ### Design System
 - Unified design via Tailwind CSS + shadcn/ui components
@@ -352,20 +369,20 @@ Punktevergabe erfolgte **genau einmal** — keine Doppelbuchung durch `e.next()`
 
 ### 1. Dienstplan- & Login-Bugfixes (`docs/superpowers/plans/2026-08-06-dienstplan-login-bugfixes.md`)
 
-**Status:** Nicht erledigt
+**Status:** ✅ GELÖST (2026-09-24)
 
 **Tasks:**
-- **Task 1:** `shift_plans`-400-Fehler beim automatischen Anlegen beheben
-  - Files: `chef-app/src/pages/Dienstplan.tsx:98-121`
-  - Kontext: `getFirstListItem` mit fehlerhaftem Filter führt zu doppeltem `create()` bei StrictMode-Doppelmount
-  - Lösung: Exakter Filter (`=` statt `~`), expliziter 404-Check, `cancelled`-Flag gegen Race-Conditions
+- **Task 1a:** `shift_plans`-400-Fehler beim automatischen Anlegen
+  - ✅ **Commit `aa1112b`**: "fix(dienstplan): 400-Fehler beim automatischen Plan-Anlegen beheben"
+  - ✅ **Commit `9d5d078`**: "fix(dienstplan): Plan-State bei Ladefehler zurücksetzen"
+  - ✅ **Commit `3c39ef0`**: "fix(chef-app): Remove silent .catch() in plan request caching"
+  - Implementierte Lösung: `planRequestsRef` Cache, expliziter userId-Check, requestKey: null
   
-- **Task 2:** React-Warnung "Cannot update BrowserRouter while rendering Login" beheben
-  - Files: `chef-app/src/pages/Login.tsx:1-20`
-  - Kontext: Imperativer `navigate()` im Render-Pfad statt deklarativer `<Navigate>`-Komponente
-  - Lösung: `useNavigate()` entfernen, stattdessen `<Navigate to="/" replace />` zurückgeben
+- **Task 1b:** React-Warnung "Cannot update BrowserRouter while rendering Login"
+  - ✅ **Commit `1446211`**: "fix(login): Redirect für eingeloggte User über <Navigate> statt navigate()"
+  - Implementierte Lösung: Deklarative `<Navigate to="/" replace />` statt imperativem `navigate()`
 
-**Priorität:** Mittel (Fehler sichtbar im Dev-Log, aber nicht Critical für Produktion)
+**Priorität:** Erledigt
 
 ---
 

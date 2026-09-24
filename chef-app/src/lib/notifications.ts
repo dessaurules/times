@@ -9,12 +9,9 @@ export async function notifyEmployee(
   referenceId?: string,
 ) {
   try {
-    const empUser = await pb.collection('users').getFirstListItem(
-      `employee = "${employeeId}"`,
-      { requestKey: null },
-    )
+    // employeeId is already the users.id (after consolidation)
     await pb.collection('notifications').create({
-      user:         empUser.id,
+      user:         employeeId,
       title,
       message,
       type,
@@ -22,6 +19,6 @@ export async function notifyEmployee(
       reference_id: referenceId,
     }, { requestKey: null })
   } catch {
-    // Mitarbeiter hat möglicherweise noch keinen verknüpften Account
+    // Notification creation failed (user might not exist or invalid data)
   }
 }

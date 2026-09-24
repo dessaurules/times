@@ -1,19 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useAuthStore } from '../auth'
 
-vi.mock('../../lib/pb', () => ({
-  pb: {
-    collection: vi.fn().mockReturnValue({ authRefresh: vi.fn() }),
-    authStore: {
-      isValid: false,
-      model: null,
-      clear: vi.fn(),
-      onChange: vi.fn(),
+vi.mock('../../lib/pb', () => {
+  const mockAuthStore = {
+    isValid: false,
+    model: null,
+    clear: vi.fn(),
+    onChange: vi.fn(),
+  }
+  return {
+    pb: {
+      collection: vi.fn().mockReturnValue({ authRefresh: vi.fn() }),
+      authStore: mockAuthStore,
     },
-  },
-}))
+  }
+})
 
 import { pb } from '../../lib/pb'
+
+function setIsValid(value: boolean) {
+  Object.defineProperty(pb.authStore, 'isValid', { value, writable: true, configurable: true })
+}
 
 function authRefreshMock() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,7 +30,7 @@ function authRefreshMock() {
 describe('auth store', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    pb.authStore.isValid = false
+    setIsValid(false)
   })
 
   describe('logout recursion protection', () => {
@@ -45,7 +52,7 @@ describe('auth store', () => {
 
   describe('refresh()', () => {
     beforeEach(() => {
-      pb.authStore.isValid = true
+      setIsValid(true)
       useAuthStore.setState({ user: { id: 'u1', role: 'gf' } as never })
     })
 

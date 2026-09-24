@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest'
 import { getWeekDays, canEditDept, visibleDepts, sortEmployees, calcSollMins } from '../dienstplanUtils'
-import type { Employee, Absence } from '@shared/types'
+import type { User, Absence } from '@shared/types'
 
 describe('getWeekDays', () => {
   // Pfingstmontag 2026 is 2026-05-25.
@@ -74,7 +74,7 @@ describe('visibleDepts', () => {
 })
 
 describe('calcSollMins', () => {
-  const emp   = { id: 'e1', weekly_hours: 40 } as Employee
+  const emp   = { id: 'e1', weekly_hours: 40 } as User
   const daily = Math.round(40 / 5) * 60 // 480 min
 
   // Normale Woche ohne Feiertage (KW11 2026)
@@ -132,16 +132,16 @@ describe('calcSollMins', () => {
   })
 
   test('Mitarbeiter ohne weekly_hours → Soll 0, kein Crash', () => {
-    const empNoHours = { id: 'e2' } as Employee
+    const empNoHours = { id: 'e2' } as User
     expect(calcSollMins(empNoHours, normalDays, {})).toBe(0)
   })
 })
 
 describe('sortEmployees', () => {
   const emps = [
-    { id: '1' } as Employee,
-    { id: '2' } as Employee,
-    { id: '3' } as Employee,
+    { id: '1' } as User,
+    { id: '2' } as User,
+    { id: '3' } as User,
   ]
 
   test('keine Order → Originalreihenfolge', () => {

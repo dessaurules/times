@@ -1,6 +1,6 @@
 import { startOfWeek, addDays, format, isSameDay, getISOWeek } from 'date-fns'
 import { getHolidays } from 'feiertagejs'
-import type { Employee, ShiftEntry, Absence } from '@shared/types'
+import type { User, ShiftEntry, Absence } from '@shared/types'
 import { SOLL_EXEMPT_ABSENCE_TYPES } from '@shared/types'
 
 export interface WeekDay {
@@ -113,10 +113,10 @@ export function fmtMins(mins: number): string {
 }
 
 export function sortEmployees(
-  employees: Employee[],
+  employees: User[],
   deptId: string,
   rowOrder: Record<string, string[]>,
-): Employee[] {
+): User[] {
   const order = rowOrder[deptId]
   if (!order || order.length === 0) return employees
   return [...employees].sort(
@@ -131,7 +131,7 @@ export function sortEmployees(
 }
 
 export function calcSollMins(
-  emp: Employee,
+  emp: User,
   days: WeekDay[],
   absenceMap: Record<string, Absence>,
 ): number {

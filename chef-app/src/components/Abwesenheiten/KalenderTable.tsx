@@ -1,10 +1,10 @@
 import { cn } from '@/lib/utils'
-import type { Employee, Absence, AbsenceType } from '@shared/types'
+import type { Absence, AbsenceType, User } from '@shared/types'
 import { ABSENCE_COLORS } from '@shared/types'
 import type { CalendarDay } from '../../lib/calendarUtils'
 
 export interface KalenderTableProps {
-  employees: Employee[]
+  employees: User[]
   absenceMap: Map<string, Absence>
   calendarDays: CalendarDay[]
   summaries: Map<string, { at: number; vacation: number; sick: number }>
@@ -52,7 +52,7 @@ export default function KalenderTable({
         <tbody>
           {(() => {
             // Mitarbeiter nach Abteilung gruppieren
-            const grouped = new Map<string, { deptName: string; emps: Employee[] }>()
+            const grouped = new Map<string, { deptName: string; emps: User[] }>()
             for (const emp of employees) {
               const key      = emp.department || '__none__'
               const deptName = emp.expand?.department?.name ?? 'Ohne Abteilung'

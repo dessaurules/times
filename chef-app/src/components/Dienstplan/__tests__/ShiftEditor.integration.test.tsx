@@ -9,6 +9,17 @@ vi.mock('@/hooks/useShiftTemplates', () => ({
   useShiftTemplates: vi.fn(),
 }))
 
+// QuickSelectSections only renders once pb.authStore.model is set (SSO-Guard)
+vi.mock('@/lib/pb', () => ({
+  pb: {
+    authStore: { model: { id: 'user_1' } },
+    collection: vi.fn().mockReturnValue({
+      create: vi.fn().mockResolvedValue({ id: 'abs_1' }),
+      getFullList: vi.fn().mockResolvedValue([]),
+    }),
+  },
+}))
+
 import { useShiftTemplates } from '@/hooks/useShiftTemplates'
 
 const mockTemplates: ShiftTemplate[] = [
@@ -37,6 +48,8 @@ const defaultHookReturn = {
 
 const defaultProps = {
   open: true,
+  employeeId: 'emp_1',
+  date: '2026-01-05',
   onClose: vi.fn(),
   onSave: vi.fn(),
   employeeName: 'Max Mustermann',
@@ -63,17 +76,15 @@ describe('ShiftEditor Integration', () => {
       />
     )
 
-    // Click the Krank (K) absence button with emoji
-    const krankBtn = screen.getByText(/🏥.*Krank/)
+    // Click the Krank (K) absence button (title carries the German label)
+    const krankBtn = screen.getByRole('button', { name: 'K' })
     await user.click(krankBtn)
 
     await waitFor(() => {
-      expect(onSave).toHaveBeenCalledWith(
-        expect.objectContaining({
-          note: expect.stringMatching(/Krank/)
-        })
-      )
+      expect(onSave).not.toHaveBeenCalled()
     })
+    // onSave is not used for absences — QuickSelectSections creates the
+    // absence directly via useCreateAbsence and only calls onClose.
     expect(onClose).toHaveBeenCalled()
   })
 
@@ -151,12 +162,6 @@ describe('ShiftEditor Integration', () => {
       />
     )
 
-    // Ensure Freier Tag is NOT checked
-    const freierTagCheckbox = screen.getByRole('checkbox', { name: /Freier Tag/i }) as HTMLInputElement
-    if (freierTagCheckbox.checked) {
-      await user.click(freierTagCheckbox)
-    }
-
     // Set Shift 1
     const startInputs = screen.getAllByDisplayValue('08:00')
     await user.clear(startInputs[0])
@@ -167,7 +172,7 @@ describe('ShiftEditor Integration', () => {
     await user.type(endInputs[0], '15:30')
 
     // Expand Shift 2
-    const expandBtn = screen.getByText(/Zweite Schicht hinzufügen/)
+    const expandBtn = screen.getByText(/Zweite Schicht$/)
     await user.click(expandBtn)
 
     // Wait for Shift 2 fields to appear

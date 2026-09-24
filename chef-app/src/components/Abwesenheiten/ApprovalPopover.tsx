@@ -2,13 +2,13 @@ import { useEffect, useRef } from 'react'
 import { X, Check, XCircle } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { de } from 'date-fns/locale'
-import type { Absence, Employee } from '@shared/types'
+import type { Absence, User } from '@shared/types'
 import { ABSENCE_COLORS } from '@shared/types'
 import { Button } from '../ui/button'
 
 interface ApprovalPopoverProps {
   absence: Absence
-  employee: Employee
+  employee: User
   anchorRect: DOMRect
   onApprove: () => void
   onReject: () => void

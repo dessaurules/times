@@ -9,6 +9,15 @@ vi.mock('../../../hooks/useShiftTemplates', () => ({
   useShiftTemplates: vi.fn(),
 }))
 
+// AbsencesTab reads pb.collection('absences').getFullList() directly —
+// mock the module (not vi.stubGlobal, which doesn't intercept ES imports).
+const mockGetFullList = vi.fn().mockResolvedValue([])
+vi.mock('@/lib/pb', () => ({
+  pb: {
+    collection: vi.fn(() => ({ getFullList: mockGetFullList })),
+  },
+}))
+
 import { useShiftTemplates } from '../../../hooks/useShiftTemplates'
 
 describe('ShiftEditorSettings', () => {
@@ -234,12 +243,8 @@ describe('ShiftEditorSettings', () => {
         },
       ]
 
-      // Mock pb.collection
-      vi.stubGlobal('pb', {
-        collection: vi.fn(() => ({
-          getFullList: vi.fn().mockResolvedValue(mockAbsences),
-        })),
-      })
+      // Mock pb.collection('absences').getFullList()
+      mockGetFullList.mockResolvedValue(mockAbsences)
 
       const user = userEvent.setup()
       render(
@@ -254,7 +259,7 @@ describe('ShiftEditorSettings', () => {
       )
 
       // Click Absences tab
-      const absencesTab = screen.getByText('📅 Abwesenheiten')
+      const absencesTab = screen.getByText('Abwesenheiten')
       await user.click(absencesTab)
 
       // Wait for absences to render
@@ -273,11 +278,7 @@ describe('ShiftEditorSettings', () => {
     })
 
     it('shows empty state when no absences', async () => {
-      vi.stubGlobal('pb', {
-        collection: vi.fn(() => ({
-          getFullList: vi.fn().mockResolvedValue([]),
-        })),
-      })
+      mockGetFullList.mockResolvedValue([])
 
       const user = userEvent.setup()
       render(
@@ -292,7 +293,7 @@ describe('ShiftEditorSettings', () => {
       )
 
       // Click Absences tab
-      const absencesTab = screen.getByText('📅 Abwesenheiten')
+      const absencesTab = screen.getByText('Abwesenheiten')
       await user.click(absencesTab)
 
       // Check empty state
@@ -317,11 +318,7 @@ describe('ShiftEditorSettings', () => {
         },
       ]
 
-      vi.stubGlobal('pb', {
-        collection: vi.fn(() => ({
-          getFullList: vi.fn().mockResolvedValue(mockAbsences),
-        })),
-      })
+      mockGetFullList.mockResolvedValue(mockAbsences)
 
       const user = userEvent.setup()
       render(
@@ -336,7 +333,7 @@ describe('ShiftEditorSettings', () => {
       )
 
       // Click Absences tab
-      const absencesTab = screen.getByText('📅 Abwesenheiten')
+      const absencesTab = screen.getByText('Abwesenheiten')
       await user.click(absencesTab)
 
       // Should only show approved

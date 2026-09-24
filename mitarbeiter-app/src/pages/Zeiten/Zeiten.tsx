@@ -3,7 +3,7 @@ import { format, endOfDay, isWeekend, startOfYear, parseISO } from 'date-fns'
 import { pb } from '../../lib/pb'
 import { useAuthStore } from '../../stores/auth'
 import { getHolidayDates } from '../../lib/holidays'
-import type { TimeEntry, Employee } from '@shared/types'
+import type { TimeEntry } from '@shared/types'
 import { cn } from '@/lib/utils'
 import { netMins, fmtDuration, dailySollMins } from '../../lib/zeitenCalc'
 import ZeitenCarousel from '../../components/ZeitenCarousel'
@@ -13,9 +13,8 @@ import MonatlichCard from './MonatlichCard'
 
 export default function Zeiten() {
   const user       = useAuthStore(s => s.user)
-  const employeeId = user?.employee ?? ''
+  const employeeId = user?.id ?? ''
 
-  const [employee,        setEmployee]        = useState<Employee | null>(null)
   const [fedState,        setFedState]        = useState('ST')
   const [allEntries,      setAllEntries]      = useState<TimeEntry[]>([])
   const [loadingOvertime, setLoadingOvertime] = useState(true)
@@ -26,13 +25,6 @@ export default function Zeiten() {
       .then(s => setFedState(s.value))
       .catch(() => {})
   }, [])
-
-  useEffect(() => {
-    if (!employeeId) return
-    pb.collection('employees').getOne<Employee>(employeeId, { requestKey: null })
-      .then(setEmployee)
-      .catch(console.error)
-  }, [employeeId])
 
   useEffect(() => {
     if (!employeeId) return
@@ -48,7 +40,7 @@ export default function Zeiten() {
       .finally(() => setLoadingOvertime(false))
   }, [employeeId])
 
-  const weeklyHours = employee?.weekly_hours ?? 40
+  const weeklyHours = user?.weekly_hours ?? 40
   const sollPerDay  = dailySollMins(weeklyHours)
 
   const holidaysYear = getHolidayDates(new Date().getFullYear(), fedState)

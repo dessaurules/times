@@ -15,13 +15,30 @@ export type NotifType      = 'absence_request' | 'absence_approved' | 'absence_r
 
 // ── Collections ────────────────────────────────────────
 export interface User extends PBRecord {
-  email:      string
-  name:       string
-  first_name: string
-  last_name:  string
-  role:       UserRole
-  employee?:  string
-  expand?: { employee?: Employee }
+  email:              string
+  name:               string
+  first_name:         string
+  last_name:          string
+  role:               UserRole
+  password?:          string          // nur beim Create
+  verified?:          boolean
+  points?:            number
+  gam_seen_at?:       string           // datetime
+  phone?:             string
+  birthday?:          string           // ISO date
+  street?:            string
+  zip?:               string
+  city?:              string
+  department?:        string           // relation ID
+  position?:          string
+  contract_type?:     ContractType
+  weekly_hours?:      number
+  start_date?:        string           // ISO date
+  end_date?:          string           // ISO date
+  vacation_days?:     number
+  active?:            boolean
+  planner_departments?: string | string[]  // JSON array, aber oft als string gespeichert
+  expand?: { department?: Department }
 }
 
 export interface Department extends PBRecord {
@@ -40,27 +57,6 @@ export interface ShiftTemplate extends PBRecord {
   expand?: { department?: Department }
 }
 
-export interface Employee extends PBRecord {
-  first_name: string
-  last_name: string
-  email: string
-  phone: string
-  birthday: string        // ISO date
-  street: string
-  zip: string
-  city: string
-  department: string      // relation ID
-  position: string
-  contract_type: ContractType
-  weekly_hours: number
-  start_date: string      // ISO date
-  end_date?: string       // ISO date
-  vacation_days: number
-  active: boolean
-  planner_departments?: string[]  // Array von Department-IDs, z.B. ["dept_id_1","dept_id_2"]
-  expand?: { department?: Department }
-}
-
 export interface Absence extends PBRecord {
   employee: string        // relation ID
   date_from: string       // ISO date
@@ -72,7 +68,7 @@ export interface Absence extends PBRecord {
   created_by: string
   approved_by?: string
   approved_at?: string
-  expand?: { employee?: Employee; approved_by?: User }
+  expand?: { employee?: User; approved_by?: User }
 }
 
 export interface VacationAccount extends PBRecord {
@@ -81,7 +77,7 @@ export interface VacationAccount extends PBRecord {
   entitlement: number
   carry_over: number
   carry_over_expires: string  // ISO date
-  expand?: { employee?: Employee }
+  expand?: { employee?: User}
 }
 
 export interface TimeEntry extends PBRecord {
@@ -171,7 +167,7 @@ export interface ShiftPlan extends PBRecord {
 
 export interface ShiftEntry extends PBRecord {
   plan_id:      string       // Relation zu ShiftPlan
-  employee:     string       // Relation zu Employee
+  employee:     string       // Relation zu User
   department:   string       // Relation zu Department
   date:         string       // 'yyyy-MM-dd'
   start_time:   string       // 'HH:mm'
@@ -185,7 +181,7 @@ export interface ShiftEntry extends PBRecord {
   is_free_day?: boolean      // Kennzeichnung als freier Tag
   status:       ShiftStatus
   expand?: {
-    employee?:   Employee
+    employee?:   User
     department?: Department
   }
 }

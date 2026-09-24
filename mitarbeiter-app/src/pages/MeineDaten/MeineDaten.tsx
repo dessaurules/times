@@ -4,7 +4,7 @@ import { de } from 'date-fns/locale'
 import { User as UserIcon, FileText, Clock, Download } from 'lucide-react'
 import { pb } from '../../lib/pb'
 import { useAuthStore } from '../../stores/auth'
-import type { Employee, Document, Availability } from '@shared/types'
+import type { User, Document, Availability } from '@shared/types'
 import { CONTRACT_LABELS } from '@shared/types'
 import { cn } from '@/lib/utils'
 
@@ -27,12 +27,12 @@ const WEEKDAY_LABELS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag
 const WEEKDAY_ORDER  = [1, 2, 3, 4, 5, 6, 0]
 
 export default function MeineDaten() {
-  const user       = useAuthStore(s => s.user)
-  const employeeId = user?.employee ?? ''
+  const authUser   = useAuthStore(s => s.user)
+  const employeeId = authUser?.id ?? ''
 
   const [tab, setTab] = useState<Tab>('stammdaten')
 
-  const [employee,    setEmployee]    = useState<Employee | null>(null)
+  const [employee,    setEmployee]    = useState<User | null>(null)
   const [documents,   setDocuments]   = useState<Document[]>([])
   const [docsLoaded,  setDocsLoaded]  = useState(false)
   const [avails,      setAvails]      = useState<Availability[]>([])
@@ -41,7 +41,7 @@ export default function MeineDaten() {
 
   useEffect(() => {
     if (!employeeId) return
-    pb.collection('employees').getOne<Employee>(employeeId, {
+    pb.collection('users').getOne<User>(employeeId, {
       expand: 'department',
       requestKey: null,
     }).then(setEmployee).catch(console.error)
@@ -160,7 +160,7 @@ export default function MeineDaten() {
               <div className="divide-y divide-[#F3F4F6]">
                 {([
                   ['Abteilung',     employee.expand?.department?.name ?? '—'],
-                  ['Vertragsart',   CONTRACT_LABELS[employee.contract_type] ?? employee.contract_type],
+                  ['Vertragsart',   (employee.contract_type ? CONTRACT_LABELS[employee.contract_type] : null) ?? employee.contract_type ?? '—'],
                   ['Wochenstunden', `${employee.weekly_hours} h`],
                   ['Eintrittsdatum', employee.start_date
                     ? format(parseISO(employee.start_date), 'd. MMMM yyyy', { locale: de })

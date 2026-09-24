@@ -35,7 +35,7 @@ interface ShiftEntry extends PBRecord {
 
 export default function Dienstplan() {
   const user       = useAuthStore(s => s.user)
-  const employeeId = user?.employee ?? ''
+  const employeeId = user?.id ?? ''
 
   const [weekStart, setWeekStart] = useState(() =>
     startOfWeek(new Date(), { weekStartsOn: 1 })

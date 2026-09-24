@@ -32,7 +32,7 @@ function countAbsenceDays(absences: Absence[], year: number, federalState: strin
 
 export default function Abwesenheiten() {
   const user       = useAuthStore(s => s.user)
-  const employeeId = user?.employee ?? ''
+  const employeeId = user?.id ?? ''
 
   const [year,       setYear]       = useState(new Date().getFullYear())
   const [absences,   setAbsences]   = useState<Absence[]>([])

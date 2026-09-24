@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { pb } from '../lib/pb'
 import { getHolidayDates } from '../lib/holidays'
 import { buildCalendarDays, buildAbsenceMap } from '../lib/calendarUtils'
-import type { Employee, Absence, AbsenceType } from '@shared/types'
+import type { User, Absence, AbsenceType } from '@shared/types'
 import { VACATION_TYPES, ABSENCE_COLORS } from '@shared/types'
 import KalenderTable from '../components/Abwesenheiten/KalenderTable'
 import ApprovalPopover from '../components/Abwesenheiten/ApprovalPopover'
@@ -22,7 +22,7 @@ export default function Abwesenheiten() {
   const year  = currentDate.getFullYear()
   const month = currentDate.getMonth() + 1
 
-  const [employees,    setEmployees]  = useState<Employee[]>([])
+  const [employees,    setEmployees]  = useState<User[]>([])
   const [absences,     setAbsences]   = useState<Absence[]>([])
   const [federalState, setFederal]    = useState('ST')
   const [loading,      setLoading]    = useState(true)
@@ -51,7 +51,7 @@ export default function Abwesenheiten() {
   useEffect(() => {
     Promise.all([
       pb.collection('settings').getFullList({ requestKey: 'abs-settings' }),
-      pb.collection('employees').getFullList<Employee>({
+      pb.collection('users').getFullList<User>({
         sort: 'last_name,first_name', filter: 'active = true',
         expand: 'department', requestKey: 'abs-employees',
       }),

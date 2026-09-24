@@ -3,7 +3,7 @@ import { addDays, format, parseISO, isAfter } from 'date-fns'
 import { ChevronLeft, ChevronRight, Check, AlertCircle } from 'lucide-react'
 import { pb } from '../lib/pb'
 import { useAuthStore } from '../stores/auth'
-import type { Department, Employee, Settings, ShiftPlan, ShiftEntry, Absence } from '@shared/types'
+import type { Department, User, Settings, ShiftPlan, ShiftEntry, Absence } from '@shared/types'
 import { cn } from '@/lib/utils'
 import {
   getWeekStart, getWeekDays, getWeekLabel,
@@ -28,13 +28,13 @@ export default function Dienstplan() {
 
   // ── Stammdaten ────────────────────────────────────────────────────
   const [departments, setDepartments]   = useState<Department[]>([])
-  const [employees, setEmployees]       = useState<Employee[]>([])
+  const [employees, setEmployees]       = useState<User[]>([])
   const [federalState, setFederalState] = useState('ST')
 
   useEffect(() => {
     pb.collection('departments').getFullList<Department>({ sort: 'sort_order', requestKey: null })
       .then(setDepartments)
-    pb.collection('employees').getFullList<Employee>({ filter: 'active = true', requestKey: null })
+    pb.collection('users').getFullList<User>({ filter: 'active = true', requestKey: null })
       .then(setEmployees)
     pb.collection('settings').getFirstListItem<Settings>('key = "federal_state"', { requestKey: null })
       .then(s => setFederalState(s.value))
@@ -46,15 +46,16 @@ export default function Dienstplan() {
   const weekLabel = useMemo(() => getWeekLabel(weekStart, days), [weekStart, days])
 
   // ── Berechtigungen ────────────────────────────────────────────────
-  const authEmployee = useMemo(
-    () => employees.find(e => e.id === user?.employee),
-    [employees, user?.employee],
-  )
   const allDeptIds = useMemo(() => departments.map(d => d.id), [departments])
 
+  const normalizePlannerDepts = (depts: any): string[] | undefined => {
+    if (!depts) return undefined
+    return Array.isArray(depts) ? depts : [depts]
+  }
+
   const visibleDeptIds = useMemo(
-    () => visibleDepts(role, authEmployee?.planner_departments, allDeptIds),
-    [role, authEmployee?.planner_departments, allDeptIds],
+    () => visibleDepts(role, normalizePlannerDepts(user?.planner_departments), allDeptIds),
+    [role, user?.planner_departments, allDeptIds],
   )
 
   // Abteilungs-Selektor (GF/Admin kann filtern, Planer sieht nur seine)
@@ -66,8 +67,8 @@ export default function Dienstplan() {
   }, [departments, visibleDeptIds, selectedDept])
 
   const editableDepts = useMemo(
-    () => shownDepts.map(d => d.id).filter(id => canEditDept(role, authEmployee?.planner_departments, id)),
-    [shownDepts, role, authEmployee?.planner_departments],
+    () => shownDepts.map(d => d.id).filter(id => canEditDept(role, normalizePlannerDepts(user?.planner_departments), id)),
+    [shownDepts, role, user?.planner_departments],
   )
 
   // ── Zeilen-Reihenfolge (localStorage) ────────────────────────────
