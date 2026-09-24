@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dienstplan – Varianten-Vergleich</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #F3F4F6; color: #111827; }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 0; border-bottom: 2px solid #E5E7EB; background: #fff; padding: 0 24px; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .tab { padding: 14px 22px; font-size: 14px; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; color: #6B7280; transition: all .15s; }
+  .tab:hover { color: #4F46E5; }
+  .tab.active { color: #4F46E5; border-bottom-color: #4F46E5; }
+  .badge { display: inline-block; margin-left: 6px; font-size: 10px; background: #EEF2FF; color: #4F46E5; border-radius: 99px; padding: 1px 7px; font-weight: 700; }
+  .badge.green { background: #ECFDF5; color: #059669; }
+
+  .page { display: none; padding: 24px; max-width: 1300px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* ── Shared Card ── */
+  .card { background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; }
+  .card-header { padding: 14px 18px; border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .card-title { font-size: 15px; font-weight: 700; color: #111827; }
+  .card-sub   { font-size: 12px; color: #6B7280; margin-top: 2px; }
+
+  /* ── Buttons ── */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+  .btn-primary { background: linear-gradient(135deg,#4F46E5,#7C3AED); color: #fff; }
+  .btn-primary:hover { opacity: .9; }
+  .btn-outline { background: #fff; color: #374151; border: 1px solid #D1D5DB; }
+  .btn-outline:hover { background: #F9FAFB; }
+  .btn-green { background: #059669; color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 6px; }
+
+  /* ── Page header ── */
+  .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+  .page-header h1 { font-size: 22px; font-weight: 800; }
+  .page-header p  { font-size: 13px; color: #6B7280; margin-top: 3px; }
+  .week-nav { display: flex; align-items: center; gap: 8px; }
+  .week-nav span { font-size: 14px; font-weight: 700; min-width: 180px; text-align: center; }
+  .nav-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #D1D5DB; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #374151; }
+  .nav-btn:hover { background: #F3F4F6; }
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     VARIANTE A — Wochenraster
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  .raster-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .raster-table th { background: #F9FAFB; font-weight: 600; color: #374151; padding: 10px 8px; border-bottom: 2px solid #E5E7EB; border-right: 1px solid #E5E7EB; text-align: center; }
+  .raster-table th.emp-col { text-align: left; min-width: 150px; padding-left: 14px; position: sticky; left: 0; z-index: 2; background: #F9FAFB; }
+  .raster-table td { border-bottom: 1px solid #F3F4F6; border-right: 1px solid #F3F4F6; padding: 0; height: 56px; vertical-align: middle; text-align: center; cursor: pointer; }
+  .raster-table td:first-child { padding-left: 14px; text-align: left; font-weight: 600; color: #111827; font-size: 13px; background: #fff; position: sticky; left: 0; z-index: 1; border-right: 1px solid #E5E7EB; }
+  .raster-table td:first-child .role { font-size: 11px; font-weight: 400; color: #9CA3AF; }
+  .raster-table tr:hover td { background: #FAFAFA; }
+  .raster-table tr:hover td:first-child { background: #FAFAFA; }
+
+  .shift-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 2px; }
+  .shift-time { font-size: 11px; font-weight: 700; color: #1E40AF; background: #EEF2FF; border-radius: 6px; padding: 3px 7px; }
+  .shift-dept { font-size: 9px; color: #6B7280; }
+  .shift-open { font-size: 10px; color: #9CA3AF; background: #F3F4F6; border-radius: 6px; padding: 2px 6px; border: 1px dashed #D1D5DB; }
+  .shift-empty:hover .shift-add { opacity: 1; }
+  .shift-add { opacity: 0; font-size: 20px; color: #C7D2FE; transition: opacity .15s; }
+  .day-header { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+  .day-name { font-size: 11px; font-weight: 700; }
+  .day-date { font-size: 10px; font-weight: 400; color: #9CA3AF; }
+  .day-today { color: #4F46E5 !important; }
+  .day-today .day-date { color: #818CF8; }
+  .weekend-col td { background: #FAFAFA; }
+  .weekend-col th { background: #F3F4F6; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6B7280; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+  /* ── Status bar A ── */
+  .status-bar { display: flex; gap: 12px; margin-bottom: 16px; }
+  .stat-chip { background: #fff; border: 1px solid #E5E7EB; border-radius: 10px; padding: 8px 14px; font-size: 12px; }
+  .stat-chip strong { font-size: 18px; font-weight: 800; display: block; }
+  .stat-chip.indigo strong { color: #4F46E5; }
+  .stat-chip.green  strong { color: #059669; }
+  .stat-chip.amber  strong { color: #D97706; }
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     VARIANTE B — Listenbasiert
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  .list-layout { display: grid; grid-template-columns: 360px 1fr; gap: 20px; align-items: start; }
+  .form-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; position: sticky; top: 80px; }
+  .form-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .form-row { display: flex; flex-direction: column; gap: 4px; }
+  .form-row label { font-size: 12px; font-weight: 600; color: #374151; }
+  .form-row select, .form-row input { width: 100%; height: 36px; border: 1px solid #D1D5DB; border-radius: 8px; padding: 0 10px; font-size: 13px; color: #111827; background: #fff; }
+  .form-row select:focus, .form-row input:focus { outline: none; border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(79,70,229,.1); }
+  .time-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .form-sep { height: 1px; background: #F3F4F6; }
+
+  .entries-list { display: flex; flex-direction: column; gap: 3px; }
+  .entry-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: #fff; border: 1px solid #E5E7EB; border-radius: 10px; font-size: 13px; }
+  .entry-avatar { width: 34px; height: 34px; border-radius: 8px; background: linear-gradient(135deg,#4F46E5,#7C3AED); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 12px; flex-shrink: 0; }
+  .entry-info { flex: 1; }
+  .entry-name { font-weight: 600; color: #111827; }
+  .entry-meta { font-size: 11px; color: #6B7280; margin-top: 1px; }
+  .entry-time { font-size: 12px; font-weight: 700; color: #1E40AF; background: #EEF2FF; padding: 3px 8px; border-radius: 6px; white-space: nowrap; }
+  .entry-dept { font-size: 11px; color: #6B7280; background: #F3F4F6; padding: 2px 7px; border-radius: 6px; }
+  .entry-actions { display: flex; gap: 4px; }
+  .icon-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid #E5E7EB; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #6B7280; }
+  .icon-btn:hover { background: #FEF2F2; border-color: #FECACA; color: #DC2626; }
+  .day-group { font-size: 11px; font-weight: 700; color: #9CA3AF; padding: 10px 0 4px; text-transform: uppercase; letter-spacing: .05em; }
+
+  /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     VARIANTE C — Kalenderansicht
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  .cal-day-header { text-align: center; font-size: 11px; font-weight: 700; color: #9CA3AF; padding: 6px; text-transform: uppercase; letter-spacing: .04em; }
+  .cal-cell { background: #fff; border: 1px solid #E5E7EB; border-radius: 10px; min-height: 110px; padding: 8px; cursor: pointer; transition: border-color .15s; }
+  .cal-cell:hover { border-color: #A5B4FC; }
+  .cal-cell.today { border-color: #4F46E5; background: #FAFBFF; }
+  .cal-cell.other-month { background: #F9FAFB; opacity: .5; }
+  .cal-cell.weekend { background: #FAFAFA; }
+  .cal-date { font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 6px; }
+  .cal-date.today-num { width: 22px; height: 22px; background: #4F46E5; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+  .cal-shift { display: flex; align-items: center; gap: 4px; padding: 3px 6px; border-radius: 5px; font-size: 10px; font-weight: 600; margin-bottom: 3px; }
+  .cal-shift .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .s-blue { background: #EEF2FF; color: #3730A3; }
+  .s-blue .dot { background: #4F46E5; }
+  .s-green { background: #ECFDF5; color: #065F46; }
+  .s-green .dot { background: #059669; }
+  .s-amber { background: #FFFBEB; color: #92400E; }
+  .s-amber .dot { background: #D97706; }
+  .s-rose  { background: #FFF1F2; color: #9F1239; }
+  .s-rose  .dot { background: #E11D48; }
+  .s-violet { background: #F5F3FF; color: #5B21B6; }
+  .s-violet .dot { background: #7C3AED; }
+  .cal-more { font-size: 10px; color: #9CA3AF; margin-top: 2px; }
+  .cal-add { font-size: 18px; color: #E5E7EB; text-align: center; margin-top: 4px; }
+  .cal-cell:hover .cal-add { color: #C7D2FE; }
+
+  .emp-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .emp-chip { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid transparent; transition: all .15s; }
+  .emp-chip.active { border-color: currentColor; }
+  .chip-av { width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 8px; font-weight: 800; }
+
+  /* ── Popup (shared) ── */
+  .popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity .15s; }
+  .popup-overlay.open { opacity: 1; pointer-events: all; }
+  .popup { background: #fff; border-radius: 16px; width: 340px; box-shadow: 0 20px 60px rgba(0,0,0,.18); overflow: hidden; transform: scale(.95); transition: transform .15s; }
+  .popup-overlay.open .popup { transform: scale(1); }
+  .popup-header { padding: 16px 18px; border-bottom: 1px solid #F3F4F6; display: flex; align-items: center; justify-content: space-between; }
+  .popup-title { font-size: 15px; font-weight: 700; }
+  .popup-close { width: 28px; height: 28px; border-radius: 6px; border: none; background: #F3F4F6; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  .popup-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .popup-footer { padding: 12px 18px; border-top: 1px solid #F3F4F6; display: flex; justify-content: flex-end; gap: 8px; }
+
+  /* ── Pro/Con ── */
+  .comparison { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 32px; }
+  .compare-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; padding: 16px; }
+  .compare-card h3 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+  .pro-con { display: flex; flex-direction: column; gap: 6px; }
+  .pro { color: #059669; font-size: 12px; }
+  .con { color: #DC2626; font-size: 12px; }
+  .pro::before { content: "✓ "; font-weight: 700; }
+  .con::before { content: "✗ "; font-weight: 700; }
+  .rec { border: 2px solid #4F46E5; }
+  .rec h3 { color: #4F46E5; }
+  .rec-badge { display: inline-block; font-size: 10px; background: #4F46E5; color: #fff; border-radius: 99px; padding: 2px 8px; margin-left: 6px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('a')">Variante A — Wochenraster <span class="badge green">Empfohlen</span></div>
+  <div class="tab" onclick="showTab('b')">Variante B — Listenbasiert</div>
+  <div class="tab" onclick="showTab('c')">Variante C — Kalenderansicht</div>
+</div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     VARIANTE A — Wochenraster
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="page active" id="page-a">
+  <div class="page-header">
+    <div>
+      <h1>Dienstplan</h1>
+      <p>Wochenraster — Klick in eine Zelle zum Bearbeiten</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="week-nav">
+        <button class="nav-btn">‹</button>
+        <span>26. Mai – 1. Jun 2026</span>
+        <button class="nav-btn">›</button>
+      </div>
+      <button class="btn btn-outline btn-sm">Entwurf</button>
+      <button class="btn btn-green btn-sm" onclick="showPopup('pub')">✓ Veröffentlichen</button>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="stat-chip indigo"><strong>8</strong>Schichten geplant</div>
+    <div class="stat-chip green"><strong>5</strong>Mitarbeiter eingeteilt</div>
+    <div class="stat-chip amber"><strong>2</strong>Offene Stellen</div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#EEF2FF;border:1px solid #C7D2FE"></div> Schicht geplant</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#FFF1F2;border:1px solid #FECDD3"></div> Freier Tag / Urlaub</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#F3F4F6;border:1px dashed #D1D5DB"></div> Offen (kein MA)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ECFDF5;border:1px solid #A7F3D0"></div> Veröffentlicht</div>
+  </div>
+
+  <div class="card" style="overflow-x:auto">
+    <table class="raster-table">
+      <thead>
+        <tr>
+          <th class="emp-col">Mitarbeiter</th>
+          <th class="day-today"><div class="day-header"><span class="day-name day-today">Mo</span><span class="day-date day-today">26.05</span></div></th>
+          <th><div class="day-header"><span class="day-name">Di</span><span class="day-date">27.05</span></div></th>
+          <th><div class="day-header"><span class="day-name">Mi</span><span class="day-date">28.05</span></div></th>
+          <th><div class="day-header"><span class="day-name">Do</span><span class="day-date">29.05</span></div></th>
+          <th><div class="day-header"><span class="day-name">Fr</span><span class="day-date">30.05</span></div></th>
+          <th style="background:#F3F4F6"><div class="day-header"><span class="day-name" style="color:#9CA3AF">Sa</span><span class="day-date">31.05</span></div></th>
+          <th style="background:#F3F4F6"><div class="day-header"><span class="day-name" style="color:#9CA3AF">So</span><span class="day-date">01.06</span></div></th>
+          <th style="min-width:80px;border-left:2px solid #E5E7EB">Std./Wo.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- MA 1 -->
+        <tr>
+          <td><div>Müller, Anna</div><div class="role">Küche</div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF"><div class="shift-cell"><span class="shift-time">07:00–15:00</span><span class="shift-dept">Küche</span></div></td>
+          <td onclick="showPopup('edit')"><div class="shift-cell shift-empty"><span class="shift-add">+</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF"><div class="shift-cell"><span class="shift-time">07:00–15:00</span><span class="shift-dept">Küche</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF"><div class="shift-cell"><span class="shift-time">07:00–15:00</span><span class="shift-dept">Küche</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#FFF1F2"><div class="shift-cell"><span style="font-size:10px;color:#9CA3AF">Urlaub</span></div></td>
+          <td style="background:#F9FAFB"></td>
+          <td style="background:#F9FAFB"></td>
+          <td style="border-left:2px solid #E5E7EB;font-weight:700;color:#4F46E5;font-size:13px">24 h</td>
+        </tr>
+        <!-- MA 2 -->
+        <tr>
+          <td><div>Schmidt, Klaus</div><div class="role">Service</div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF"><div class="shift-cell"><span class="shift-time">11:00–19:00</span><span class="shift-dept">Service</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF"><div class="shift-cell"><span class="shift-time">11:00–19:00</span><span class="shift-dept">Service</span></div></td>
+          <td onclick="showPopup('edit')"><div class="shift-cell shift-empty"><span class="shift-add">+</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF"><div class="shift-cell"><span class="shift-time">11:00–19:00</span><span class="shift-dept">Service</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF"><div class="shift-cell"><span class="shift-time">11:00–19:00</span><span class="shift-dept">Service</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF;background:#F3F4F6"><div class="shift-cell"><span class="shift-time" style="background:#F3F4F6;color:#6B7280">09:00–14:00</span><span class="shift-dept">Service</span></div></td>
+          <td style="background:#F9FAFB"></td>
+          <td style="border-left:2px solid #E5E7EB;font-weight:700;color:#4F46E5;font-size:13px">40 h</td>
+        </tr>
+        <!-- MA 3 -->
+        <tr>
+          <td><div>Weber, Lisa</div><div class="role">Bar</div></td>
+          <td onclick="showPopup('edit')"><div class="shift-cell shift-empty"><span class="shift-add">+</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF"><div class="shift-cell"><span class="shift-time">15:00–23:00</span><span class="shift-dept">Bar</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF"><div class="shift-cell"><span class="shift-time">15:00–23:00</span><span class="shift-dept">Bar</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF"><div class="shift-cell"><span class="shift-time">15:00–23:00</span><span class="shift-dept">Bar</span></div></td>
+          <td onclick="showPopup('edit')"><div class="shift-cell shift-empty"><span class="shift-add">+</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#F3F4F6"><div class="shift-cell"><span class="shift-time" style="background:#F3F4F6;color:#6B7280">18:00–23:00</span><span class="shift-dept">Bar</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#F3F4F6"><div class="shift-cell"><span class="shift-time" style="background:#F3F4F6;color:#6B7280">18:00–23:00</span><span class="shift-dept">Bar</span></div></td>
+          <td style="border-left:2px solid #E5E7EB;font-weight:700;color:#4F46E5;font-size:13px">29 h</td>
+        </tr>
+        <!-- MA 4 (Offen) -->
+        <tr>
+          <td><div style="color:#9CA3AF;font-style:italic">Offen</div><div class="role">Küche</div></td>
+          <td onclick="showPopup('edit')" style="background:#FFFBEB"><div class="shift-cell"><span class="shift-open">Offen 07–15</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#FFFBEB"><div class="shift-cell"><span class="shift-open">Offen 07–15</span></div></td>
+          <td onclick="showPopup('edit')"><div class="shift-cell shift-empty"><span class="shift-add">+</span></div></td>
+          <td onclick="showPopup('edit')"><div class="shift-cell shift-empty"><span class="shift-add">+</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#FFFBEB"><div class="shift-cell"><span class="shift-open">Offen 07–15</span></div></td>
+          <td style="background:#F9FAFB"></td>
+          <td style="background:#F9FAFB"></td>
+          <td style="border-left:2px solid #E5E7EB;font-weight:400;color:#D97706;font-size:13px">—</td>
+        </tr>
+        <!-- MA 5 -->
+        <tr>
+          <td><div>Braun, Tom</div><div class="role">Küche</div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF"><div class="shift-cell"><span class="shift-time">07:00–15:00</span><span class="shift-dept">Küche</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF"><div class="shift-cell"><span class="shift-time">07:00–15:00</span><span class="shift-dept">Küche</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF"><div class="shift-cell"><span class="shift-time">07:00–15:00</span><span class="shift-dept">Küche</span></div></td>
+          <td onclick="showPopup('edit')"><div class="shift-cell shift-empty"><span class="shift-add">+</span></div></td>
+          <td onclick="showPopup('edit')" style="background:#EEF2FF"><div class="shift-cell"><span class="shift-time">07:00–15:00</span><span class="shift-dept">Küche</span></div></td>
+          <td style="background:#F9FAFB"></td>
+          <td style="background:#F9FAFB"></td>
+          <td style="border-left:2px solid #E5E7EB;font-weight:700;color:#4F46E5;font-size:13px">32 h</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     VARIANTE B — Listenbasiert
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="page" id="page-b">
+  <div class="page-header">
+    <div>
+      <h1>Dienstplan</h1>
+      <p>Listenbasiert — Schichten einzeln hinzufügen</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="week-nav">
+        <button class="nav-btn">‹</button>
+        <span>26. Mai – 1. Jun 2026</span>
+        <button class="nav-btn">›</button>
+      </div>
+      <button class="btn btn-green btn-sm" onclick="showPopup('pub')">✓ Veröffentlichen</button>
+    </div>
+  </div>
+
+  <div class="list-layout">
+    <!-- Formular links -->
+    <div class="form-card">
+      <div class="card-header"><div><div class="card-title">Schicht hinzufügen</div><div class="card-sub">Für die KW 22</div></div></div>
+      <div class="form-body">
+        <div class="form-row">
+          <label>Mitarbeiter</label>
+          <select>
+            <option>Müller, Anna</option>
+            <option>Schmidt, Klaus</option>
+            <option>Weber, Lisa</option>
+            <option>Braun, Tom</option>
+            <option selected>— Offen (kein MA) —</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Datum</label>
+          <input type="date" value="2026-05-26">
+        </div>
+        <div class="form-row">
+          <label>Zeiten</label>
+          <div class="time-row">
+            <input type="time" value="07:00">
+            <input type="time" value="15:00">
+          </div>
+        </div>
+        <div class="form-row">
+          <label>Bereich</label>
+          <select>
+            <option>Küche</option>
+            <option>Service</option>
+            <option>Bar</option>
+            <option>Verwaltung</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Notiz (optional)</label>
+          <input type="text" placeholder="z.B. Einschulung, Vertretung…">
+        </div>
+        <div class="form-sep"></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center">+ Schicht hinzufügen</button>
+      </div>
+    </div>
+
+    <!-- Liste rechts -->
+    <div>
+      <div class="entries-list">
+        <div class="day-group">Montag, 26. Mai</div>
+        <div class="entry-item">
+          <div class="entry-avatar">AM</div>
+          <div class="entry-info">
+            <div class="entry-name">Müller, Anna</div>
+            <div class="entry-meta">Montag, 26. Mai</div>
+          </div>
+          <span class="entry-dept">Küche</span>
+          <span class="entry-time">07:00 – 15:00</span>
+          <div class="entry-actions">
+            <button class="icon-btn" title="Löschen">🗑</button>
+          </div>
+        </div>
+        <div class="entry-item">
+          <div class="entry-avatar">SK</div>
+          <div class="entry-info">
+            <div class="entry-name">Schmidt, Klaus</div>
+            <div class="entry-meta">Montag, 26. Mai</div>
+          </div>
+          <span class="entry-dept">Service</span>
+          <span class="entry-time">11:00 – 19:00</span>
+          <div class="entry-actions">
+            <button class="icon-btn" title="Löschen">🗑</button>
+          </div>
+        </div>
+        <div class="entry-item" style="border-style:dashed;background:#FFFBEB">
+          <div class="entry-avatar" style="background:#D97706">?</div>
+          <div class="entry-info">
+            <div class="entry-name" style="color:#D97706">Offen</div>
+            <div class="entry-meta">Montag, 26. Mai</div>
+          </div>
+          <span class="entry-dept">Küche</span>
+          <span class="entry-time" style="background:#FFFBEB;color:#D97706;border:1px solid #FDE68A">07:00 – 15:00</span>
+          <div class="entry-actions">
+            <button class="icon-btn" title="Löschen">🗑</button>
+          </div>
+        </div>
+
+        <div class="day-group">Dienstag, 27. Mai</div>
+        <div class="entry-item">
+          <div class="entry-avatar">SK</div>
+          <div class="entry-info"><div class="entry-name">Schmidt, Klaus</div><div class="entry-meta">Dienstag, 27. Mai</div></div>
+          <span class="entry-dept">Service</span>
+          <span class="entry-time">11:00 – 19:00</span>
+          <div class="entry-actions"><button class="icon-btn">🗑</button></div>
+        </div>
+        <div class="entry-item">
+          <div class="entry-avatar" style="background:#7C3AED">WL</div>
+          <div class="entry-info"><div class="entry-name">Weber, Lisa</div><div class="entry-meta">Dienstag, 27. Mai</div></div>
+          <span class="entry-dept">Bar</span>
+          <span class="entry-time">15:00 – 23:00</span>
+          <div class="entry-actions"><button class="icon-btn">🗑</button></div>
+        </div>
+        <div class="entry-item">
+          <div class="entry-avatar" style="background:#059669">BT</div>
+          <div class="entry-info"><div class="entry-name">Braun, Tom</div><div class="entry-meta">Dienstag, 27. Mai</div></div>
+          <span class="entry-dept">Küche</span>
+          <span class="entry-time">07:00 – 15:00</span>
+          <div class="entry-actions"><button class="icon-btn">🗑</button></div>
+        </div>
+
+        <div class="day-group">Mittwoch, 28. Mai – Freitag, 30. Mai</div>
+        <div style="padding:16px;background:#F9FAFB;border-radius:10px;text-align:center;font-size:13px;color:#9CA3AF;border:1px dashed #E5E7EB">
+          Weitere Einträge… (Mi: 4 Schichten, Do: 3, Fr: 4)
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+     VARIANTE C — Kalenderansicht
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div class="page" id="page-c">
+  <div class="page-header">
+    <div>
+      <h1>Dienstplan</h1>
+      <p>Kalenderansicht — Monatsübersicht aller Schichten</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="week-nav">
+        <button class="nav-btn">‹</button>
+        <span>Mai 2026</span>
+        <button class="nav-btn">›</button>
+      </div>
+      <button class="btn btn-green btn-sm" onclick="showPopup('pub')">✓ Veröffentlichen</button>
+    </div>
+  </div>
+
+  <!-- Mitarbeiter-Filter -->
+  <div class="emp-filter">
+    <div style="font-size:12px;font-weight:600;color:#6B7280;align-self:center;margin-right:4px;">Filtern:</div>
+    <div class="emp-chip active" style="background:#EEF2FF;color:#4F46E5">
+      <div class="chip-av" style="background:#4F46E5">AM</div> Müller, A.
+    </div>
+    <div class="emp-chip active" style="background:#ECFDF5;color:#059669">
+      <div class="chip-av" style="background:#059669">SK</div> Schmidt, K.
+    </div>
+    <div class="emp-chip active" style="background:#F5F3FF;color:#7C3AED">
+      <div class="chip-av" style="background:#7C3AED">WL</div> Weber, L.
+    </div>
+    <div class="emp-chip active" style="background:#FFF7ED;color:#D97706">
+      <div class="chip-av" style="background:#D97706">BT</div> Braun, T.
+    </div>
+    <div class="emp-chip" style="background:#F3F4F6;color:#9CA3AF">
+      <div class="chip-av" style="background:#9CA3AF">?</div> Offen
+    </div>
+  </div>
+
+  <div class="card" style="padding:16px">
+    <div class="cal-grid">
+      <div class="cal-day-header">Mo</div>
+      <div class="cal-day-header">Di</div>
+      <div class="cal-day-header">Mi</div>
+      <div class="cal-day-header">Do</div>
+      <div class="cal-day-header">Fr</div>
+      <div class="cal-day-header" style="color:#D97706">Sa</div>
+      <div class="cal-day-header" style="color:#D97706">So</div>
+
+      <!-- Woche 1 (leer weil April) -->
+      <div class="cal-cell other-month"><div class="cal-date">27</div></div>
+      <div class="cal-cell other-month"><div class="cal-date">28</div></div>
+      <div class="cal-cell other-month"><div class="cal-date">29</div></div>
+      <div class="cal-cell other-month"><div class="cal-date">30</div></div>
+      <div class="cal-cell"><div class="cal-date">1</div><div class="cal-shift s-blue"><div class="dot"></div>Müller 07–15</div><div class="cal-shift s-green"><div class="dot"></div>Schmidt 11–19</div></div>
+      <div class="cal-cell weekend"><div class="cal-date">2</div></div>
+      <div class="cal-cell weekend"><div class="cal-date">3</div></div>
+
+      <!-- Woche 2 -->
+      <div class="cal-cell"><div class="cal-date">4</div><div class="cal-shift s-blue"><div class="dot"></div>Müller 07–15</div><div class="cal-shift s-violet"><div class="dot"></div>Weber 15–23</div></div>
+      <div class="cal-cell"><div class="cal-date">5</div><div class="cal-shift s-amber"><div class="dot"></div>Braun 07–15</div><div class="cal-shift s-green"><div class="dot"></div>Schmidt 11–19</div></div>
+      <div class="cal-cell"><div class="cal-date">6</div><div class="cal-shift s-blue"><div class="dot"></div>Müller 07–15</div></div>
+      <div class="cal-cell"><div class="cal-date">7</div><div class="cal-shift s-amber"><div class="dot"></div>Braun 07–15</div><div class="cal-shift s-violet"><div class="dot"></div>Weber 15–23</div></div>
+      <div class="cal-cell"><div class="cal-date">8</div><div class="cal-shift s-green"><div class="dot"></div>Schmidt 11–19</div></div>
+      <div class="cal-cell weekend"><div class="cal-date">9</div></div>
+      <div class="cal-cell weekend"><div class="cal-date">10</div></div>
+
+      <!-- ... weitere Wochen vereinfacht ... -->
+      <div class="cal-cell"><div class="cal-date">11</div><div class="cal-shift s-blue"><div class="dot"></div>Müller 07–15</div></div>
+      <div class="cal-cell"><div class="cal-date">12</div><div class="cal-shift s-violet"><div class="dot"></div>Weber 15–23</div><div class="cal-shift s-green"><div class="dot"></div>Schmidt 11–19</div></div>
+      <div class="cal-cell"><div class="cal-date">13</div><div class="cal-shift s-amber"><div class="dot"></div>Braun 07–15</div></div>
+      <div class="cal-cell"><div class="cal-date">14</div><div class="cal-shift s-blue"><div class="dot"></div>Müller 07–15</div><div class="cal-shift s-violet"><div class="dot"></div>Weber 15–23</div><div class="cal-more">+1 weitere</div></div>
+      <div class="cal-cell"><div class="cal-date">15</div><div class="cal-shift s-green"><div class="dot"></div>Schmidt 11–19</div></div>
+      <div class="cal-cell weekend"><div class="cal-date">16</div></div>
+      <div class="cal-cell weekend"><div class="cal-date">17</div></div>
+
+      <div class="cal-cell"><div class="cal-date">18</div><div class="cal-shift s-amber"><div class="dot"></div>Braun 07–15</div></div>
+      <div class="cal-cell"><div class="cal-date">19</div><div class="cal-shift s-blue"><div class="dot"></div>Müller 07–15</div></div>
+      <div class="cal-cell"><div class="cal-date">20</div><div class="cal-shift s-violet"><div class="dot"></div>Weber 15–23</div></div>
+      <div class="cal-cell"><div class="cal-date">21</div><div class="cal-shift s-green"><div class="dot"></div>Schmidt 11–19</div><div class="cal-shift s-amber"><div class="dot"></div>Braun 07–15</div></div>
+      <div class="cal-cell"><div class="cal-date">22</div><div class="cal-shift s-blue"><div class="dot"></div>Müller 07–15</div></div>
+      <div class="cal-cell weekend"><div class="cal-date">23</div><div class="cal-shift s-green"><div class="dot"></div>Schmidt 09–14</div></div>
+      <div class="cal-cell weekend"><div class="cal-date">24</div></div>
+
+      <!-- KW 22 — diese Woche -->
+      <div class="cal-cell today" onclick="showPopup('edit')"><div class="cal-date"><div class="today-num">26</div></div><div class="cal-shift s-blue"><div class="dot"></div>Müller 07–15</div><div class="cal-shift s-green"><div class="dot"></div>Schmidt 11–19</div><div class="cal-add">+</div></div>
+      <div class="cal-cell" onclick="showPopup('edit')"><div class="cal-date">27</div><div class="cal-shift s-violet"><div class="dot"></div>Weber 15–23</div><div class="cal-add">+</div></div>
+      <div class="cal-cell" onclick="showPopup('edit')"><div class="cal-date">28</div><div class="cal-shift s-amber"><div class="dot"></div>Braun 07–15</div><div class="cal-shift s-violet"><div class="dot"></div>Weber 15–23</div><div class="cal-add">+</div></div>
+      <div class="cal-cell" onclick="showPopup('edit')"><div class="cal-date">29</div><div class="cal-shift s-blue"><div class="dot"></div>Müller 07–15</div><div class="cal-add">+</div></div>
+      <div class="cal-cell" onclick="showPopup('edit')"><div class="cal-date">30</div><div class="cal-shift s-green"><div class="dot"></div>Schmidt 11–19</div><div class="cal-shift s-amber"><div class="dot"></div>Braun 07–15</div><div class="cal-add">+</div></div>
+      <div class="cal-cell weekend" onclick="showPopup('edit')"><div class="cal-date">31</div><div class="cal-add">+</div></div>
+      <div class="cal-cell other-month weekend" onclick="showPopup('edit')"><div class="cal-date">1</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Popup: Schicht bearbeiten ── -->
+<div class="popup-overlay" id="popup-edit" onclick="if(event.target===this)closePopup('edit')">
+  <div class="popup">
+    <div class="popup-header">
+      <div class="popup-title">Schicht — Montag, 26. Mai</div>
+      <button class="popup-close" onclick="closePopup('edit')">✕</button>
+    </div>
+    <div class="popup-body">
+      <div class="form-row"><label>Mitarbeiter</label><select><option>Müller, Anna</option><option>Schmidt, Klaus</option><option>Weber, Lisa</option><option>Braun, Tom</option><option>— Offen —</option></select></div>
+      <div class="form-row"><label>Zeiten</label><div class="time-row"><input type="time" value="07:00"><input type="time" value="15:00"></div></div>
+      <div class="form-row"><label>Bereich</label><select><option>Küche</option><option>Service</option><option>Bar</option></select></div>
+      <div class="form-row"><label>Notiz</label><input type="text" placeholder="Optional…"></div>
+    </div>
+    <div class="popup-footer">
+      <button class="btn btn-outline btn-sm" onclick="closePopup('edit')">Abbrechen</button>
+      <button class="btn btn-primary btn-sm" onclick="closePopup('edit')">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Popup: Veröffentlichen ── -->
+<div class="popup-overlay" id="popup-pub" onclick="if(event.target===this)closePopup('pub')">
+  <div class="popup">
+    <div class="popup-header">
+      <div class="popup-title">Dienstplan veröffentlichen?</div>
+      <button class="popup-close" onclick="closePopup('pub')">✕</button>
+    </div>
+    <div class="popup-body">
+      <p style="font-size:13px;color:#374151;">Der Dienstplan für <strong>KW 22 (26. Mai – 1. Jun)</strong> wird an alle eingeteilten Mitarbeiter als Push-Nachricht gesendet.</p>
+      <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;padding:10px 12px;font-size:12px;color:#065F46;">
+        ✓ 5 Mitarbeiter werden benachrichtigt<br>
+        ✓ Dienstplan erscheint sofort in der Mitarbeiter-App
+      </div>
+    </div>
+    <div class="popup-footer">
+      <button class="btn btn-outline btn-sm" onclick="closePopup('pub')">Abbrechen</button>
+      <button class="btn btn-green btn-sm" onclick="closePopup('pub')">Jetzt veröffentlichen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showTab(id) {
+    document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['a','b','c'][i] === id))
+    document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + id))
+  }
+  function showPopup(id) {
+    document.getElementById('popup-' + id).classList.add('open')
+  }
+  function closePopup(id) {
+    document.getElementById('popup-' + id).classList.remove('open')
+  }
+</script>
+</body>
+</html>

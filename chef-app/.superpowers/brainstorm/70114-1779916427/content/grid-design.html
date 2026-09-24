@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WeekGrid Design-Varianten</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8fafc; padding: 24px; color: #111827; }
+
+  h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+
+  .variants { display: flex; flex-direction: column; gap: 40px; }
+
+  .variant { background: white; border-radius: 12px; border: 2px solid #e5e7eb; overflow: hidden; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
+  .variant:hover { border-color: #a5b4fc; box-shadow: 0 0 0 3px #eef2ff; }
+  .variant.selected { border-color: #6366f1; box-shadow: 0 0 0 3px #eef2ff; }
+
+  .variant-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; border-bottom: 1px solid #f1f5f9; }
+  .variant-title { font-size: 14px; font-weight: 700; }
+  .variant-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+  .badge-rec { background: #d1fae5; color: #065f46; }
+  .badge-dense { background: #dbeafe; color: #1e40af; }
+  .badge-current { background: #f3f4f6; color: #6b7280; }
+  .variant-meta { font-size: 12px; color: #6b7280; padding: 6px 16px 10px; }
+
+  /* ── Grid ── */
+  .grid-wrap { overflow-x: auto; padding: 0; }
+  table { border-collapse: collapse; min-width: 100%; font-family: inherit; }
+  thead th { background: white; position: sticky; top: 0; z-index: 10; }
+
+  /* Name column */
+  .col-name { text-align: left; white-space: nowrap; font-weight: 600; color: #4b5563; border-right: 1px solid #e5e7eb; position: sticky; left: 0; background: white; z-index: 5; }
+  /* Day columns */
+  .col-day { text-align: center; border-right: 1px solid #e5e7eb; min-width: 80px; }
+  .day-name { font-weight: 700; color: #111827; }
+  .day-date { color: #9ca3af; }
+  /* Sigma column */
+  .col-sigma { background: #eef2ff; border-left: 2px solid #c7d2fe; text-align: center; position: sticky; right: 0; white-space: nowrap; }
+  .sigma-label { font-weight: 700; font-size: 10px; color: #4338ca; text-transform: uppercase; letter-spacing: .04em; }
+  .sigma-sub { font-size: 9px; color: #818cf8; }
+
+  /* Dept row */
+  .dept-row td { background: #eef2ff; color: #4338ca; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+  .dept-sigma { background: #eef2ff; border-left: 2px solid #c7d2fe; text-align: center; font-size: 12px; font-weight: 600; color: #4338ca; position: sticky; right: 0; }
+
+  /* Data cells */
+  .data-cell { border-right: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; vertical-align: middle; }
+  .data-cell.weekend { background: #f9fafb; }
+
+  /* Sigma data cell */
+  .sigma-cell { background: rgba(238,242,255,.8); border-left: 2px solid #c7d2fe; border-bottom: 1px solid #e5e7eb; text-align: center; position: sticky; right: 0; vertical-align: middle; }
+  .sigma-hours { font-weight: 700; color: #1f2937; }
+  .sigma-saldo { display: inline-block; font-size: 10px; font-weight: 600; border-radius: 999px; margin-top: 2px; }
+  .saldo-pos { background: #fef3c7; color: #92400e; }
+  .saldo-neg { background: #fee2e2; color: #991b1b; }
+  .saldo-ok  { background: #d1fae5; color: #065f46; }
+  .bar-wrap { height: 3px; background: #e5e7eb; border-radius: 2px; margin: 2px 4px 0; }
+  .bar-fill { height: 3px; border-radius: 2px; background: #818cf8; }
+
+  /* ── Tiles ── */
+  .tile { border-radius: 4px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 500; white-space: nowrap; }
+  .tile-blue   { background: #dbeafe; color: #1e40af; }
+  .tile-green  { background: #d1fae5; color: #065f46; }
+  .tile-amber  { background: #fef3c7; color: #92400e; }
+  .tile-absence{ background: #faeeda; color: #633806; font-weight: 600; }
+  .tile-sick   { background: #fcebeb; color: #791f1f; font-weight: 600; }
+  .tile-free   { background: #d1fae5; color: #059669; font-weight: 900; }
+  .tile-empty  { border: 1px dashed #d1d5db; color: #d1d5db; }
+
+  /* ── Variante A: Ultra Kompakt ── */
+  .va .col-name  { font-size: 11px; padding: 2px 8px; }
+  .va .col-day   { padding: 4px 2px; }
+  .va .day-name  { font-size: 11px; }
+  .va .day-date  { font-size: 9px; }
+  .va .col-sigma { padding: 4px 6px; }
+  .va .dept-row td { padding: 3px 8px; }
+  .va .dept-sigma { padding: 3px 6px; }
+  .va .data-cell { padding: 2px; }
+  .va .sigma-cell { padding: 3px 6px; }
+  .va .sigma-hours { font-size: 11px; }
+  .va .sigma-saldo { font-size: 9px; padding: 0px 5px; }
+  .va .bar-wrap   { margin: 1px 2px 0; }
+  .va .tile        { font-size: 10px; padding: 1px 4px; }
+  .va .tile-empty  { font-size: 9px; padding: 1px 3px; }
+
+  /* ── Variante B: Kompakt (Empfehlung) ── */
+  .vb .col-name  { font-size: 12px; padding: 4px 10px; }
+  .vb .col-day   { padding: 5px 2px; }
+  .vb .day-name  { font-size: 12px; }
+  .vb .day-date  { font-size: 10px; }
+  .vb .col-sigma { padding: 5px 8px; }
+  .vb .dept-row td { padding: 4px 10px; }
+  .vb .dept-sigma { padding: 4px 8px; }
+  .vb .data-cell { padding: 3px; }
+  .vb .sigma-cell { padding: 4px 8px; }
+  .vb .sigma-hours { font-size: 12px; }
+  .vb .sigma-saldo { font-size: 10px; padding: 1px 6px; }
+  .vb .tile        { font-size: 11px; padding: 3px 6px; }
+  .vb .tile-empty  { font-size: 10px; padding: 3px 6px; }
+
+  /* ── Variante C: Aktuell (py-3) ── */
+  .vc .col-name  { font-size: 13px; padding: 6px 12px; }
+  .vc .col-day   { padding: 6px 4px; }
+  .vc .day-name  { font-size: 13px; }
+  .vc .day-date  { font-size: 11px; }
+  .vc .col-sigma { padding: 6px 10px; }
+  .vc .dept-row td { padding: 6px 12px; }
+  .vc .dept-sigma { padding: 6px 10px; }
+  .vc .data-cell { padding: 4px; }
+  .vc .sigma-cell { padding: 5px 10px; }
+  .vc .sigma-hours { font-size: 13px; }
+  .vc .sigma-saldo { font-size: 10px; padding: 1px 7px; }
+  .vc .tile        { font-size: 11px; padding: 10px 6px; }
+  .vc .tile-empty  { font-size: 10px; padding: 10px 6px; }
+
+  .select-btn { display: block; text-align: center; padding: 10px; font-size: 13px; font-weight: 600; color: #6366f1; border-top: 1px solid #f1f5f9; background: #fafafa; transition: background .15s; cursor: pointer; }
+  .select-btn:hover { background: #eef2ff; }
+  .variant.selected .select-btn { background: #eef2ff; color: #4338ca; }
+  .check { display: none; margin-right: 4px; }
+  .variant.selected .check { display: inline; }
+</style>
+</head>
+<body>
+<h1>WeekGrid — Designvarianten</h1>
+<p class="subtitle">Zellhöhe und Kachelgröße im Vergleich. Alle Kacheln (Schicht, Urlaub, Freier Tag) sind jeweils gleich hoch.</p>
+
+<div class="variants">
+
+  <!-- ══════════════════ VARIANTE A ══════════════════ -->
+  <div class="variant va" onclick="select(this,'a')" data-choice="a">
+    <div class="variant-header">
+      <span class="variant-title">Variante A — Ultra kompakt</span>
+      <span class="variant-badge badge-dense">Sehr dicht</span>
+    </div>
+    <p class="variant-meta">Zeilenhöhe ~26 px · Schriftgröße 10 px · Ideal für 20+ Mitarbeiter</p>
+    <div class="grid-wrap">
+      <table class="va">
+        <thead>
+          <tr>
+            <th class="col-name">Mitarbeiter</th>
+            <th class="col-day"><div class="day-name">Mo</div><div class="day-date">26.05</div></th>
+            <th class="col-day"><div class="day-name">Di</div><div class="day-date">27.05</div></th>
+            <th class="col-day"><div class="day-name">Mi</div><div class="day-date">28.05</div></th>
+            <th class="col-day"><div class="day-name">Do</div><div class="day-date">29.05</div></th>
+            <th class="col-day"><div class="day-name">Fr</div><div class="day-date">30.05</div></th>
+            <th class="col-day weekend"><div class="day-name">Sa</div><div class="day-date">31.05</div></th>
+            <th class="col-day weekend"><div class="day-name">So</div><div class="day-date">01.06</div></th>
+            <th class="col-sigma"><div class="sigma-label">Σ Std.</div><div class="sigma-sub">Brutto</div></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="dept-row"><td colspan="8" style="padding-left:8px">▾ Service</td><td class="dept-sigma">64 h</td></tr>
+          <tr>
+            <td class="col-name data-cell">M. Müller</td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell"><div class="tile tile-free">F</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">24 h</div><div class="bar-wrap"><div class="bar-fill" style="width:75%"></div></div><span class="sigma-saldo saldo-neg">−8 h</span></td>
+          </tr>
+          <tr>
+            <td class="col-name data-cell">A. Schmidt</td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-sick">K</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-empty">+</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">24 h</div><div class="bar-wrap"><div class="bar-fill" style="width:100%"></div></div><span class="sigma-saldo saldo-ok">±0 h</span></td>
+          </tr>
+          <tr>
+            <td class="col-name data-cell">T. Wagner</td>
+            <td class="data-cell"><div class="tile tile-amber">06:00–14:00</div><div style="margin-top:1px" class="tile tile-blue" style="font-size:9px">18:00–22:00</div></td>
+            <td class="data-cell"><div class="tile tile-amber">06:00–14:00</div></td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell"><div class="tile tile-free">F</div></td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">38 h</div><div class="bar-wrap"><div class="bar-fill" style="width:95%"></div></div><span class="sigma-saldo saldo-ok">±0 h</span></td>
+          </tr>
+          <tr>
+            <td class="col-name data-cell">S. Klein</td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">0 h</div><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="sigma-saldo saldo-neg">−40 h</span></td>
+          </tr>
+          <tr>
+            <td class="col-name data-cell">L. Bauer</td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-free">F</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">32 h</div><div class="bar-wrap"><div class="bar-fill" style="width:80%"></div></div><span class="sigma-saldo saldo-pos">+8 h</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="select-btn" onclick="select(event,'a')"><span class="check">✓ </span>Variante A wählen</div>
+  </div>
+
+  <!-- ══════════════════ VARIANTE B ══════════════════ -->
+  <div class="variant vb" onclick="select(this,'b')" data-choice="b">
+    <div class="variant-header">
+      <span class="variant-title">Variante B — Kompakt</span>
+      <span class="variant-badge badge-rec">Empfohlen</span>
+    </div>
+    <p class="variant-meta">Zeilenhöhe ~32 px · Schriftgröße 11 px · Gut lesbar, bis ~15 Mitarbeiter</p>
+    <div class="grid-wrap">
+      <table class="vb">
+        <thead>
+          <tr>
+            <th class="col-name">Mitarbeiter</th>
+            <th class="col-day"><div class="day-name">Mo</div><div class="day-date">26.05</div></th>
+            <th class="col-day"><div class="day-name">Di</div><div class="day-date">27.05</div></th>
+            <th class="col-day"><div class="day-name">Mi</div><div class="day-date">28.05</div></th>
+            <th class="col-day"><div class="day-name">Do</div><div class="day-date">29.05</div></th>
+            <th class="col-day"><div class="day-name">Fr</div><div class="day-date">30.05</div></th>
+            <th class="col-day weekend"><div class="day-name">Sa</div><div class="day-date">31.05</div></th>
+            <th class="col-day weekend"><div class="day-name">So</div><div class="day-date">01.06</div></th>
+            <th class="col-sigma"><div class="sigma-label">Σ Std.</div><div class="sigma-sub">Brutto</div></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="dept-row"><td colspan="8" style="padding-left:10px">▾ Service</td><td class="dept-sigma">64 h</td></tr>
+          <tr>
+            <td class="col-name data-cell">M. Müller</td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell"><div class="tile tile-free">F</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">24 h</div><div class="bar-wrap"><div class="bar-fill" style="width:75%"></div></div><span class="sigma-saldo saldo-neg">−8 h</span></td>
+          </tr>
+          <tr>
+            <td class="col-name data-cell">A. Schmidt</td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-sick">K</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-empty">+</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">24 h</div><div class="bar-wrap"><div class="bar-fill" style="width:100%"></div></div><span class="sigma-saldo saldo-ok">±0 h</span></td>
+          </tr>
+          <tr>
+            <td class="col-name data-cell">T. Wagner</td>
+            <td class="data-cell"><div class="tile tile-amber" style="padding:2px 6px">06:00–14:00</div><div style="margin-top:2px" class="tile tile-blue" style="padding:2px 6px">18:00–22:00</div></td>
+            <td class="data-cell"><div class="tile tile-amber">06:00–14:00</div></td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell"><div class="tile tile-free">F</div></td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">38 h</div><div class="bar-wrap"><div class="bar-fill" style="width:95%"></div></div><span class="sigma-saldo saldo-ok">±0 h</span></td>
+          </tr>
+          <tr>
+            <td class="col-name data-cell">S. Klein</td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">0 h</div><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="sigma-saldo saldo-neg">−40 h</span></td>
+          </tr>
+          <tr>
+            <td class="col-name data-cell">L. Bauer</td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-free">F</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">32 h</div><div class="bar-wrap"><div class="bar-fill" style="width:80%"></div></div><span class="sigma-saldo saldo-pos">+8 h</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="select-btn" onclick="select(event,'b')"><span class="check">✓ </span>Variante B wählen</div>
+  </div>
+
+  <!-- ══════════════════ VARIANTE C ══════════════════ -->
+  <div class="variant vc" onclick="select(this,'c')" data-choice="c">
+    <div class="variant-header">
+      <span class="variant-title">Variante C — Aktuell (py-3)</span>
+      <span class="variant-badge badge-current">Aktueller Stand</span>
+    </div>
+    <p class="variant-meta">Zeilenhöhe ~44 px · Schriftgröße 11 px · Luftig, bis ~8 Mitarbeiter</p>
+    <div class="grid-wrap">
+      <table class="vc">
+        <thead>
+          <tr>
+            <th class="col-name">Mitarbeiter</th>
+            <th class="col-day"><div class="day-name">Mo</div><div class="day-date">26.05</div></th>
+            <th class="col-day"><div class="day-name">Di</div><div class="day-date">27.05</div></th>
+            <th class="col-day"><div class="day-name">Mi</div><div class="day-date">28.05</div></th>
+            <th class="col-day"><div class="day-name">Do</div><div class="day-date">29.05</div></th>
+            <th class="col-day"><div class="day-name">Fr</div><div class="day-date">30.05</div></th>
+            <th class="col-day weekend"><div class="day-name">Sa</div><div class="day-date">31.05</div></th>
+            <th class="col-day weekend"><div class="day-name">So</div><div class="day-date">01.06</div></th>
+            <th class="col-sigma"><div class="sigma-label">Σ Std.</div><div class="sigma-sub">Brutto</div></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="dept-row"><td colspan="8" style="padding-left:12px">▾ Service</td><td class="dept-sigma">64 h</td></tr>
+          <tr>
+            <td class="col-name data-cell">M. Müller</td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell"><div class="tile tile-free">F</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">24 h</div><div class="bar-wrap"><div class="bar-fill" style="width:75%"></div></div><span class="sigma-saldo saldo-neg">−8 h</span></td>
+          </tr>
+          <tr>
+            <td class="col-name data-cell">A. Schmidt</td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-sick">K</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-empty">+</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">24 h</div><div class="bar-wrap"><div class="bar-fill" style="width:100%"></div></div><span class="sigma-saldo saldo-ok">±0 h</span></td>
+          </tr>
+          <tr>
+            <td class="col-name data-cell">T. Wagner</td>
+            <td class="data-cell"><div class="tile tile-amber" style="padding:4px 6px">06:00–14:00</div><div style="margin-top:2px" class="tile tile-blue" style="padding:4px 6px">18:00–22:00</div></td>
+            <td class="data-cell"><div class="tile tile-amber">06:00–14:00</div></td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell"><div class="tile tile-free">F</div></td>
+            <td class="data-cell"><div class="tile tile-blue">08:00–16:00</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">38 h</div><div class="bar-wrap"><div class="bar-fill" style="width:95%"></div></div><span class="sigma-saldo saldo-ok">±0 h</span></td>
+          </tr>
+          <tr>
+            <td class="col-name data-cell">S. Klein</td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell"><div class="tile tile-absence">U</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">0 h</div><div class="bar-wrap"><div class="bar-fill" style="width:0%"></div></div><span class="sigma-saldo saldo-neg">−40 h</span></td>
+          </tr>
+          <tr>
+            <td class="col-name data-cell">L. Bauer</td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-free">F</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell"><div class="tile tile-green">10:00–18:00</div></td>
+            <td class="data-cell weekend"></td>
+            <td class="data-cell weekend"></td>
+            <td class="sigma-cell"><div class="sigma-hours">32 h</div><div class="bar-wrap"><div class="bar-fill" style="width:80%"></div></div><span class="sigma-saldo saldo-pos">+8 h</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="select-btn" onclick="select(event,'c')"><span class="check">✓ </span>Variante C wählen</div>
+  </div>
+
+</div>
+
+<script>
+let chosen = null;
+function select(e, choice) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  document.querySelectorAll('.variant').forEach(v => v.classList.remove('selected'));
+  const el = document.querySelector('[data-choice="' + choice + '"]');
+  if (el) { el.classList.add('selected'); chosen = choice; }
+  if (window.recordChoice) window.recordChoice(choice, 'Variante ' + choice.toUpperCase());
+}
+</script>
+</body>
+</html>

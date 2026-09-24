@@ -2,11 +2,9 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
-import { useAuthStore } from './stores/auth'
 
-// User-Daten beim Start auffrischen (employee-Feld, Rolle etc.)
-useAuthStore.getState().refresh()
-
+// Der initiale refresh() passiert in App.tsx — hier NICHT zusätzlich aufrufen:
+// zwei parallele authRefresh()-Calls lösen die Auto-Cancellation des SDK aus.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

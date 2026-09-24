@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './components/Layout/ProtectedRoute'
 import AppLayout      from './components/Layout/AppLayout'
@@ -7,10 +8,22 @@ import Dienstplan     from './pages/Dienstplan'
 import Abwesenheiten  from './pages/Abwesenheiten/Abwesenheiten'
 import Zeiten         from './pages/Zeiten/Zeiten'
 import MeineDaten     from './pages/MeineDaten/MeineDaten'
+import { useAuthStore } from './stores/auth'
+import { pb } from './lib/pb'
 
 export default function App() {
+  useEffect(() => {
+    useAuthStore.getState().refresh().catch(() => {
+      pb.authStore.clear()
+      useAuthStore.getState().logout()
+    })
+  }, [])
+
+  // basename aus Vites `base` ('/ma/'): ohne ihn matcht /ma/ keine Route, die
+  // Catch-all schreibt die URL auf '/' um — und der naechste Reload laedt dort
+  // die Chef-App statt der Mitarbeiter-App.
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route element={<ProtectedRoute />}>

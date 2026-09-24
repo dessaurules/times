@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
     "composite": true,
+    // Emit in einen temporaeren Ordner umleiten: sonst legt `tsc -b` ein
+    // vite.config.js neben die .ts-Datei, und Vite laedt .js VOR .ts —
+    // wodurch base:'/ma/' und das PWA-Plugin stillschweigend verloren gehen.
+    "outDir": "./node_modules/.tmp/tsconfig.node",
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",

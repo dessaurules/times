@@ -1,0 +1,275 @@
+<style>
+  body { background: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .phone-wrap { max-width: 390px; margin: 0 auto; padding: 16px; }
+  .section-label { font-size: 11px; font-weight: 700; color: #6B7280; letter-spacing: .08em; text-transform: uppercase; margin: 20px 0 8px; }
+
+  /* ---- Card shell ---- */
+  .demo-card {
+    background: #fff;
+    border: 1.5px solid #E5E7EB;
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  .demo-card:hover { border-color: #A5B4FC; }
+  .demo-card.selected-card { border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(79,70,229,.18); }
+
+  /* ---- SVG gauge helpers ---- */
+  /* 270° arc: M 21.37 54.63 A 32 32 0 1 1 66.63 54.63
+     THREE_QUARTER_CIRC ≈ 150.796 */
+
+  /* ---- Option A: two gauges side-by-side in one card ---- */
+  .gauge-row { display: flex; gap: 8px; align-items: flex-start; }
+  .gauge-col { flex: 1; display: flex; align-items: flex-start; gap: 8px; }
+  .gauge-divider { width: 1px; background: #E5E7EB; align-self: stretch; margin: 0 4px; }
+  .gauge-text h4 { font-size: 10px; font-weight: 600; color: #374151; margin: 0 0 3px; }
+  .gauge-text .val { font-size: 12px; font-weight: 700; color: #111827; font-variant-numeric: tabular-nums; }
+  .gauge-text .sub { font-size: 10px; color: #6B7280; margin-top: 1px; }
+
+  /* ---- Option B: single card, tab toggle ---- */
+  .tab-row { display: flex; gap: 4px; margin-bottom: 10px; }
+  .tab-btn {
+    flex: 1; font-size: 10px; font-weight: 600; padding: 5px 8px; border-radius: 7px;
+    border: 1.5px solid #E5E7EB; background: #fff; color: #6B7280; cursor: pointer;
+  }
+  .tab-btn.active { background: #EEF2FF; color: #4F46E5; border-color: #A5B4FC; }
+  .gauge-center { display: flex; align-items: center; gap: 12px; }
+  .gauge-info h4 { font-size: 10px; font-weight: 600; color: #374151; margin: 0 0 4px; }
+  .gauge-info .big { font-size: 18px; font-weight: 700; color: #111827; line-height: 1; }
+  .gauge-info .of { font-size: 12px; color: #6B7280; margin-left: 2px; }
+  .gauge-info .sub { font-size: 10px; color: #6B7280; margin-top: 3px; }
+
+  /* ---- Option C: horizontal wide card ---- */
+  .hcard { display: flex; align-items: center; gap: 12px; }
+  .hcard-stats { flex: 1; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #F3F4F6; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { font-size: 10px; color: #6B7280; }
+  .stat-val { font-size: 11px; font-weight: 700; color: #111827; font-variant-numeric: tabular-nums; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; display: inline-block; vertical-align: middle; }
+
+  /* ---- Selection pill ---- */
+  .pick-badge {
+    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .05em;
+    background: #4F46E5; color: #fff; border-radius: 5px; padding: 1px 6px; margin-bottom: 6px;
+  }
+
+  .option-label { font-size: 11px; font-weight: 600; color: #4F46E5; margin-bottom: 6px; display: block; }
+  .option-desc  { font-size: 11px; color: #6B7280; margin-bottom: 10px; }
+
+  .comparison { display: flex; gap: 8px; }
+  .comparison > div { flex: 1; }
+  .badge-old { font-size: 9px; font-weight: 700; background: #FEF3C7; color: #92400E; border-radius: 4px; padding: 1px 5px; display: inline-block; margin-bottom: 5px; }
+  .badge-new { font-size: 9px; font-weight: 700; background: #EDE9FE; color: #5B21B6; border-radius: 4px; padding: 1px 5px; display: inline-block; margin-bottom: 5px; }
+</style>
+
+<h2>Dashboard-Karte: 3 Optionen</h2>
+<p class="subtitle">Alle mit echtem ¾-Kreis (270°), Links→Rechts-Füllung und kompakter Mobilschrift. Tippe auf deine Favoritenoption.</p>
+
+<!-- ═══════════════════════════════════════════
+     ARC COMPARISON (before / after)
+═══════════════════════════════════════════ -->
+<div class="section-label">Bogenform-Änderung</div>
+<div style="background:#fff;border:1.5px solid #E5E7EB;border-radius:14px;padding:12px 14px;margin-bottom:14px;">
+  <div class="comparison">
+    <!-- BEFORE: semicircle (current) -->
+    <div>
+      <span class="badge-old">Vorher (Halbkreis)</span>
+      <svg width="88" height="56" viewBox="0 0 88 64" style="overflow:visible;display:block">
+        <path d="M 76 32 A 32 32 0 1 0 12 32" fill="none" stroke="#E5E7EB" stroke-width="8" stroke-linecap="round"/>
+        <path d="M 76 32 A 32 32 0 1 0 12 32" fill="none" stroke="#4F46E5" stroke-width="8" stroke-linecap="round"
+          stroke-dasharray="150.796" stroke-dashoffset="50.265"/>
+      </svg>
+      <div style="font-size:10px;color:#6B7280;margin-top:4px">Öffnung unten, Füllung rechts→links</div>
+    </div>
+    <!-- AFTER: true 270° arc -->
+    <div>
+      <span class="badge-new">Nachher (¾-Kreis)</span>
+      <svg width="88" height="64" viewBox="0 0 88 72" style="overflow:visible;display:block">
+        <path d="M 21.37 54.63 A 32 32 0 1 1 66.63 54.63" fill="none" stroke="#E5E7EB" stroke-width="8" stroke-linecap="round"/>
+        <path d="M 21.37 54.63 A 32 32 0 1 1 66.63 54.63" fill="none"
+          stroke="url(#gradNew)" stroke-width="8" stroke-linecap="round"
+          stroke-dasharray="150.796" stroke-dashoffset="50.265"/>
+        <defs>
+          <linearGradient id="gradNew" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#4F46E5"/>
+            <stop offset="100%" stop-color="#7C3AED"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <div style="font-size:10px;color:#6B7280;margin-top:4px">Öffnung unten, Füllung links→rechts</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     OPTION A
+═══════════════════════════════════════════ -->
+<div class="section-label">Option A — Nebeneinander (eine Karte)</div>
+<span class="option-desc">Beide Gauges immer gleichzeitig sichtbar. Kein Tippen nötig.</span>
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Nebeneinander</h3>
+      <p style="font-size:11px;margin:4px 0 0">Zwei Gauges nebeneinander mit Trenner. Beide Daten immer sichtbar.</p>
+      <div style="background:#fff;border:1.5px solid #E5E7EB;border-radius:10px;padding:10px;margin:8px 0 0;font-size:9px">
+        <div style="font-weight:600;color:#374151;margin-bottom:6px">Schnellübersicht</div>
+        <div class="gauge-row">
+          <div class="gauge-col">
+            <svg width="54" height="50" viewBox="0 0 88 72" style="flex-shrink:0;overflow:visible">
+              <defs>
+                <linearGradient id="gA1" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#4F46E5"/><stop offset="100%" stop-color="#7C3AED"/>
+                </linearGradient>
+              </defs>
+              <path d="M 21.37 54.63 A 32 32 0 1 1 66.63 54.63" fill="none" stroke="#E5E7EB" stroke-width="9" stroke-linecap="round"/>
+              <path d="M 21.37 54.63 A 32 32 0 1 1 66.63 54.63" fill="none" stroke="url(#gA1)" stroke-width="9" stroke-linecap="round"
+                stroke-dasharray="150.796" stroke-dashoffset="37.699"/>
+            </svg>
+            <div class="gauge-text" style="font-size:10px">
+              <h4>Juni 2025</h4>
+              <div class="val" style="font-size:11px">142:30 <span style="font-weight:400;color:#6B7280;font-size:9px">/ 160 h</span></div>
+            </div>
+          </div>
+          <div class="gauge-divider"></div>
+          <div class="gauge-col">
+            <svg width="54" height="50" viewBox="0 0 88 72" style="flex-shrink:0;overflow:visible">
+              <defs>
+                <linearGradient id="gA2" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#DC2626"/><stop offset="100%" stop-color="#EF4444"/>
+                </linearGradient>
+              </defs>
+              <path d="M 21.37 54.63 A 32 32 0 1 1 66.63 54.63" fill="none" stroke="#E5E7EB" stroke-width="9" stroke-linecap="round"/>
+              <path d="M 21.37 54.63 A 32 32 0 1 1 66.63 54.63" fill="none" stroke="url(#gA2)" stroke-width="9" stroke-linecap="round"
+                stroke-dasharray="30.159" stroke-dashoffset="0"/>
+              <path d="M 21.37 54.63 A 32 32 0 1 1 66.63 54.63" fill="none" stroke="#10B981" stroke-width="9" stroke-linecap="round"
+                stroke-dasharray="90.478" stroke-dashoffset="-30.159"/>
+            </svg>
+            <div class="gauge-text" style="font-size:10px">
+              <h4>Urlaub 2025</h4>
+              <div class="val" style="font-size:11px">18 <span style="font-weight:400;color:#6B7280;font-size:9px">/ 28 Tage</span></div>
+              <div class="sub">verfügbar</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     OPTION B
+═══════════════════════════════════════════ -->
+<div class="section-label">Option B — Toggle (eine Ansicht)</div>
+<span class="option-desc">Eine Karte, oben zwei Tabs. Tippen schaltet zwischen Stunden und Urlaub um.</span>
+<div class="options">
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Mit Tabs zum Toggeln</h3>
+      <p style="font-size:11px;margin:4px 0 0">Oben zwei Tabs, ein großer Gauge pro View.</p>
+      <div style="background:#fff;border:1.5px solid #E5E7EB;border-radius:10px;padding:10px;margin:8px 0 0;font-size:9px">
+        <div class="tab-row" style="gap:6px;margin-bottom:8px">
+          <div class="tab-btn active" style="flex:1;padding:4px 8px;font-size:9px">⏱ Stunden</div>
+          <div class="tab-btn" style="flex:1;padding:4px 8px;font-size:9px">🌴 Urlaub</div>
+        </div>
+        <div class="gauge-center" style="gap:10px">
+          <svg width="72" height="64" viewBox="0 0 88 72" style="flex-shrink:0;overflow:visible">
+            <defs>
+              <linearGradient id="gB" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#4F46E5"/><stop offset="100%" stop-color="#7C3AED"/>
+              </linearGradient>
+            </defs>
+            <path d="M 21.37 54.63 A 32 32 0 1 1 66.63 54.63" fill="none" stroke="#E5E7EB" stroke-width="10" stroke-linecap="round"/>
+            <path d="M 21.37 54.63 A 32 32 0 1 1 66.63 54.63" fill="none" stroke="url(#gB)" stroke-width="10" stroke-linecap="round"
+              stroke-dasharray="150.796" stroke-dashoffset="37.699"/>
+          </svg>
+          <div class="gauge-info" style="font-size:10px">
+            <h4>Juni 2025</h4>
+            <div style="line-height:1.2">
+              <span class="big" style="font-size:16px">142:30</span>
+              <span class="of" style="font-size:11px">/ 160 h</span>
+            </div>
+            <div class="sub" style="font-size:9px;margin-top:2px">89 % erzielt · KW 26</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     OPTION C
+═══════════════════════════════════════════ -->
+<div class="section-label">Option C — Gauge + Statistiken</div>
+<span class="option-desc">Ein größerer Gauge links, Kennzahlen-Tabelle rechts. Mehr Info auf einen Blick.</span>
+<div class="options">
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Mit Statistik-Tabelle</h3>
+      <p style="font-size:11px;margin:4px 0 0">Großer Gauge + vier Kennzahlen-Zeilen rechts.</p>
+      <div style="background:#fff;border:1.5px solid #E5E7EB;border-radius:10px;padding:10px;margin:8px 0 0;font-size:9px">
+        <div class="hcard" style="gap:10px">
+          <svg width="80" height="70" viewBox="0 0 88 72" style="flex-shrink:0;overflow:visible">
+            <defs>
+              <linearGradient id="gC" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#4F46E5"/><stop offset="100%" stop-color="#7C3AED"/>
+              </linearGradient>
+            </defs>
+            <path d="M 21.37 54.63 A 32 32 0 1 1 66.63 54.63" fill="none" stroke="#E5E7EB" stroke-width="10" stroke-linecap="round"/>
+            <path d="M 21.37 54.63 A 32 32 0 1 1 66.63 54.63" fill="none" stroke="url(#gC)" stroke-width="10" stroke-linecap="round"
+              stroke-dasharray="150.796" stroke-dashoffset="37.699"/>
+            <text x="44" y="34" text-anchor="middle" font-size="10" font-weight="700" fill="#111827">142:30</text>
+            <text x="44" y="46" text-anchor="middle" font-size="7" fill="#6B7280">von 160 h</text>
+          </svg>
+          <div class="hcard-stats" style="font-size:9px">
+            <div class="stat-row" style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #F3F4F6">
+              <span class="stat-label"><span class="dot" style="background:#4F46E5;width:5px;height:5px"></span>Stunden Jun</span>
+              <span class="stat-val">142:30</span>
+            </div>
+            <div class="stat-row" style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #F3F4F6">
+              <span class="stat-label"><span class="dot" style="background:#10B981;width:5px;height:5px"></span>Urlaub verf.</span>
+              <span class="stat-val">18</span>
+            </div>
+            <div class="stat-row" style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #F3F4F6">
+              <span class="stat-label"><span class="dot" style="background:#DC2626;width:5px;height:5px"></span>Genommen</span>
+              <span class="stat-val">6</span>
+            </div>
+            <div class="stat-row" style="display:flex;justify-content:space-between;padding:3px 0">
+              <span class="stat-label"><span class="dot" style="background:#F59E0B;width:5px;height:5px"></span>Geplant</span>
+              <span class="stat-val">4</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TYPOGRAPHY COMPARISON
+═══════════════════════════════════════════ -->
+<div class="section-label">Schriftgröße: Vorher vs. Nachher</div>
+<div style="background:#fff;border:1.5px solid #E5E7EB;border-radius:14px;padding:12px 14px;">
+  <div class="comparison">
+    <div>
+      <span class="badge-old">Vorher (zu groß)</span>
+      <div style="font-size:14px;font-weight:700;color:#111827">142:30</div>
+      <div style="font-size:14px;font-weight:700;color:#111827">/ 160 h</div>
+      <div style="font-size:12px;font-weight:600;color:#374151;margin-top:3px">Juni 2025</div>
+      <div style="font-size:12px;color:#6B7280">verfügbar</div>
+    </div>
+    <div>
+      <span class="badge-new">Nachher (kompakt)</span>
+      <div style="font-size:12px;font-weight:700;color:#111827">142:30</div>
+      <div style="font-size:12px;font-weight:700;color:#111827">/ 160 h</div>
+      <div style="font-size:10px;font-weight:600;color:#374151;margin-top:3px">Juni 2025</div>
+      <div style="font-size:10px;color:#6B7280">verfügbar</div>
+    </div>
+  </div>
+</div>

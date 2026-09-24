@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dienstplan — Variante A (v2)</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F9FAFB; color: #111827; font-size: 13px; }
+
+.app { display: flex; height: 100vh; }
+
+/* Sidebar */
+.sidebar { width: 200px; background: #1E1B4B; flex-shrink: 0; padding: 16px 0; }
+.sidebar-logo { padding: 0 14px 16px; font-size: 16px; font-weight: 700; color: white; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 8px; }
+.nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 14px; color: rgba(255,255,255,0.65); cursor: pointer; font-size: 12px; margin: 1px 6px; border-radius: 6px; }
+.nav-item.active { background: rgba(255,255,255,0.15); color: white; font-weight: 500; }
+.nav-item:hover:not(.active) { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); }
+
+/* Main */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Controls bar */
+.controls { background: white; border-bottom: 1px solid #E5E7EB; padding: 10px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 52px; }
+.week-nav { display: flex; align-items: center; gap: 6px; }
+.week-btn { background: #F3F4F6; border: 1px solid #E5E7EB; border-radius: 6px; padding: 5px 10px; cursor: pointer; color: #374151; font-size: 13px; transition: background 0.15s; }
+.week-btn:hover { background: #E5E7EB; }
+.week-label { font-weight: 600; font-size: 13px; color: #111827; min-width: 220px; text-align: center; }
+.dept-select { border: 1px solid #E5E7EB; border-radius: 6px; padding: 5px 10px; font-size: 12px; background: white; color: #374151; cursor: pointer; }
+.role-badge { display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: #F5F3FF; border-radius: 20px; font-size: 11px; color: #4338CA; border: 1px solid #DDD6FE; }
+.ml-auto { margin-left: auto; }
+.flex-gap { display: flex; align-items: center; gap: 8px; }
+.status-chip { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+.status-draft { background: #FEF3C7; color: #92400E; }
+.status-pub { background: #D1FAE5; color: #065F46; }
+.btn { padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.15s; }
+.btn-primary { background: #4F46E5; color: white; }
+.btn-primary:hover { background: #4338CA; }
+.btn-ghost { background: white; border: 1px solid #E5E7EB; color: #374151; }
+.btn-ghost:hover { background: #F9FAFB; }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+.btn-danger { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+.btn-danger:hover { background: #FEE2E2; }
+
+/* Grid */
+.grid-area { flex: 1; overflow: auto; }
+.table-wrap { padding: 12px 16px 24px; min-width: max-content; }
+
+table { border-collapse: collapse; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden; width: 100%; }
+
+thead th { background: #F8F9FF; border-bottom: 2px solid #E5E7EB; padding: 7px 4px; text-align: center; font-size: 11px; font-weight: 600; color: #6B7280; position: sticky; top: 0; z-index: 10; min-width: 90px; }
+thead th.th-ma { text-align: left; padding-left: 10px; min-width: 175px; width: 175px; position: sticky; left: 0; z-index: 20; background: #F8F9FF; border-right: 1px solid #E5E7EB; }
+thead th .day-num { font-size: 14px; font-weight: 700; color: #111827; display: block; line-height: 1.3; }
+thead th .day-name { font-size: 10px; color: #9CA3AF; display: block; }
+thead th.th-weekend { background: #F9FAFB; }
+thead th.th-weekend .day-num { color: #9CA3AF; }
+thead th.th-holiday { background: #FFFBEB; border-left: 2px solid #FCD34D; }
+thead th.th-holiday .day-num { color: #B45309; }
+thead th.th-holiday .day-name { color: #D97706; }
+thead th .holiday-tag { font-size: 9px; background: #FEF3C7; color: #92400E; padding: 2px 5px; border-radius: 3px; display: inline-block; margin-top: 2px; white-space: nowrap; }
+
+/* Dept header */
+tr.tr-dept td { background: #EEF2FF; padding: 6px 10px; font-size: 11px; font-weight: 700; color: #3730A3; letter-spacing: 0.04em; text-transform: uppercase; border-top: 2px solid #C7D2FE; border-bottom: 1px solid #C7D2FE; cursor: pointer; user-select: none; }
+tr.tr-dept td:first-child { position: sticky; left: 0; z-index: 5; background: #EEF2FF; border-right: 1px solid #C7D2FE; }
+tr.tr-dept:hover td { background: #E0E7FF; }
+tr.tr-dept:hover td:first-child { background: #E0E7FF; }
+.dept-toggle-icon { display: inline-block; transition: transform 0.2s; margin-right: 6px; font-size: 10px; }
+.collapsed .dept-toggle-icon { transform: rotate(-90deg); }
+
+/* Employee rows */
+tr.tr-emp td { border-bottom: 1px solid #F3F4F6; padding: 3px 3px; height: 54px; vertical-align: middle; }
+tr.tr-emp:last-of-type td { border-bottom: 1px solid #E5E7EB; }
+tr.tr-emp:hover td { background: #FAFAFA; }
+tr.tr-emp td.td-ma { position: sticky; left: 0; z-index: 5; background: white; border-right: 1px solid #E5E7EB; padding: 4px 8px; }
+tr.tr-emp:hover td.td-ma { background: #FAFAFA; }
+
+/* Employee name cell */
+.ma-cell { display: flex; align-items: center; gap: 7px; }
+.drag-handle { color: #D1D5DB; cursor: grab; font-size: 13px; flex-shrink: 0; padding: 2px; }
+.drag-handle:hover { color: #9CA3AF; }
+.ma-avatar { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: white; flex-shrink: 0; }
+.ma-name-txt { font-size: 12px; font-weight: 500; color: #111827; line-height: 1.3; }
+.ma-role-txt { font-size: 10px; color: #9CA3AF; }
+
+/* Shift cells */
+td.td-shift { text-align: center; vertical-align: middle; padding: 3px; }
+td.td-shift.weekend { background: #FAFAFA; }
+td.td-shift.holiday-col { background: #FFFDF5; border-left: 2px solid #FDE68A; }
+
+/* Single shift chip */
+.shift-chip { display: inline-flex; align-items: center; padding: 4px 7px; border-radius: 5px; font-size: 10px; font-weight: 500; cursor: grab; white-space: nowrap; border: none; width: 100%; justify-content: center; position: relative; transition: box-shadow 0.15s, transform 0.15s; }
+.shift-chip:hover { box-shadow: 0 2px 6px rgba(0,0,0,0.12); transform: translateY(-1px); }
+.chip-blue   { background: #DBEAFE; color: #1E40AF; }
+.chip-green  { background: #D1FAE5; color: #065F46; }
+.chip-amber  { background: #FEF3C7; color: #92400E; }
+.chip-purple { background: #EDE9FE; color: #5B21B6; }
+.chip-rose   { background: #FFE4E6; color: #9F1239; }
+
+/* Split shifts (two in one cell) */
+.split-cell { display: flex; flex-direction: column; gap: 2px; width: 100%; }
+.split-cell .shift-chip { font-size: 9px; padding: 3px 5px; }
+
+/* Add shift button */
+.add-shift { width: 100%; height: 44px; border-radius: 5px; border: 1px dashed #D1D5DB; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #D1D5DB; font-size: 18px; transition: all 0.15s; background: transparent; }
+.add-shift:hover { border-color: #4F46E5; color: #4F46E5; background: #F5F3FF; }
+.holiday-icon { font-size: 16px; color: #FCD34D; }
+
+/* Add 2nd shift link */
+.add-second { display: flex; align-items: center; flex-direction: column; gap: 2px; }
+.add-second-link { font-size: 9px; color: #9CA3AF; cursor: pointer; margin-top: 1px; }
+.add-second-link:hover { color: #4F46E5; }
+
+/* Drag states */
+.drag-over-cell { background: #EEF2FF !important; outline: 2px dashed #4F46E5; outline-offset: -2px; }
+.dragging-row { opacity: 0.45; }
+
+/* ── Overlays ─────────────────────────────────── */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; display: none; align-items: center; justify-content: center; }
+.overlay.show { display: flex; }
+
+.popup { background: white; border-radius: 12px; padding: 22px; width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.22); max-height: 90vh; overflow-y: auto; }
+.popup-wide { width: 520px; }
+.popup-title { font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
+.popup-close { background: none; border: none; cursor: pointer; color: #9CA3AF; font-size: 18px; line-height: 1; }
+.popup-close:hover { color: #374151; }
+
+.form-group { margin-bottom: 13px; }
+.form-label { font-size: 11px; font-weight: 600; color: #374151; margin-bottom: 5px; display: block; text-transform: uppercase; letter-spacing: 0.03em; }
+.form-input { width: 100%; border: 1px solid #E5E7EB; border-radius: 6px; padding: 7px 10px; font-size: 12px; color: #111827; font-family: inherit; }
+.form-input:focus { outline: none; border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+.form-row { display: flex; gap: 10px; }
+.form-row .form-group { flex: 1; }
+.form-readonly { background: #F9FAFB; color: #6B7280; }
+
+.color-row { display: flex; gap: 8px; }
+.color-dot { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.1s; }
+.color-dot:hover { transform: scale(1.1); }
+.color-dot.chosen { border-color: #111827; transform: scale(1.15); }
+.cd-blue   { background: #BFDBFE; }
+.cd-green  { background: #A7F3D0; }
+.cd-amber  { background: #FDE68A; }
+.cd-purple { background: #DDD6FE; }
+.cd-rose   { background: #FECDD3; }
+
+.divider { border: none; border-top: 1px solid #F3F4F6; margin: 16px 0; }
+.split-section { background: #F8F9FF; border: 1px solid #E0E7FF; border-radius: 8px; padding: 14px; margin-top: 8px; }
+.split-section-title { font-size: 11px; font-weight: 600; color: #4338CA; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+
+.popup-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+
+/* Publish popup */
+.pub-summary { background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 12px; margin-bottom: 14px; font-size: 12px; color: #166534; }
+.pub-summary strong { display: block; font-size: 13px; margin-bottom: 3px; }
+
+/* Settings popup */
+.stabs { display: flex; border-bottom: 1px solid #E5E7EB; margin-bottom: 18px; }
+.stab { padding: 8px 14px; font-size: 12px; cursor: pointer; color: #6B7280; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.stab.active { color: #4F46E5; border-bottom-color: #4F46E5; font-weight: 500; }
+
+.perm-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.perm-table th { text-align: left; font-size: 10px; color: #9CA3AF; font-weight: 600; padding: 5px 8px; border-bottom: 1px solid #F3F4F6; letter-spacing: 0.04em; text-transform: uppercase; }
+.perm-table td { padding: 8px 8px; border-bottom: 1px solid #F9FAFB; vertical-align: middle; }
+.dept-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.dept-chip-tog { padding: 3px 9px; border-radius: 12px; font-size: 10px; cursor: pointer; border: 1px solid #E5E7EB; background: #F9FAFB; color: #6B7280; user-select: none; transition: all 0.1s; }
+.dept-chip-tog.on { background: #EEF2FF; border-color: #C7D2FE; color: #4338CA; font-weight: 500; }
+.role-pill { padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+.rp-gf  { background: #EDE9FE; color: #5B21B6; }
+.rp-sl  { background: #FEF3C7; color: #92400E; }
+.rp-ma  { background: #F3F4F6; color: #6B7280; }
+.u-row  { display: flex; align-items: center; gap: 7px; }
+.u-av   { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: white; flex-shrink: 0; }
+
+.role-sim-list { display: flex; flex-direction: column; gap: 8px; }
+.role-sim-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid #E5E7EB; cursor: pointer; }
+.role-sim-item:hover { background: #F9FAFB; }
+.role-sim-item.active-sim { border-color: #C7D2FE; background: #EEF2FF; }
+.role-sim-title { font-size: 12px; font-weight: 500; }
+.role-sim-desc { font-size: 11px; color: #9CA3AF; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">⏱ Schicht &amp; Plan</div>
+    <div style="margin-top:12px">
+      <div class="nav-item">📊 Dashboard</div>
+      <div class="nav-item">👥 Mitarbeiter</div>
+      <div class="nav-item">📅 Abwesenheiten</div>
+      <div class="nav-item active">📋 Dienstplan</div>
+      <div class="nav-item">🕐 Zeiterfassung</div>
+      <div class="nav-item">📈 Berichte</div>
+      <div class="nav-item">⚙️ Einstellungen</div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Controls -->
+    <div class="controls">
+      <div class="week-nav">
+        <button class="week-btn" onclick="prevWeek()">&#8249;</button>
+        <div class="week-label" id="week-label"></div>
+        <button class="week-btn" onclick="nextWeek()">&#8250;</button>
+      </div>
+
+      <select class="dept-select" id="dept-sel" onchange="changeDept(this.value)">
+        <option value="all">Alle Abteilungen</option>
+        <option value="kueche">Küche</option>
+        <option value="service">Service</option>
+        <option value="bar">Bar</option>
+      </select>
+
+      <div class="role-badge" id="role-badge">👁 Ansicht: <strong style="margin-left:3px">Admin</strong></div>
+
+      <div class="flex-gap ml-auto">
+        <span class="status-chip status-draft" id="status-chip">Entwurf</span>
+        <button class="btn btn-ghost btn-sm" onclick="showSettings()">⚙ Berechtigungen</button>
+        <button class="btn btn-primary btn-sm" onclick="showPublish()">Veröffentlichen</button>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="grid-area">
+      <div class="table-wrap">
+        <div id="grid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Shift Editor ─────────────────────────────── -->
+<div class="overlay" id="ov-shift">
+  <div class="popup">
+    <div class="popup-title">
+      <span id="shift-title">Schicht eintragen</span>
+      <button class="popup-close" onclick="closeOv('ov-shift')">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mitarbeiter</label>
+      <input class="form-input form-readonly" id="f-ma" readonly>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tag</label>
+      <input class="form-input form-readonly" id="f-day" readonly>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Beginn</label>
+        <input class="form-input" type="time" id="f-start" value="08:00">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ende</label>
+        <input class="form-input" type="time" id="f-end" value="16:00">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Position / Hinweis</label>
+      <input class="form-input" type="text" id="f-note" placeholder="z.B. Springer, Vertretung…">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Farbe</label>
+      <div class="color-row">
+        <div class="color-dot cd-blue chosen"   onclick="pickColor(this,'blue')"></div>
+        <div class="color-dot cd-green"          onclick="pickColor(this,'green')"></div>
+        <div class="color-dot cd-amber"          onclick="pickColor(this,'amber')"></div>
+        <div class="color-dot cd-purple"         onclick="pickColor(this,'purple')"></div>
+        <div class="color-dot cd-rose"           onclick="pickColor(this,'rose')"></div>
+      </div>
+    </div>
+
+    <!-- 2nd shift section -->
+    <hr class="divider">
+    <div id="split-toggle" style="font-size:12px;color:#6B7280;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none" onclick="toggleSplit()">
+      <span id="split-icon">▶</span> <span>Zweite Teilschicht hinzufügen</span>
+    </div>
+    <div class="split-section" id="split-form" style="display:none;margin-top:10px">
+      <div class="split-section-title">✂ Zweite Teilschicht</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Beginn</label>
+          <input class="form-input" type="time" id="f2-start" value="18:00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ende</label>
+          <input class="form-input" type="time" id="f2-end" value="23:00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Position / Hinweis</label>
+        <input class="form-input" type="text" id="f2-note" placeholder="Abenddienst…">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Farbe</label>
+        <div class="color-row">
+          <div class="color-dot cd-blue"            onclick="pickColor2(this,'blue')"></div>
+          <div class="color-dot cd-green"           onclick="pickColor2(this,'green')"></div>
+          <div class="color-dot cd-amber"           onclick="pickColor2(this,'amber')"></div>
+          <div class="color-dot cd-purple chosen"   onclick="pickColor2(this,'purple')"></div>
+          <div class="color-dot cd-rose"            onclick="pickColor2(this,'rose')"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="popup-actions">
+      <button class="btn btn-danger btn-sm" id="del-btn" onclick="deleteShift()" style="display:none">Löschen</button>
+      <button class="btn btn-ghost" onclick="closeOv('ov-shift')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="saveShift()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Publish ──────────────────────────────────── -->
+<div class="overlay" id="ov-pub">
+  <div class="popup">
+    <div class="popup-title">
+      Dienstplan veröffentlichen
+      <button class="popup-close" onclick="closeOv('ov-pub')">✕</button>
+    </div>
+    <div class="pub-summary">
+      <strong>✓ Bereit zur Veröffentlichung</strong>
+      KW 22 · 25.05. – 01.06.2026 · 3 Abteilungen · 8 Mitarbeiter
+    </div>
+    <div class="form-group">
+      <label class="form-label">Benachrichtigung an</label>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox" checked> Alle betroffenen Mitarbeiter per Push</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer"><input type="checkbox"> Abteilungsleiter</label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Optionale Nachricht</label>
+      <input class="form-input" type="text" placeholder="Hinweis an Mitarbeiter…">
+    </div>
+    <div class="popup-actions">
+      <button class="btn btn-ghost" onclick="closeOv('ov-pub')">Abbrechen</button>
+      <button class="btn btn-primary" onclick="doPublish()">Jetzt veröffentlichen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Settings ─────────────────────────────────── -->
+<div class="overlay" id="ov-settings">
+  <div class="popup popup-wide">
+    <div class="popup-title">
+      Dienstplan-Berechtigungen
+      <button class="popup-close" onclick="closeOv('ov-settings')">✕</button>
+    </div>
+    <div class="stabs">
+      <div class="stab active" onclick="stab(this,'st-perm')">Berechtigungen</div>
+      <div class="stab"        onclick="stab(this,'st-sim')">Rollen-Ansicht testen</div>
+    </div>
+
+    <!-- Permissions tab -->
+    <div id="st-perm">
+      <table class="perm-table">
+        <thead><tr><th>Nutzer</th><th>Rolle</th><th>Darf planen für</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div class="u-row"><div class="u-av" style="background:#4F46E5">A</div>Admin</div></td>
+            <td><span class="role-pill rp-gf">GF</span></td>
+            <td style="color:#9CA3AF;font-style:italic;font-size:11px">Alle (automatisch)</td>
+          </tr>
+          <tr>
+            <td><div class="u-row"><div class="u-av" style="background:#059669">LM</div>Lisa Meier</div></td>
+            <td><span class="role-pill rp-sl">SL</span></td>
+            <td>
+              <div class="dept-chips">
+                <div class="dept-chip-tog on"  onclick="this.classList.toggle('on')">Küche</div>
+                <div class="dept-chip-tog"     onclick="this.classList.toggle('on')">Service</div>
+                <div class="dept-chip-tog"     onclick="this.classList.toggle('on')">Bar</div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="u-row"><div class="u-av" style="background:#D97706">TW</div>Tom Weber</div></td>
+            <td><span class="role-pill rp-sl">SL</span></td>
+            <td>
+              <div class="dept-chips">
+                <div class="dept-chip-tog"    onclick="this.classList.toggle('on')">Küche</div>
+                <div class="dept-chip-tog on" onclick="this.classList.toggle('on')">Service</div>
+                <div class="dept-chip-tog"    onclick="this.classList.toggle('on')">Bar</div>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td><div class="u-row"><div class="u-av" style="background:#6B7280">AM</div>Anna Müller</div></td>
+            <td><span class="role-pill rp-ma">MA</span></td>
+            <td style="color:#D1D5DB;font-size:12px">—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Role simulation tab -->
+    <div id="st-sim" style="display:none">
+      <p style="font-size:12px;color:#6B7280;margin-bottom:12px">Simuliere die Ansicht für einen bestimmten Nutzer:</p>
+      <div class="role-sim-list">
+        <div class="role-sim-item active-sim" onclick="simRole('admin','Admin / GF',this)">
+          <input type="radio" name="sim" checked>
+          <div><div class="role-sim-title">Admin / GF</div><div class="role-sim-desc">Abteilungs-Selektor sichtbar · alle Abteilungen</div></div>
+        </div>
+        <div class="role-sim-item" onclick="simRole('sl-kueche','Lisa Meier (Küche)',this)">
+          <input type="radio" name="sim">
+          <div><div class="role-sim-title">Lisa Meier — Planer Küche</div><div class="role-sim-desc">Kein Selektor · nur Küche sichtbar</div></div>
+        </div>
+        <div class="role-sim-item" onclick="simRole('sl-service','Tom Weber (Service)',this)">
+          <input type="radio" name="sim">
+          <div><div class="role-sim-title">Tom Weber — Planer Service</div><div class="role-sim-desc">Kein Selektor · nur Service sichtbar</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="popup-actions">
+      <button class="btn btn-ghost" onclick="closeOv('ov-settings')">Schließen</button>
+      <button class="btn btn-primary" onclick="closeOv('ov-settings')">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────
+let weekIdx = 0;     // 0=KW22, 1=KW23, -1=KW21
+let dept    = 'all';
+let role    = 'admin';
+let collapsed = {};
+let pickedColor  = 'blue';
+let pickedColor2 = 'purple';
+let editCtx = null;  // { deptKey, empId, dayIdx } currently editing
+let dragShift = null;
+let dragRowCtx = null;
+
+// ── Week definitions ───────────────────────────────
+// KW22: Mon 25.05 – Mon 01.06 (Pfingstmontag = extra column)
+// KW23: Mon 01.06 – Sun 07.06
+// KW21: Mon 18.05 – Sun 24.05
+const WEEKS = [
+  {
+    label: 'KW 22 &nbsp;·&nbsp; 25.05. – 01.06.2026',
+    days: [
+      {d:'25.05.',n:'Mo',we:false,hol:false},
+      {d:'26.05.',n:'Di',we:false,hol:false},
+      {d:'27.05.',n:'Mi',we:false,hol:false},
+      {d:'28.05.',n:'Do',we:false,hol:false},
+      {d:'29.05.',n:'Fr',we:false,hol:false},
+      {d:'30.05.',n:'Sa',we:true, hol:false},
+      {d:'31.05.',n:'So',we:true, hol:false},
+      {d:'01.06.',n:'Mo',we:false,hol:true,holName:'Pfingstmontag'}, // extra column
+    ]
+  },
+  {
+    label: 'KW 23 &nbsp;·&nbsp; 01.06. – 07.06.2026',
+    days: [
+      {d:'01.06.',n:'Mo',we:false,hol:true,holName:'Pfingstmontag'}, // first column, already planned
+      {d:'02.06.',n:'Di',we:false,hol:false},
+      {d:'03.06.',n:'Mi',we:false,hol:false},
+      {d:'04.06.',n:'Do',we:false,hol:false},
+      {d:'05.06.',n:'Fr',we:false,hol:false},
+      {d:'06.06.',n:'Sa',we:true, hol:false},
+      {d:'07.06.',n:'So',we:true, hol:false},
+    ]
+  },
+  {
+    label: 'KW 21 &nbsp;·&nbsp; 18.05. – 24.05.2026',
+    days: [
+      {d:'18.05.',n:'Mo',we:false,hol:false},
+      {d:'19.05.',n:'Di',we:false,hol:false},
+      {d:'20.05.',n:'Mi',we:false,hol:false},
+      {d:'21.05.',n:'Do',we:false,hol:false},
+      {d:'22.05.',n:'Fr',we:false,hol:false},
+      {d:'23.05.',n:'Sa',we:true, hol:false},
+      {d:'24.05.',n:'So',we:true, hol:false},
+    ]
+  }
+];
+
+// ── Departments & employees ────────────────────────
+const DEPTS = {
+  kueche: {
+    name: 'Küche',
+    color: '#4F46E5',
+    employees: [
+      {id:1, name:'Mustermann, Max', role:'Küchenchef', av:'#4F46E5'},
+      {id:2, name:'Schmidt, Anna',   role:'Köchin',     av:'#059669'},
+      {id:3, name:'Fischer, Klaus',  role:'Spüler',     av:'#D97706'},
+    ]
+  },
+  service: {
+    name: 'Service',
+    color: '#0891B2',
+    employees: [
+      {id:4, name:'Müller, Lisa',  role:'Serviceleitung', av:'#7C3AED'},
+      {id:5, name:'Weber, Tom',    role:'Kellner',        av:'#0891B2'},
+      {id:6, name:'Braun, Sarah',  role:'Kellnerin',      av:'#DC2626'},
+    ]
+  },
+  bar: {
+    name: 'Bar',
+    color: '#B45309',
+    employees: [
+      {id:7, name:'Klein, Jonas',     role:'Barkeeper', av:'#059669'},
+      {id:8, name:'Hoffmann, Maria',  role:'Barkeeper', av:'#9D174D'},
+    ]
+  }
+};
+
+// shifts[weekIdx][deptKey][empId][dayIdx] = {time, color, time2?, color2?}
+// weekIdx 0=KW22(0..7), 1=KW23(0..6), 2=KW21(0..6)
+const shifts = [
+  // KW22
+  {
+    kueche: {
+      1: {0:{time:'06:00–14:00',color:'blue'}, 1:{time:'06:00–14:00',color:'blue'}, 3:{time:'14:00–22:00',color:'green'}, 4:{time:'14:00–22:00',color:'green'}, 7:{time:'08:00–16:00',color:'amber',time2:'16:00–22:00',color2:'purple'}},
+      2: {0:{time:'10:00–18:00',color:'purple'}, 2:{time:'10:00–18:00',color:'purple'}, 4:{time:'10:00–18:00',color:'purple'}, 6:{time:'08:00–14:00',color:'amber'}},
+      3: {1:{time:'08:00–16:00',color:'green'}, 5:{time:'10:00–16:00',color:'green'}},
+    },
+    service: {
+      4: {0:{time:'11:00–20:00',color:'blue'}, 2:{time:'11:00–20:00',color:'blue'}, 4:{time:'11:00–20:00',color:'blue'}},
+      5: {1:{time:'12:00–21:00',color:'green'}, 3:{time:'12:00–21:00',color:'green'}, 5:{time:'12:00–18:00',color:'green'}},
+      6: {0:{time:'17:00–23:00',color:'purple',time2:'23:00–01:00',color2:'rose'}, 1:{time:'17:00–23:00',color:'purple'}, 2:{time:'17:00–23:00',color:'purple'}, 5:{time:'10:00–15:00',color:'amber'}, 6:{time:'10:00–15:00',color:'amber'}},
+    },
+    bar: {
+      7: {3:{time:'18:00–02:00',color:'purple'}, 4:{time:'18:00–02:00',color:'purple'}, 5:{time:'18:00–02:00',color:'purple'}, 6:{time:'18:00–02:00',color:'purple'}, 7:{time:'12:00–20:00',color:'blue'}},
+      8: {4:{time:'20:00–02:00',color:'blue'}, 5:{time:'20:00–02:00',color:'blue'}, 6:{time:'20:00–02:00',color:'blue'}, 7:{time:'14:00–22:00',color:'amber'}},
+    }
+  },
+  // KW23 — dayIdx 0 = 01.06. (Pfingstmontag) — shifts carried from KW22 dayIdx 7
+  {
+    kueche: {
+      1: {0:{time:'08:00–16:00',color:'amber',time2:'16:00–22:00',color2:'purple'}, 1:{time:'06:00–14:00',color:'blue'}, 2:{time:'06:00–14:00',color:'blue'}},
+      2: {0:{time:'08:00–14:00',color:'amber'}, 3:{time:'10:00–18:00',color:'purple'}, 5:{time:'10:00–18:00',color:'purple'}},
+      3: {},
+    },
+    service: {
+      4: {1:{time:'11:00–20:00',color:'blue'}, 3:{time:'11:00–20:00',color:'blue'}, 5:{time:'11:00–20:00',color:'blue'}},
+      5: {2:{time:'12:00–21:00',color:'green'}, 4:{time:'12:00–21:00',color:'green'}},
+      6: {0:{time:'10:00–16:00',color:'amber'}, 1:{time:'17:00–23:00',color:'purple'}, 6:{time:'10:00–15:00',color:'amber'}},
+    },
+    bar: {
+      7: {3:{time:'18:00–02:00',color:'purple'}, 4:{time:'18:00–02:00',color:'purple'}, 5:{time:'18:00–02:00',color:'purple'}, 6:{time:'18:00–02:00',color:'purple'}},
+      8: {4:{time:'20:00–02:00',color:'blue'}, 5:{time:'20:00–02:00',color:'blue'}},
+    }
+  },
+  // KW21
+  {
+    kueche: {
+      1: {0:{time:'06:00–14:00',color:'blue'}, 2:{time:'06:00–14:00',color:'blue'}, 4:{time:'14:00–22:00',color:'green'}},
+      2: {1:{time:'10:00–18:00',color:'purple'}, 3:{time:'10:00–18:00',color:'purple'}},
+      3: {0:{time:'08:00–16:00',color:'green'}, 5:{time:'10:00–16:00',color:'green'}},
+    },
+    service: {
+      4: {0:{time:'11:00–20:00',color:'blue'}, 2:{time:'11:00–20:00',color:'blue'}},
+      5: {1:{time:'12:00–21:00',color:'green'}, 4:{time:'12:00–21:00',color:'green'}},
+      6: {3:{time:'17:00–23:00',color:'purple'}, 5:{time:'10:00–15:00',color:'amber'}},
+    },
+    bar: {
+      7: {4:{time:'18:00–02:00',color:'purple'}, 5:{time:'18:00–02:00',color:'purple'}, 6:{time:'18:00–02:00',color:'purple'}},
+      8: {4:{time:'20:00–02:00',color:'blue'}, 5:{time:'20:00–02:00',color:'blue'}, 6:{time:'20:00–02:00',color:'blue'}},
+    }
+  }
+];
+
+// ── Helpers ────────────────────────────────────────
+function wi() {
+  return weekIdx === 0 ? 0 : weekIdx === 1 ? 1 : 2;
+}
+function week() { return WEEKS[wi()]; }
+function initials(name) {
+  const parts = name.split(',');
+  return (parts[1].trim()[0] + parts[0][0]).toUpperCase();
+}
+
+// ── Navigation ─────────────────────────────────────
+function prevWeek() { if(weekIdx>-1){weekIdx--;} renderAll(); }
+function nextWeek() { if(weekIdx<1){weekIdx++;} renderAll(); }
+function changeDept(v) { dept=v; renderGrid(); }
+
+// ── Render ─────────────────────────────────────────
+function renderAll() {
+  document.getElementById('week-label').innerHTML = week().label;
+  renderGrid();
+}
+
+function renderGrid() {
+  const w = week();
+  const days = w.days;
+  const deptKeys = dept==='all' ? ['kueche','service','bar']
+    : role==='sl-kueche' ? ['kueche']
+    : role==='sl-service' ? ['service']
+    : [dept];
+  const sh = shifts[wi()];
+
+  let h = '<table>';
+
+  // Header
+  h += '<thead><tr><th class="th-ma">Mitarbeiter</th>';
+  days.forEach(d => {
+    const cls = [d.hol?'th-holiday':'', d.we?'th-weekend':''].filter(Boolean).join(' ');
+    h += `<th class="${cls}">
+      <span class="day-num">${d.d.slice(0,2)}</span>
+      <span class="day-name">${d.n}</span>
+      ${d.hol ? `<span class="holiday-tag">${d.holName}</span>` : ''}
+    </th>`;
+  });
+  h += '</tr></thead><tbody>';
+
+  deptKeys.forEach(dk => {
+    const dep = DEPTS[dk];
+    const col = collapsed[dk];
+    h += `<tr class="tr-dept${col?' collapsed':''}" onclick="toggleDept('${dk}')">
+      <td colspan="${days.length+1}">
+        <span class="dept-toggle-icon">▼</span>
+        <span style="color:${dep.color}">${dep.name}</span>
+        <span style="margin-left:6px;font-size:10px;font-weight:400;color:#6B7280">${dep.employees.length} Mitarbeiter</span>
+        <span style="margin-left:8px;padding:1px 8px;border-radius:10px;font-size:9px;background:#FEF3C7;color:#92400E">Entwurf</span>
+      </td>
+    </tr>`;
+
+    if (!col) {
+      dep.employees.forEach((emp, empIdx) => {
+        const av = initials(emp.name);
+        const empSh = (sh[dk] && sh[dk][emp.id]) ? sh[dk][emp.id] : {};
+        h += `<tr class="tr-emp"
+          draggable="true"
+          ondragstart="rowDragStart(event,'${dk}',${empIdx})"
+          ondragover="event.preventDefault()"
+          ondrop="rowDrop(event,'${dk}',${empIdx})">`;
+        h += `<td class="td-ma">
+          <div class="ma-cell">
+            <span class="drag-handle" title="Zeile verschieben">⠿</span>
+            <div class="ma-avatar" style="background:${emp.av}">${av}</div>
+            <div>
+              <div class="ma-name-txt">${emp.name}</div>
+              <div class="ma-role-txt">${emp.role}</div>
+            </div>
+          </div>
+        </td>`;
+
+        days.forEach((d, di) => {
+          const s = empSh[di];
+          const cellCls = ['td-shift', d.hol?'holiday-col':'', d.we?'weekend':''].filter(Boolean).join(' ');
+          h += `<td class="${cellCls}"
+            ondragover="shiftDragOver(event)"
+            ondragleave="shiftDragLeave(event)"
+            ondrop="shiftDrop(event,'${dk}',${emp.id},${di})">`;
+
+          if (s) {
+            if (s.time2) {
+              // Split shift
+              h += `<div class="split-cell">
+                <div class="shift-chip chip-${s.color}" draggable="true"
+                  ondragstart="shiftDragStart(event,'${dk}',${emp.id},${di})"
+                  onclick="openEdit(event,'${dk}',${emp.id},${di})"
+                  title="${s.time}">${s.time}</div>
+                <div class="shift-chip chip-${s.color2}" draggable="true"
+                  ondragstart="shiftDragStart(event,'${dk}',${emp.id},${di})"
+                  onclick="openEdit(event,'${dk}',${emp.id},${di})"
+                  title="${s.time2}">${s.time2}</div>
+              </div>`;
+            } else {
+              // Single shift with add-2nd option
+              h += `<div class="add-second">
+                <div class="shift-chip chip-${s.color}" draggable="true"
+                  ondragstart="shiftDragStart(event,'${dk}',${emp.id},${di})"
+                  onclick="openEdit(event,'${dk}',${emp.id},${di})"
+                  title="${s.time}">${s.time}</div>
+                <span class="add-second-link" onclick="openEdit2nd(event,'${dk}',${emp.id},${di})">+ Teilschicht</span>
+              </div>`;
+            }
+          } else if (d.hol) {
+            h += `<div class="add-second">
+              <span class="holiday-icon" title="${d.holName}">🎉</span>
+              <span class="add-second-link" onclick="openAdd(event,'${dk}',${emp.id},${di},'${d.n} ${d.d}')">+ Schicht</span>
+            </div>`;
+          } else {
+            h += `<div class="add-shift" onclick="openAdd(event,'${dk}',${emp.id},${di},'${d.n} ${d.d}')">+</div>`;
+          }
+          h += '</td>';
+        });
+        h += '</tr>';
+      });
+    }
+  });
+
+  h += '</tbody></table>';
+  document.getElementById('grid').innerHTML = h;
+}
+
+function toggleDept(dk) {
+  collapsed[dk] = !collapsed[dk];
+  renderGrid();
+}
+
+// ── Shift popup ────────────────────────────────────
+function openAdd(e, dk, empId, di, dayStr) {
+  e.stopPropagation();
+  editCtx = {dk, empId, di, dayStr, isNew: true};
+  const dep = DEPTS[dk];
+  const emp = dep.employees.find(x => x.id === empId);
+  document.getElementById('shift-title').textContent = 'Schicht eintragen';
+  document.getElementById('f-ma').value = emp.name;
+  document.getElementById('f-day').value = dayStr;
+  document.getElementById('f-start').value = '08:00';
+  document.getElementById('f-end').value = '16:00';
+  document.getElementById('f-note').value = '';
+  document.getElementById('del-btn').style.display = 'none';
+  closeSplit();
+  showOv('ov-shift');
+}
+
+function openEdit(e, dk, empId, di) {
+  e.stopPropagation();
+  const s = shifts[wi()][dk]?.[empId]?.[di];
+  if (!s) return;
+  const w = week();
+  const dep = DEPTS[dk];
+  const emp = dep.employees.find(x => x.id === empId);
+  editCtx = {dk, empId, di, dayStr: `${w.days[di].n} ${w.days[di].d}`, isNew: false};
+  document.getElementById('shift-title').textContent = 'Schicht bearbeiten';
+  document.getElementById('f-ma').value = emp.name;
+  document.getElementById('f-day').value = editCtx.dayStr;
+  const [ss,se] = s.time.split('–');
+  document.getElementById('f-start').value = ss;
+  document.getElementById('f-end').value = se;
+  document.getElementById('f-note').value = '';
+  document.getElementById('del-btn').style.display = '';
+  pickedColor = s.color;
+
+  if (s.time2) {
+    document.getElementById('split-form').style.display = 'block';
+    document.getElementById('split-icon').textContent = '▼';
+    const [s2,e2] = s.time2.split('–');
+    document.getElementById('f2-start').value = s2;
+    document.getElementById('f2-end').value = e2;
+    document.getElementById('f2-note').value = '';
+    pickedColor2 = s.color2;
+  } else {
+    closeSplit();
+  }
+  showOv('ov-shift');
+}
+
+function openEdit2nd(e, dk, empId, di) {
+  e.stopPropagation();
+  openEdit(e, dk, empId, di);
+  setTimeout(() => {
+    document.getElementById('split-form').style.display = 'block';
+    document.getElementById('split-icon').textContent = '▼';
+  }, 0);
+}
+
+function saveShift() {
+  if (!editCtx) return;
+  const {dk, empId, di} = editCtx;
+  if (!shifts[wi()][dk]) shifts[wi()][dk] = {};
+  if (!shifts[wi()][dk][empId]) shifts[wi()][dk][empId] = {};
+  const start = document.getElementById('f-start').value;
+  const end   = document.getElementById('f-end').value;
+  const hasSplit = document.getElementById('split-form').style.display !== 'none';
+  const entry = {time: `${start}–${end}`, color: pickedColor};
+  if (hasSplit) {
+    const s2 = document.getElementById('f2-start').value;
+    const e2 = document.getElementById('f2-end').value;
+    entry.time2  = `${s2}–${e2}`;
+    entry.color2 = pickedColor2;
+  }
+  shifts[wi()][dk][empId][di] = entry;
+  closeOv('ov-shift');
+  renderGrid();
+}
+
+function deleteShift() {
+  if (!editCtx) return;
+  const {dk, empId, di} = editCtx;
+  if (shifts[wi()][dk]?.[empId]) {
+    delete shifts[wi()][dk][empId][di];
+  }
+  closeOv('ov-shift');
+  renderGrid();
+}
+
+function toggleSplit() {
+  const f = document.getElementById('split-form');
+  const icon = document.getElementById('split-icon');
+  if (f.style.display === 'none') {
+    f.style.display = 'block'; icon.textContent = '▼';
+  } else {
+    closeSplit();
+  }
+}
+function closeSplit() {
+  document.getElementById('split-form').style.display = 'none';
+  document.getElementById('split-icon').textContent = '▶';
+}
+function pickColor(el, c) {
+  pickedColor = c;
+  document.querySelectorAll('#ov-shift .color-row:first-of-type .color-dot').forEach(d => d.classList.remove('chosen'));
+  el.classList.add('chosen');
+}
+function pickColor2(el, c) {
+  pickedColor2 = c;
+  el.closest('.color-row').querySelectorAll('.color-dot').forEach(d => d.classList.remove('chosen'));
+  el.classList.add('chosen');
+}
+
+// ── Shift Drag & Drop ──────────────────────────────
+function shiftDragStart(e, dk, empId, di) {
+  dragShift = {dk, empId, di};
+  e.stopPropagation();
+}
+function shiftDragOver(e) {
+  e.preventDefault();
+  if (dragShift) e.currentTarget.classList.add('drag-over-cell');
+}
+function shiftDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over-cell');
+}
+function shiftDrop(e, toDk, toEmp, toDi) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over-cell');
+  if (!dragShift) return;
+  const {dk, empId, di} = dragShift;
+  const s = shifts[wi()][dk]?.[empId]?.[di];
+  if (!s) { dragShift = null; return; }
+  delete shifts[wi()][dk][empId][di];
+  if (!shifts[wi()][toDk]) shifts[wi()][toDk] = {};
+  if (!shifts[wi()][toDk][toEmp]) shifts[wi()][toDk][toEmp] = {};
+  shifts[wi()][toDk][toEmp][toDi] = s;
+  dragShift = null;
+  renderGrid();
+}
+
+// ── Row reorder Drag & Drop ────────────────────────
+function rowDragStart(e, dk, idx) {
+  dragRowCtx = {dk, idx};
+}
+function rowDrop(e, dk, toIdx) {
+  e.preventDefault();
+  if (!dragRowCtx || dragRowCtx.dk !== dk || dragRowCtx.idx === toIdx) { dragRowCtx = null; return; }
+  const emps = DEPTS[dk].employees;
+  const [moved] = emps.splice(dragRowCtx.idx, 1);
+  emps.splice(toIdx, 0, moved);
+  dragRowCtx = null;
+  renderGrid();
+}
+
+// ── Publish ────────────────────────────────────────
+function showPublish() { showOv('ov-pub'); }
+function doPublish() {
+  closeOv('ov-pub');
+  const chip = document.getElementById('status-chip');
+  chip.textContent = 'Veröffentlicht';
+  chip.className = 'status-chip status-pub';
+}
+
+// ── Settings ───────────────────────────────────────
+function showSettings() { showOv('ov-settings'); }
+function stab(el, target) {
+  document.querySelectorAll('.stab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['st-perm','st-sim'].forEach(id => {
+    document.getElementById(id).style.display = id===target ? 'block' : 'none';
+  });
+}
+function simRole(r, label, el) {
+  role = r;
+  document.querySelectorAll('.role-sim-item').forEach(x => x.classList.remove('active-sim'));
+  el.classList.add('active-sim');
+  el.querySelector('input').checked = true;
+  document.getElementById('role-badge').innerHTML = `👁 Ansicht: <strong style="margin-left:3px">${label}</strong>`;
+  const sel = document.getElementById('dept-sel');
+  if (r === 'admin') {
+    sel.style.display = '';
+    dept = 'all'; sel.value = 'all';
+  } else {
+    sel.style.display = 'none';
+    dept = r === 'sl-kueche' ? 'kueche' : 'service';
+  }
+  renderGrid();
+}
+
+// ── Overlay helpers ────────────────────────────────
+function showOv(id) { document.getElementById(id).classList.add('show'); }
+function closeOv(id) { document.getElementById(id).classList.remove('show'); }
+document.addEventListener('click', e => {
+  if (e.target.classList.contains('overlay')) closeOv(e.target.id);
+});
+
+// ── Boot ───────────────────────────────────────────
+renderAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motion-Prototyp — Chef-App Animationen</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #F3F4F6;
+  color: #111827;
+  padding: 40px 24px 80px;
+  line-height: 1.5;
+}
+
+.page { max-width: 820px; margin: 0 auto; }
+.page-title { font-size: 22px; font-weight: 700; color: #111827; }
+.page-sub   { font-size: 13px; color: #6B7280; margin-top: 4px; margin-bottom: 36px; }
+
+/* ── Card ─────────────────────────────── */
+.card {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.card-tag {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .1em; color: #9CA3AF; margin-bottom: 4px;
+}
+.card-title {
+  font-size: 15px; font-weight: 600; color: #111827; margin-bottom: 18px;
+}
+.divider { border: none; border-top: 1px solid #F3F4F6; margin: 20px 0; }
+
+/* ── Buttons ───────────────────────────── */
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 8px;
+  border: 1px solid #E5E7EB; background: white;
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  color: #374151; transition: background .12s, border-color .12s;
+}
+.btn:hover { background: #F9FAFB; }
+.btn.active {
+  background: #EEF2FF; color: #4F46E5;
+  border-color: #C7D2FE; font-weight: 600;
+}
+.btn.primary { background: #4F46E5; color: white; border-color: #4F46E5; }
+.btn.primary:hover { background: #4338CA; }
+.var-tag {
+  display: inline-block; width: 18px; height: 18px; border-radius: 4px;
+  background: #F3F4F6; color: #6B7280; font-size: 10px; font-weight: 700;
+  text-align: center; line-height: 18px; flex-shrink: 0;
+}
+.btn.active .var-tag { background: #C7D2FE; color: #4F46E5; }
+
+/* ── Checkbox ──────────────────────────── */
+.cb-row {
+  display: flex; align-items: center; gap: 10px; margin-top: 16px;
+  padding: 10px 14px; background: #F9FAFB; border-radius: 8px;
+  border: 1px solid #E5E7EB;
+}
+.cb-row input { accent-color: #4F46E5; width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+.cb-row label { font-size: 13px; color: #374151; cursor: pointer; }
+
+/* ── Modal ─────────────────────────────── */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px; background: rgba(0,0,0,0.45);
+}
+.modal-panel {
+  background: white; border-radius: 20px;
+  width: 90%; max-width: 500px;
+  padding: 28px; position: relative;
+  box-shadow: 0 24px 64px rgba(0,0,0,.18);
+}
+.modal-panel h2 { font-size: 18px; font-weight: 700; color: #111827; }
+.modal-panel .modal-sub { font-size: 12px; color: #6B7280; margin-top: 2px; margin-bottom: 20px; }
+.modal-badge {
+  display: inline-block; padding: 2px 10px; border-radius: 20px;
+  background: #EEF2FF; color: #4F46E5; font-size: 11px; font-weight: 600;
+}
+.modal-body {
+  background: #F9FAFB; border-radius: 10px; padding: 14px;
+  margin-bottom: 20px; font-size: 13px; color: #6B7280;
+}
+.modal-body p + p { margin-top: 6px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; }
+.modal-close {
+  position: absolute; top: 14px; right: 14px;
+  width: 28px; height: 28px; border: none; border-radius: 7px;
+  background: #F3F4F6; cursor: pointer; font-size: 14px; color: #6B7280;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-close:hover { background: #E5E7EB; }
+
+/* ── Kalender-Grid ─────────────────────── */
+.cal-grid { display: flex; flex-direction: column; gap: 3px; margin-top: 14px; }
+.cal-row  { display: flex; gap: 2px; align-items: center; }
+.cal-emp  { width: 72px; font-size: 11px; font-weight: 600; color: #6B7280; flex-shrink: 0; }
+.cal-day-header {
+  width: 72px; flex-shrink: 0;
+  display: flex; gap: 2px; margin-bottom: 2px;
+}
+.cal-day-lbl {
+  width: 28px; text-align: center; font-size: 9px;
+  color: #9CA3AF; font-weight: 600;
+}
+.cal-cell {
+  width: 28px; height: 26px; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; cursor: default;
+  border: 1px solid #E5E7EB; background: #FAFAFA;
+  user-select: none; position: relative;
+  transition: box-shadow .1s;
+}
+.cal-cell.draggable { cursor: grab; }
+.cal-cell.draggable:active { cursor: grabbing; }
+
+/* Frage 3 — Drag-Over Varianten */
+.drag-a .cal-cell.drag-over {
+  background: #EEF2FF !important;
+  border-color: #A5B4FC;
+  box-shadow: 0 0 0 3px rgba(79,70,229,.2);
+}
+.drag-b .cal-cell.drag-over {
+  background: #DBEAFE !important;
+  border: 2px solid #3B82F6;
+}
+.drag-c .cal-cell.drag-over {
+  background: #F3F4F6 !important;
+  border: 2px solid #9CA3AF;
+}
+
+/* Frage 5 — Quell-Zelle Varianten */
+.src-a .cal-cell.drag-src {
+  background: #C7D2FE !important;
+  box-shadow: 0 0 0 2px #4F46E5;
+}
+.src-b .cal-cell.drag-src {
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(79,70,229,.35);
+  z-index: 1;
+}
+.src-c .cal-cell.drag-src {
+  border: 2px dashed #4F46E5 !important;
+  background: #F5F3FF !important;
+}
+
+/* CSS-Fallback-Animation (Frage 4 Variante C) */
+@keyframes css-pop {
+  0%   { transform: scale(0); opacity: 0; }
+  60%  { transform: scale(1.14); opacity: 1; }
+  100% { transform: scale(1); }
+}
+.css-pop { animation: css-pop 260ms cubic-bezier(.34,1.56,.64,1) forwards; }
+
+/* ── Zusammenfassung ───────────────────── */
+.summary {
+  background: #1E1B4B; color: white;
+  border-radius: 16px; padding: 24px; margin-top: 28px;
+}
+.summary h3 { font-size: 13px; font-weight: 700; color: #A5B4FC; margin-bottom: 16px; letter-spacing: .06em; text-transform: uppercase; }
+.sum-row { display: flex; gap: 16px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+.sum-row:last-child { border: none; }
+.sum-q  { font-size: 11px; color: #818CF8; width: 180px; flex-shrink: 0; }
+.sum-a  { font-size: 13px; font-weight: 600; color: white; }
+.sum-a.empty { color: #6366F1; font-style: italic; font-weight: 400; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-title">Motion-Prototyp · Chef-App</div>
+  <div class="page-sub">Klicke die Varianten an und schau dir die Animationen live an. Deine Auswahl wird unten gesammelt.</div>
+
+  <!-- ══════════════════════════════════════════
+       FRAGE 1 + 2  —  Modal-Animation
+  ═══════════════════════════════════════════ -->
+  <div class="card">
+    <div class="card-tag">Frage 1</div>
+    <div class="card-title">Wie soll das Mitarbeiterfenster erscheinen?</div>
+    <div class="btn-row">
+      <button class="btn" id="btn-modal-A" onclick="openModal('A')">
+        <span class="var-tag">A</span> Soft Fade &amp; Scale
+      </button>
+      <button class="btn" id="btn-modal-B" onclick="openModal('B')">
+        <span class="var-tag">B</span> Spring von unten
+      </button>
+      <button class="btn" id="btn-modal-C" onclick="openModal('C')">
+        <span class="var-tag">C</span> Spring Scale
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="card-tag">Frage 2</div>
+    <div style="font-size:14px;font-weight:600;color:#111827;margin-bottom:12px">Wie soll das Fenster beim Schließen verschwinden?</div>
+    <div class="cb-row">
+      <input type="checkbox" id="close-fade-only">
+      <label for="close-fade-only">Schließen immer nur mit Fade (statt gleicher Animation rückwärts)</label>
+    </div>
+    <p style="font-size:11px;color:#9CA3AF;margin-top:8px;padding-left:2px">Öffne das Modal mit einer Variante und schließe es, um den Unterschied zu sehen.</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       FRAGE 3 + 5  —  Drag-Feedback im Kalender
+  ═══════════════════════════════════════════ -->
+  <div class="card">
+    <div class="card-tag">Frage 3</div>
+    <div class="card-title">Drag-Over Hervorhebung — wie sollen Zellen beim Ziehen aussehen?</div>
+    <div class="btn-row" style="margin-bottom:18px">
+      <button class="btn active" id="btn-drag-a" onclick="setDragMode('a')">
+        <span class="var-tag">A</span> Indigo + Glow
+      </button>
+      <button class="btn" id="btn-drag-b" onclick="setDragMode('b')">
+        <span class="var-tag">B</span> Blau + Rand
+      </button>
+      <button class="btn" id="btn-drag-c" onclick="setDragMode('c')">
+        <span class="var-tag">C</span> Grau + Rand
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="card-tag">Frage 5</div>
+    <div style="font-size:14px;font-weight:600;color:#111827;margin-bottom:12px">Quell-Zelle — wie wird die Zelle markiert, von der aus du ziehst?</div>
+    <div class="btn-row" style="margin-bottom:18px">
+      <button class="btn active" id="btn-src-a" onclick="setSrcMode('a')">
+        <span class="var-tag">A</span> Indigo Fill + Ring
+      </button>
+      <button class="btn" id="btn-src-b" onclick="setSrcMode('b')">
+        <span class="var-tag">B</span> Scale + Shadow
+      </button>
+      <button class="btn" id="btn-src-c" onclick="setSrcMode('c')">
+        <span class="var-tag">C</span> Gestrichelt
+      </button>
+    </div>
+
+    <p style="font-size:11px;color:#9CA3AF;margin-bottom:10px">← Ziehe von einer farbigen Zelle (U, K, RU) über leere Zellen um den Effekt zu sehen →</p>
+    <div id="cal-container" class="drag-a src-a"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       FRAGE 4  —  Zell-Füll-Animation
+  ═══════════════════════════════════════════ -->
+  <div class="card">
+    <div class="card-tag">Frage 4</div>
+    <div class="card-title">Zell-Animation — wie erscheint eine Zelle wenn sie befüllt wird?</div>
+    <div class="btn-row" style="margin-bottom:18px">
+      <button class="btn active" id="btn-fill-a" onclick="setFillMode('a')">
+        <span class="var-tag">A</span> Spring Pop <span style="font-size:10px;color:#9CA3AF;margin-left:4px">motion</span>
+      </button>
+      <button class="btn" id="btn-fill-b" onclick="setFillMode('b')">
+        <span class="var-tag">B</span> Soft Fade <span style="font-size:10px;color:#9CA3AF;margin-left:4px">motion</span>
+      </button>
+      <button class="btn" id="btn-fill-c" onclick="setFillMode('c')">
+        <span class="var-tag">C</span> CSS Pop <span style="font-size:10px;color:#9CA3AF;margin-left:4px">aktuell</span>
+      </button>
+    </div>
+    <p style="font-size:11px;color:#9CA3AF;margin-bottom:12px">Klick auf eine Zeile → alle 8 Zellen werden mit 40ms Abstand befüllt:</p>
+    <div id="fill-demo"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       ZUSAMMENFASSUNG
+  ═══════════════════════════════════════════ -->
+  <div class="summary">
+    <h3>Meine Auswahl</h3>
+    <div class="sum-row">
+      <div class="sum-q">Frage 1 · Modal öffnen</div>
+      <div class="sum-a empty" id="sum-1">noch nicht getestet</div>
+    </div>
+    <div class="sum-row">
+      <div class="sum-q">Frage 2 · Modal schließen</div>
+      <div class="sum-a" id="sum-2">Gleiche Animation rückwärts</div>
+    </div>
+    <div class="sum-row">
+      <div class="sum-q">Frage 3 · Drag-Over Farbe</div>
+      <div class="sum-a" id="sum-3">A – Indigo + Glow</div>
+    </div>
+    <div class="sum-row">
+      <div class="sum-q">Frage 4 · Zell-Animation</div>
+      <div class="sum-a" id="sum-4">A – Spring Pop</div>
+    </div>
+    <div class="sum-row">
+      <div class="sum-q">Frage 5 · Quell-Zelle</div>
+      <div class="sum-a" id="sum-5">A – Indigo Fill + Ring</div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- ══ MODAL ══════════════════════════════ -->
+<div id="modal-backdrop" style="display:none" class="modal-backdrop">
+  <div id="modal-panel" class="modal-panel">
+    <button class="modal-close" id="modal-close-btn">✕</button>
+    <h2>Max Mustermann</h2>
+    <div class="modal-sub">
+      Mitarbeiter bearbeiten ·
+      <span id="modal-variant-badge" class="modal-badge"></span>
+    </div>
+    <div class="modal-body">
+      <p>Abteilung: Küche · Eintritt: 01.01.2023</p>
+      <p>Vertrag: Vollzeit · Urlaub: 30 Tage</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="modal-cancel">Abbrechen</button>
+      <button class="btn primary" id="modal-save">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCRIPT ═════════════════════════════ -->
+<script type="module">
+import { animate, spring } from 'https://cdn.jsdelivr.net/npm/motion@latest/+esm'
+
+// ─── State ──────────────────────────────────────────────────
+let activeVariant = null
+let fillMode = 'a'
+let currentDragMode = 'a'
+let currentSrcMode  = 'a'
+
+const VARIANT_NAMES = {
+  A: 'A – Soft Fade & Scale',
+  B: 'B – Spring von unten',
+  C: 'C – Spring Scale',
+}
+
+// ─── Modal ──────────────────────────────────────────────────
+const backdrop = document.getElementById('modal-backdrop')
+const panel    = document.getElementById('modal-panel')
+
+window.openModal = async function(v) {
+  activeVariant = v
+  document.getElementById('modal-variant-badge').textContent = VARIANT_NAMES[v]
+  backdrop.style.display = 'flex'
+
+  // Backdrop einblenden
+  await animate(backdrop, { opacity: [0, 1] }, { duration: 0.18 }).finished
+
+  // Panel-Animation je Variante
+  if (v === 'A') {
+    animate(panel, { opacity: [0, 1], scale: [0.96, 1], y: [8, 0] },
+      { duration: 0.2, ease: [0.4, 0, 0.2, 1] })
+  } else if (v === 'B') {
+    animate(panel, { opacity: [0, 1], y: [36, 0] },
+      { duration: 0.4, easing: spring({ stiffness: 360, damping: 28 }) })
+  } else {
+    animate(panel, { opacity: [0, 1], scale: [0.86, 1] },
+      { duration: 0.35, easing: spring({ stiffness: 480, damping: 26 }) })
+  }
+
+  // Zusammenfassung
+  document.getElementById('sum-1').textContent = VARIANT_NAMES[v]
+  document.getElementById('sum-1').classList.remove('empty')
+  ;['A','B','C'].forEach(x =>
+    document.getElementById('btn-modal-' + x).classList.toggle('active', x === v)
+  )
+}
+
+async function closeModal() {
+  const fadeOnly = document.getElementById('close-fade-only').checked
+
+  if (fadeOnly || !activeVariant) {
+    await animate(backdrop, { opacity: [1, 0] }, { duration: 0.16 }).finished
+  } else {
+    const v = activeVariant
+    let panelAnim
+    if (v === 'A') {
+      panelAnim = animate(panel, { opacity: [1, 0], scale: [1, 0.96], y: [0, 6] }, { duration: 0.15 })
+    } else if (v === 'B') {
+      panelAnim = animate(panel, { opacity: [1, 0], y: [0, 24] }, { duration: 0.16 })
+    } else {
+      panelAnim = animate(panel, { opacity: [1, 0], scale: [1, 0.91] }, { duration: 0.15 })
+    }
+    await Promise.all([
+      panelAnim.finished,
+      animate(backdrop, { opacity: [1, 0] }, { duration: 0.16 }).finished,
+    ])
+  }
+
+  backdrop.style.display = 'none'
+}
+
+// Modal schließen via Backdrop-Klick, X, Abbrechen, Speichern
+backdrop.addEventListener('click', e => { if (e.target === backdrop) closeModal() })
+document.getElementById('modal-close-btn').addEventListener('click', closeModal)
+document.getElementById('modal-cancel').addEventListener('click', closeModal)
+document.getElementById('modal-save').addEventListener('click', closeModal)
+
+// Frage-2-Zusammenfassung live
+document.getElementById('close-fade-only').addEventListener('change', e => {
+  document.getElementById('sum-2').textContent =
+    e.target.checked ? 'Nur Fade' : 'Gleiche Animation rückwärts'
+})
+
+// ─── Kalender-Grid ──────────────────────────────────────────
+const EMPLOYEES = ['Anna B.', 'Felix M.', 'Sara K.', 'Tom H.']
+const DAYS      = Array.from({ length: 14 }, (_, i) => i + 1)
+
+const COLORS = {
+  U:  { bg: '#DBEAFE', color: '#1D4ED8' },
+  K:  { bg: '#FEE2E2', color: '#991B1B' },
+  RU: { bg: '#D1FAE5', color: '#065F46' },
+  S:  { bg: '#FEF9C3', color: '#854D0E' },
+}
+
+const PREFILLED = {
+  'Anna B.':  { 2: 'U', 3: 'U', 4: 'U' },
+  'Felix M.': { 6: 'K' },
+  'Sara K.':  { 1: 'RU', 2: 'RU' },
+  'Tom H.':   { 9: 'U', 10: 'S' },
+}
+
+// Zell-Map: key = `emp_day`
+const cellMap = {}
+let dragState = null
+
+function buildGrid() {
+  const container = document.getElementById('cal-container')
+  const grid = document.createElement('div')
+  grid.className = 'cal-grid'
+
+  // Tages-Header
+  const headerRow = document.createElement('div')
+  headerRow.className = 'cal-row'
+  const empSpacer = document.createElement('div')
+  empSpacer.className = 'cal-emp'
+  headerRow.appendChild(empSpacer)
+  DAYS.forEach(d => {
+    const lbl = document.createElement('div')
+    lbl.className = 'cal-day-lbl'
+    lbl.style.width = '28px'
+    lbl.style.textAlign = 'center'
+    lbl.style.fontSize = '9px'
+    lbl.style.color = '#9CA3AF'
+    lbl.style.fontWeight = '600'
+    lbl.textContent = d
+    headerRow.appendChild(lbl)
+  })
+  grid.appendChild(headerRow)
+
+  EMPLOYEES.forEach(emp => {
+    const row = document.createElement('div')
+    row.className = 'cal-row'
+
+    const empLabel = document.createElement('div')
+    empLabel.className = 'cal-emp'
+    empLabel.textContent = emp
+    row.appendChild(empLabel)
+
+    DAYS.forEach(day => {
+      const cell = document.createElement('div')
+      cell.className = 'cal-cell'
+      cell.dataset.emp = emp
+      cell.dataset.day = day
+      cellMap[`${emp}_${day}`] = cell
+
+      const pre = PREFILLED[emp]?.[day]
+      if (pre) {
+        const c = COLORS[pre]
+        cell.style.background = c.bg
+        cell.style.color = c.color
+        cell.style.borderColor = 'transparent'
+        cell.textContent = pre
+        cell.dataset.kuerzel = pre
+        cell.classList.add('draggable')
+      }
+
+      cell.addEventListener('mousedown', e => {
+        if (!cell.dataset.kuerzel) return
+        e.preventDefault()
+        dragState = {
+          emp,
+          kuerzel: cell.dataset.kuerzel,
+          srcCell: cell,
+          cells: [cell],
+        }
+        cell.classList.add('drag-src')
+        document.body.style.userSelect = 'none'
+        document.body.style.cursor = 'grabbing'
+      })
+
+      cell.addEventListener('mouseenter', () => {
+        if (!dragState || dragState.emp !== emp) return
+        if (cell === dragState.srcCell) return
+        if (dragState.cells.includes(cell)) return
+        dragState.cells.push(cell)
+        if (!cell.dataset.kuerzel) cell.classList.add('drag-over')
+      })
+
+      row.appendChild(cell)
+    })
+
+    grid.appendChild(row)
+  })
+
+  container.appendChild(grid)
+}
+
+document.addEventListener('mouseup', () => {
+  if (!dragState) return
+  const { cells, kuerzel, srcCell } = dragState
+  dragState = null
+  document.body.style.userSelect = ''
+  document.body.style.cursor = ''
+
+  srcCell.classList.remove('drag-src')
+
+  const targets = cells.filter(c => !c.dataset.kuerzel && c !== srcCell)
+  targets.forEach(c => c.classList.remove('drag-over'))
+
+  targets.forEach((cell, i) => {
+    setTimeout(() => fillCell(cell, kuerzel), i * 40)
+  })
+})
+
+function fillCell(cell, kuerzel) {
+  const c = COLORS[kuerzel] || COLORS.U
+  cell.style.background = c.bg
+  cell.style.color = c.color
+  cell.style.borderColor = 'transparent'
+  cell.textContent = kuerzel
+  cell.dataset.kuerzel = kuerzel
+  cell.classList.add('draggable')
+
+  applyFillAnim(cell)
+}
+
+function applyFillAnim(cell) {
+  if (fillMode === 'a') {
+    animate(cell, { scale: [0, 1], opacity: [0, 1] },
+      { duration: 0.3, easing: spring({ stiffness: 520, damping: 20 }) })
+  } else if (fillMode === 'b') {
+    animate(cell, { scale: [0.65, 1], opacity: [0, 1] },
+      { duration: 0.22, ease: [0.22, 1, 0.36, 1] })
+  } else {
+    cell.classList.remove('css-pop')
+    // Force reflow
+    void cell.offsetWidth
+    cell.classList.add('css-pop')
+    setTimeout(() => cell.classList.remove('css-pop'), 320)
+  }
+}
+
+// Drag-Mode / Src-Mode umschalten
+window.setDragMode = function(mode) {
+  currentDragMode = mode
+  const c = document.getElementById('cal-container')
+  c.className = c.className.replace(/drag-\w+/g, '').trim() + ' drag-' + mode + ' src-' + currentSrcMode
+  ;['a','b','c'].forEach(m => {
+    document.getElementById('btn-drag-' + m).classList.toggle('active', m === mode)
+  })
+  const labels = { a: 'A – Indigo + Glow', b: 'B – Blau + Rand', c: 'C – Grau + Rand' }
+  document.getElementById('sum-3').textContent = labels[mode]
+}
+
+window.setSrcMode = function(mode) {
+  currentSrcMode = mode
+  const c = document.getElementById('cal-container')
+  c.className = c.className.replace(/src-\w+/g, '').trim() + ' drag-' + currentDragMode + ' src-' + mode
+  ;['a','b','c'].forEach(m => {
+    document.getElementById('btn-src-' + m).classList.toggle('active', m === mode)
+  })
+  const labels = { a: 'A – Indigo Fill + Ring', b: 'B – Scale + Shadow', c: 'C – Gestrichelt' }
+  document.getElementById('sum-5').textContent = labels[mode]
+}
+
+// ─── Frage-4-Demo ────────────────────────────────────────────
+const FILL_ROWS = [
+  { label: 'U',  kuerzel: 'U',  ...COLORS.U  },
+  { label: 'K',  kuerzel: 'K',  ...COLORS.K  },
+  { label: 'RU', kuerzel: 'RU', ...COLORS.RU },
+]
+
+function buildFillDemo() {
+  const container = document.getElementById('fill-demo')
+  FILL_ROWS.forEach(({ label, kuerzel, bg, color }) => {
+    const row = document.createElement('div')
+    row.className = 'cal-row'
+    row.style.marginBottom = '6px'
+    row.style.cursor = 'pointer'
+    row.title = 'Klicken um Animation abzuspielen'
+
+    const empLbl = document.createElement('div')
+    empLbl.className = 'cal-emp'
+    empLbl.innerHTML = `<span style="background:${bg};color:${color};padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700">${label}</span>`
+    row.appendChild(empLbl)
+
+    const cells = []
+    for (let i = 0; i < 8; i++) {
+      const cell = document.createElement('div')
+      cell.className = 'cal-cell'
+      row.appendChild(cell)
+      cells.push(cell)
+    }
+
+    row.addEventListener('click', () => {
+      // Reset
+      cells.forEach(c => {
+        c.style.background = ''
+        c.style.color = ''
+        c.style.borderColor = ''
+        c.textContent = ''
+        c.classList.remove('css-pop')
+      })
+      // Stagger fill
+      cells.forEach((cell, i) => {
+        setTimeout(() => {
+          cell.style.background = bg
+          cell.style.color = color
+          cell.style.borderColor = 'transparent'
+          cell.textContent = kuerzel
+          applyFillAnim(cell)
+        }, i * 40)
+      })
+    })
+
+    container.appendChild(row)
+  })
+}
+
+window.setFillMode = function(mode) {
+  fillMode = mode
+  ;['a','b','c'].forEach(m => {
+    document.getElementById('btn-fill-' + m).classList.toggle('active', m === mode)
+  })
+  const labels = { a: 'A – Spring Pop', b: 'B – Soft Fade', c: 'C – CSS Pop (aktuell)' }
+  document.getElementById('sum-4').textContent = labels[mode]
+}
+
+// ─── Init ────────────────────────────────────────────────────
+buildGrid()
+buildFillDemo()
+</script>
+</body>
+</html>

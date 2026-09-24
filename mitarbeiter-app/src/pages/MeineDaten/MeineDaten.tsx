@@ -4,7 +4,7 @@ import { de } from 'date-fns/locale'
 import { User as UserIcon, FileText, Clock, Download } from 'lucide-react'
 import { pb } from '../../lib/pb'
 import { useAuthStore } from '../../stores/auth'
-import type { Employee, Document, Availability } from '@shared/types'
+import type { User, Document, Availability } from '@shared/types'
 import { CONTRACT_LABELS } from '@shared/types'
 import { cn } from '@/lib/utils'
 
@@ -27,12 +27,12 @@ const WEEKDAY_LABELS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag
 const WEEKDAY_ORDER  = [1, 2, 3, 4, 5, 6, 0]
 
 export default function MeineDaten() {
-  const user       = useAuthStore(s => s.user)
-  const employeeId = user?.employee ?? ''
+  const authUser   = useAuthStore(s => s.user)
+  const employeeId = authUser?.id ?? ''
 
   const [tab, setTab] = useState<Tab>('stammdaten')
 
-  const [employee,    setEmployee]    = useState<Employee | null>(null)
+  const [employee,    setEmployee]    = useState<User | null>(null)
   const [documents,   setDocuments]   = useState<Document[]>([])
   const [docsLoaded,  setDocsLoaded]  = useState(false)
   const [avails,      setAvails]      = useState<Availability[]>([])
@@ -41,7 +41,7 @@ export default function MeineDaten() {
 
   useEffect(() => {
     if (!employeeId) return
-    pb.collection('employees').getOne<Employee>(employeeId, {
+    pb.collection('users').getOne<User>(employeeId, {
       expand: 'department',
       requestKey: null,
     }).then(setEmployee).catch(console.error)
@@ -121,6 +121,8 @@ export default function MeineDaten() {
           <button
             key={id}
             onClick={() => setTab(id)}
+            aria-label={label}
+            aria-current={tab === id ? 'page' : undefined}
             className={cn(
               'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all',
               tab === id
@@ -128,8 +130,8 @@ export default function MeineDaten() {
                 : 'text-[#6B7280] hover:text-[#374151]'
             )}
           >
-            <Icon size={15} />
-            <span className="hidden sm:inline">{label}</span>
+            <Icon size={15} aria-hidden="true" />
+            <span className="hidden sm:inline" aria-hidden="true">{label}</span>
           </button>
         ))}
       </div>
@@ -158,7 +160,7 @@ export default function MeineDaten() {
               <div className="divide-y divide-[#F3F4F6]">
                 {([
                   ['Abteilung',     employee.expand?.department?.name ?? '—'],
-                  ['Vertragsart',   CONTRACT_LABELS[employee.contract_type] ?? employee.contract_type],
+                  ['Vertragsart',   (employee.contract_type ? CONTRACT_LABELS[employee.contract_type] : null) ?? employee.contract_type ?? '—'],
                   ['Wochenstunden', `${employee.weekly_hours} h`],
                   ['Eintrittsdatum', employee.start_date
                     ? format(parseISO(employee.start_date), 'd. MMMM yyyy', { locale: de })
@@ -227,10 +229,11 @@ export default function MeineDaten() {
                           href={getFileUrl(doc)}
                           target="_blank"
                           rel="noopener noreferrer"
+                          aria-label={`${doc.name} öffnen`}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 transition-colors"
                         >
-                          <Download size={12} />
-                          <span className="hidden md:inline">Öffnen</span>
+                          <Download size={12} aria-hidden="true" />
+                          <span className="hidden md:inline" aria-hidden="true">Öffnen</span>
                         </a>
                       )}
                     </div>
@@ -266,7 +269,7 @@ export default function MeineDaten() {
                   const isAvail  = avail?.available ?? false
 
                   return (
-                    <div key={day} className="flex items-center gap-3 px-5 py-3.5">
+                    <div key={day} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-3.5">
                       {/* Wochentag */}
                       <div className="w-24 shrink-0 text-sm font-medium text-[#374151]">
                         {WEEKDAY_LABELS[day]}
@@ -291,21 +294,21 @@ export default function MeineDaten() {
 
                       {/* Zeitraum */}
                       {isAvail && avail ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
                           <input
                             type="time"
                             value={avail.from_time}
                             onChange={e => handleAvailTimeChange(day, 'from_time', e.target.value)}
                             disabled={saving}
-                            className="h-8 px-2 rounded-lg border border-[#E5E7EB] text-sm text-[#111827] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-50"
+                            className="h-8 px-2 rounded-lg border border-[#E5E7EB] text-sm text-[#111827] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-50 min-w-[80px] flex-1"
                           />
-                          <span className="text-[#9CA3AF] text-sm">–</span>
+                          <span className="text-[#9CA3AF] text-sm shrink-0">–</span>
                           <input
                             type="time"
                             value={avail.to_time}
                             onChange={e => handleAvailTimeChange(day, 'to_time', e.target.value)}
                             disabled={saving}
-                            className="h-8 px-2 rounded-lg border border-[#E5E7EB] text-sm text-[#111827] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-50"
+                            className="h-8 px-2 rounded-lg border border-[#E5E7EB] text-sm text-[#111827] outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-50 min-w-[80px] flex-1"
                           />
                         </div>
                       ) : (

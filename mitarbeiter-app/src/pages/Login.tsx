@@ -30,12 +30,12 @@ export default function Login() {
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-200 mb-4">
             <Zap size={26} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-[#111827]">Schicht & Plan</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#111827]">Schicht & Plan</h1>
           <p className="text-sm text-[#6B7280] mt-1">Mitarbeiter-Portal</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl shadow-gray-100 border border-[#E5E7EB] p-8">
+        <div className="bg-white rounded-2xl shadow-xl shadow-gray-100 border border-[#E5E7EB] p-6 sm:p-8">
           {error && (
             <div className="mb-4 px-4 py-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl">
               {error}

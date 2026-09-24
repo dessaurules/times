@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Gamification Debug Test</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto; margin: 40px; }
+    .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+    .success { background: #d4edda; border-color: #c3e6cb; }
+    .error { background: #f8d7da; border-color: #f5c6cb; }
+    .info { background: #d1ecf1; border-color: #bee5eb; }
+    code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; }
+    button { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Gamification Debug Test</h1>
+
+  <div class="section info">
+    <h3>Schritt 1: PocketBase Status</h3>
+    <p id="pb-status">Überprüfe PocketBase...</p>
+    <button onclick="testPocketBase()">Test PocketBase</button>
+  </div>
+
+  <div class="section info">
+    <h3>Schritt 2: Auth Status</h3>
+    <p id="auth-status">Überprüfe Auth...</p>
+    <button onclick="testAuth()">Test Auth (gf@test.de)</button>
+  </div>
+
+  <div class="section info">
+    <h3>Schritt 3: gam_settings API</h3>
+    <p id="settings-status">Überprüfe gam_settings...</p>
+    <button onclick="testSettings()">Test gam_settings</button>
+  </div>
+
+  <div class="section info">
+    <h3>Schritt 4: Alle Gamification Collections</h3>
+    <p id="collections-status">Überprüfe Collections...</p>
+    <button onclick="testAllCollections()">Test alle Collections</button>
+  </div>
+
+  <script>
+    // Einfacher Fetch-basierter Test (kein PocketBase SDK nötig)
+    async function apiCall(method, url, data = null, token = null) {
+      const opts = { method };
+      if (data) opts.body = JSON.stringify(data);
+      if (token) opts.headers = { Authorization: `Bearer ${token}` };
+      const response = await fetch(url, opts);
+      return { status: response.status, data: await response.json() };
+    }
+
+    const pb = { token: null };
+    window.pb = pb;
+
+    window.testPocketBase = async () => {
+      try {
+        const health = await fetch('http://localhost:8091/api/health').then(r => r.json());
+        document.getElementById('pb-status').innerHTML = `<span class="success">✓ PocketBase läuft: ${health.message}</span>`;
+      } catch (err) {
+        document.getElementById('pb-status').innerHTML = `<span class="error">✗ Fehler: ${err.message}</span>`;
+      }
+    };
+
+    window.testAuth = async () => {
+      try {
+        const result = await apiCall('POST', 'http://localhost:8091/api/collections/users/auth-with-password', {
+          identity: 'gf@test.de',
+          password: 'testtest123'
+        });
+        if (result.status === 200) {
+          pb.token = result.data.token;
+          document.getElementById('auth-status').innerHTML = `<span class="success">✓ Angemeldet als: ${result.data.record.email} (${result.data.record.role})</span>`;
+        } else {
+          document.getElementById('auth-status').innerHTML = `<span class="error">✗ Auth Fehler: ${result.data.message}</span>`;
+        }
+      } catch (err) {
+        document.getElementById('auth-status').innerHTML = `<span class="error">✗ Fehler: ${err.message}</span>`;
+      }
+    };
+
+    window.testSettings = async () => {
+      try {
+        const result = await apiCall('GET', 'http://localhost:8091/api/collections/gam_settings/records', null, pb.token);
+        if (result.status === 200) {
+          const { items } = result.data;
+          if (items.length > 0) {
+            document.getElementById('settings-status').innerHTML = `<span class="success">✓ gam_settings geladen: ${items.length} Records, enabled=${items[0].enabled}</span>`;
+          } else {
+            document.getElementById('settings-status').innerHTML = `<span class="error">✗ gam_settings leer (0 Records)</span>`;
+          }
+        } else {
+          document.getElementById('settings-status').innerHTML = `<span class="error">✗ Status ${result.status}: ${result.data.message}</span>`;
+        }
+      } catch (err) {
+        document.getElementById('settings-status').innerHTML = `<span class="error">✗ Fehler: ${err.message}</span>`;
+      }
+    };
+
+    window.testAllCollections = async () => {
+      const collections = ['gam_settings', 'gam_tasks', 'gam_rewards', 'gam_submissions', 'gam_orders'];
+      let results = '';
+
+      for (const coll of collections) {
+        try {
+          const result = await apiCall('GET', `http://localhost:8091/api/collections/${coll}/records`, null, pb.token);
+          if (result.status === 200) {
+            results += `<div class="success">✓ ${coll}: ${result.data.items.length} records</div>`;
+          } else {
+            results += `<div class="error">✗ ${coll}: Status ${result.status}</div>`;
+          }
+        } catch (err) {
+          results += `<div class="error">✗ ${coll}: ${err.message}</div>`;
+        }
+      }
+
+      document.getElementById('collections-status').innerHTML = results;
+    };
+
+    // Auto-test on load
+    window.testPocketBase();
+  </script>
+</body>
+</html>

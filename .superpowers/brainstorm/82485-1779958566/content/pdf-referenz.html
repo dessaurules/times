@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Referenz & Anpassung</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F3F4F6; color: #111827; }
+  .page-header { background: white; border-bottom: 1px solid #E5E7EB; padding: 1rem 2rem; position: sticky; top: 0; z-index: 10; }
+  .page-header h1 { font-size: 1rem; font-weight: 700; }
+  .page-header p { font-size: 0.72rem; color: #6B7280; margin-top: 2px; }
+  .container { max-width: 1300px; margin: 0 auto; padding: 2rem; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start; }
+  .card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #E5E7EB; }
+  .card-header { padding: 0.9rem 1.25rem; border-bottom: 1px solid #E5E7EB; }
+  .card-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 99px; display: inline-block; margin-bottom: 0.4rem; }
+  .card-title { font-size: 0.85rem; font-weight: 700; }
+  .card-desc { font-size: 0.7rem; color: #6B7280; margin-top: 3px; line-height: 1.5; }
+  .card-body { padding: 1.25rem; background: #F9FAFB; }
+  .a4 { background: white; box-shadow: 0 2px 12px rgba(0,0,0,0.1); border-radius: 3px; padding: 14mm 16mm 10mm; font-size: 9.5px; color: #1a1a1a; }
+
+  .verdict { font-size: 0.7rem; padding: 0.7rem 1.25rem; border-top: 1px solid #E5E7EB; background: #F0F9FF; color: #0C4A6E; line-height: 1.6; }
+
+  /* Referenz-Tabellenstil */
+  .ref-table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+  .ref-table td { padding: 3.5px 6px; border: none; }
+  .ref-table tr:last-child td { border-top: 1px solid #ccc; font-weight: 600; padding-top: 5px; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>PDF Referenz — Dein aktuelles Format</h1>
+  <p>Links: dein bestehendes PDF-Design · Rechts: wie der DruckModal daran angepasst werden kann</p>
+</div>
+
+<div class="container">
+
+  <!-- Analyse der Referenz -->
+  <div class="card" style="margin-bottom: 2rem;">
+    <div class="card-header">
+      <span class="card-label" style="background:#F3F4F6;color:#374151;">Analyse</span>
+      <div class="card-title">Was dein PDF-Format auszeichnet</div>
+    </div>
+    <div style="padding: 1rem 1.25rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+      <div style="padding: 0.75rem; background: #F9FAFB; border-radius: 8px; border: 1px solid #E5E7EB;">
+        <div style="font-size: 0.65rem; font-weight: 700; color: #6B7280; text-transform: uppercase; margin-bottom: 4px;">Typografie</div>
+        <div style="font-size: 0.75rem; color: #111827; line-height: 1.5;">Saubere Serifenlose, klein aber lesbar. Nur wenige Schriftgrößen.</div>
+      </div>
+      <div style="padding: 0.75rem; background: #F9FAFB; border-radius: 8px; border: 1px solid #E5E7EB;">
+        <div style="font-size: 0.65rem; font-weight: 700; color: #6B7280; text-transform: uppercase; margin-bottom: 4px;">Rahmen</div>
+        <div style="font-size: 0.75rem; color: #111827; line-height: 1.5;">Keine Zell-Rahmen. Nur dünne horizontale Linien als Trenner und unter der Summe.</div>
+      </div>
+      <div style="padding: 0.75rem; background: #F9FAFB; border-radius: 8px; border: 1px solid #E5E7EB;">
+        <div style="font-size: 0.65rem; font-weight: 700; color: #6B7280; text-transform: uppercase; margin-bottom: 4px;">Spalten</div>
+        <div style="font-size: 0.75rem; color: #111827; line-height: 1.5;">Typ · Datum+Von · Datum+Bis · Stunden · Faktor. Kompakt, kein separater Tag/Datum.</div>
+      </div>
+      <div style="padding: 0.75rem; background: #F9FAFB; border-radius: 8px; border: 1px solid #E5E7EB;">
+        <div style="font-size: 0.65rem; font-weight: 700; color: #6B7280; text-transform: uppercase; margin-bottom: 4px;">Struktur</div>
+        <div style="font-size: 0.75rem; color: #111827; line-height: 1.5;">Name als Section-Header. Summe am Ende mit Linie. Sehr viel Weißraum.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- LINKS: Referenz-Mockup nachgebaut -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-label" style="background:#F3F4F6;color:#374151;">Dein bestehendes Format</span>
+        <div class="card-title">Referenz-Design (nachgebaut)</div>
+        <div class="card-desc">So sieht dein aktuelles externes PDF aus — dieses wollen wir im DruckModal nachbilden.</div>
+      </div>
+      <div class="card-body">
+        <div class="a4">
+          <!-- Kopf-Zeile -->
+          <div style="display:flex; justify-content:space-between; margin-bottom:14px;">
+            <span style="font-size:8px;color:#666;">01.04.2026 bis 30.04.2026</span>
+            <span style="font-size:8px;color:#666;">Montag, 4. Mai 2026 &nbsp; 12:15:19</span>
+          </div>
+
+          <!-- Trennlinie -->
+          <div style="border-top:1px solid #ccc; margin-bottom:8px;"></div>
+
+          <!-- Mitarbeiter-Zeile -->
+          <div style="margin-bottom:10px; font-size:9.5px; font-weight:600;">101 &nbsp; Ronny Beckmann</div>
+
+          <!-- Einträge: kein Tabellen-Header, direkt Daten -->
+          <table class="ref-table">
+            <tbody>
+              <tr><td style="width:18px;color:#555;">S</td><td>01.04.2026 08:30:00</td><td>01.04.2026 16:00:00</td><td style="text-align:right;width:48px;">7,00</td><td style="text-align:right;width:24px;color:#555;">0,5</td></tr>
+              <tr><td style="color:#555;">S</td><td>02.04.2026 08:30:00</td><td>02.04.2026 17:45:00</td><td style="text-align:right;">8,25</td><td style="text-align:right;color:#555;">1</td></tr>
+              <tr><td style="color:#555;">S</td><td>05.04.2026 09:00:00</td><td>05.04.2026 15:30:00</td><td style="text-align:right;">6,00</td><td style="text-align:right;color:#555;">0,5</td></tr>
+              <tr><td style="color:#555;">S</td><td>07.04.2026 09:00:00</td><td>07.04.2026 13:30:00</td><td style="text-align:right;">4,50</td><td style="text-align:right;color:#555;">0,5</td></tr>
+              <tr><td style="color:#555;">S</td><td>08.04.2026 09:30:00</td><td>08.04.2026 22:15:00</td><td style="text-align:right;">11,75</td><td style="text-align:right;color:#555;">1</td></tr>
+              <tr><td style="color:#555;">S</td><td>13.04.2026 09:00:00</td><td>13.04.2026 17:00:00</td><td style="text-align:right;">7,50</td><td style="text-align:right;color:#555;">0,5</td></tr>
+              <tr><td style="color:#555;">S</td><td>14.04.2026 11:00:00</td><td>14.04.2026 16:30:00</td><td style="text-align:right;">8,00</td><td style="text-align:right;color:#555;">0,5</td></tr>
+              <tr><td style="color:#555;">S</td><td>17.04.2026 09:15:00</td><td>17.04.2026 14:15:00</td><td style="text-align:right;">5,00</td><td style="text-align:right;color:#555;">0</td></tr>
+              <!-- Summe -->
+              <tr>
+                <td colspan="3" style="text-align:right;padding-top:6px;padding-right:6px;font-weight:600;color:#333;font-size:8.5px;"></td>
+                <td style="text-align:right;font-weight:700;padding-top:6px;">188,25</td>
+                <td style="text-align:right;font-weight:700;padding-top:6px;">16</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Fußzeile -->
+          <div style="margin-top:24px; text-align:right; font-size:7.5px; color:#999;">Seite 1 von 30</div>
+        </div>
+      </div>
+      <div class="verdict">
+        <strong>Kernmerkmale:</strong> Kein Tabellen-Kopf · Keine Zell-Rahmen · Nur dünne Linien als Trenner · Datumsformat mit Uhrzeit in einer Spalte · Dezimalstunden (7,00 statt 7:00) · Sehr viel Weißraum
+      </div>
+    </div>
+
+    <!-- RECHTS: Angepasster DruckModal-Vorschlag -->
+    <div class="card" style="border:2px solid #4F46E5;">
+      <div class="card-header" style="background:#EEF2FF;">
+        <span class="card-label" style="background:#4F46E5;color:white;">Anpassung DruckModal</span>
+        <div class="card-title" style="color:#3730A3;">DruckModal im Referenz-Stil</div>
+        <div class="card-desc">Gleiches visuelles Gewicht — mit den Daten aus dem DruckModal (Zeitnachweis, Abwesenheiten, Zusammenfassung). Kein überladen.</div>
+      </div>
+      <div class="card-body">
+        <div class="a4">
+          <!-- Schmaler Kopf -->
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+            <span style="font-size:8px;color:#666;">Muster GmbH · Schicht & Plan</span>
+            <span style="font-size:8px;color:#666;">Mai 2026</span>
+          </div>
+          <div style="border-top:1px solid #ccc;margin-bottom:10px;"></div>
+
+          <!-- Mitarbeiter -->
+          <div style="font-size:10px;font-weight:700;margin-bottom:8px;">Anna Müller &nbsp;<span style="font-weight:400;color:#666;font-size:9px;">Service · Soll: 168 h · 21 Arbeitstage</span></div>
+
+          <!-- Stunden: keine Zell-Rahmen, nur Linien -->
+          <table style="width:100%;border-collapse:collapse;font-size:9px;margin-bottom:14px;border-top:1px solid #ddd;">
+            <thead>
+              <tr style="color:#888;">
+                <td style="padding:3px 4px;font-size:8px;font-weight:600;border-bottom:1px solid #eee;">Von</td>
+                <td style="padding:3px 4px;font-size:8px;font-weight:600;border-bottom:1px solid #eee;">Bis</td>
+                <td style="padding:3px 4px;font-size:8px;font-weight:600;border-bottom:1px solid #eee;text-align:center;">Pause</td>
+                <td style="padding:3px 4px;font-size:8px;font-weight:600;border-bottom:1px solid #eee;text-align:right;">Netto</td>
+                <td style="padding:3px 4px;font-size:8px;font-weight:600;border-bottom:1px solid #eee;"></td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="padding:3px 4px;">05.05.2026 08:00</td><td style="padding:3px 4px;">05.05.2026 16:30</td><td style="padding:3px 4px;text-align:center;">30'</td><td style="padding:3px 4px;text-align:right;font-weight:600;">8,00</td><td></td></tr>
+              <tr><td style="padding:3px 4px;">06.05.2026 08:00</td><td style="padding:3px 4px;">06.05.2026 16:30</td><td style="padding:3px 4px;text-align:center;">30'</td><td style="padding:3px 4px;text-align:right;font-weight:600;">8,00</td><td></td></tr>
+              <tr><td style="padding:3px 4px;">07.05.2026 08:00</td><td style="padding:3px 4px;">07.05.2026 16:30</td><td style="padding:3px 4px;text-align:center;">30'</td><td style="padding:3px 4px;text-align:right;font-weight:600;">8,00</td><td></td></tr>
+              <tr><td style="padding:3px 4px;">08.05.2026 10:00</td><td style="padding:3px 4px;">08.05.2026 19:00</td><td style="padding:3px 4px;text-align:center;">45'</td><td style="padding:3px 4px;text-align:right;font-weight:600;">8,25</td><td></td></tr>
+              <!-- Summe -->
+              <tr style="border-top:1px solid #ccc;">
+                <td colspan="3" style="padding:4px 4px;text-align:right;font-size:8px;color:#888;font-weight:600;">Gesamt Ist-Stunden</td>
+                <td style="padding:4px 4px;text-align:right;font-weight:700;">160,00</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Zusammenfassung: kompakt, kein Boxrahmen -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;border-top:1px solid #eee;padding-top:8px;margin-bottom:14px;">
+            <div>
+              <div style="font-size:7.5px;color:#888;margin-bottom:1px;">Soll</div>
+              <div style="font-size:11px;font-weight:700;">168,00 h</div>
+            </div>
+            <div>
+              <div style="font-size:7.5px;color:#888;margin-bottom:1px;">Ist</div>
+              <div style="font-size:11px;font-weight:700;">160,00 h</div>
+            </div>
+            <div>
+              <div style="font-size:7.5px;color:#888;margin-bottom:1px;">Differenz</div>
+              <div style="font-size:11px;font-weight:700;color:#DC2626;">−8,00 h</div>
+            </div>
+          </div>
+
+          <!-- Abwesenheiten (wenn vorhanden) -->
+          <div style="font-size:8px;color:#888;border-top:1px solid #eee;padding-top:6px;margin-bottom:12px;">
+            <span style="font-weight:600;color:#555;">Abwesenheiten:</span>
+            &nbsp; Urlaub: 3 Tage &nbsp;·&nbsp; Krank: 2 Tage &nbsp;·&nbsp; Resturlaub: 12 Tage
+          </div>
+
+          <!-- Unterschriften -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:18px;">
+            <div><div style="height:18px;"></div><div style="border-top:1px solid #999;padding-top:3px;color:#999;font-size:8px;">Ort, Datum · Unterschrift Mitarbeiter</div></div>
+            <div><div style="height:18px;"></div><div style="border-top:1px solid #999;padding-top:3px;color:#999;font-size:8px;">Ort, Datum · Unterschrift Leitung</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="verdict">
+        <strong>Was sich ändert am DruckModal:</strong> Stundentabelle ohne Zell-Rahmen · Datumsformat Von/Bis in einer Spalte · Dezimalstunden · Zusammenfassung als 3 kompakte Inline-Werte · Abwesenheiten einzeilig · Gleicher Weißraum-Stil wie Referenz
+      </div>
+    </div>
+
+  </div>
+
+  <div style="margin-top:1.5rem;background:white;border-radius:10px;padding:1rem 1.25rem;border:1px solid #E5E7EB;">
+    <p style="font-size:0.75rem;color:#374151;line-height:1.6;">
+      <strong>Eine Frage für den Plan:</strong> Dein bestehendes PDF zeigt <strong>Dezimalstunden</strong> (7,00 statt 07:00) und kombiniert Datum + Uhrzeit in einer Spalte (01.04.2026 08:30:00).
+      Soll der DruckModal genau dieses Format übernehmen — oder lieber <strong>HH:MM</strong> und separate Datum/Zeit-Spalten behalten wie aktuell?
+    </p>
+  </div>
+</div>
+
+</body>
+</html>

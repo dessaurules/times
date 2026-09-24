@@ -1,0 +1,177 @@
+<h2>Zellenhöhe — Problem & Lösung</h2>
+<p class="subtitle">Ja, ich verstehe genau was du meinst. Hier siehst du das Problem und wie die Lösung aussieht.</p>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem;">
+
+  <!-- PROBLEM -->
+  <div>
+    <h3 style="color: #DC2626; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+      <span style="background: #FEE2E2; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800;">✗</span>
+      Aktuell — uneinheitliche Höhen
+    </h3>
+
+    <!-- Mini-Tabelle: Problem -->
+    <div style="border: 1px solid #E5E7EB; border-radius: 10px; overflow: hidden; font-size: 0.75rem;">
+      <!-- Header -->
+      <div style="display: grid; grid-template-columns: 100px repeat(4, 1fr); background: #F9FAFB; border-bottom: 1px solid #E5E7EB;">
+        <div style="padding: 6px 8px; font-weight: 600; color: #6B7280; font-size: 0.65rem; text-transform: uppercase;">MA</div>
+        <div style="padding: 6px 4px; text-align: center; font-weight: 600; color: #6B7280; font-size: 0.65rem;">Mo</div>
+        <div style="padding: 6px 4px; text-align: center; font-weight: 600; color: #6B7280; font-size: 0.65rem;">Di</div>
+        <div style="padding: 6px 4px; text-align: center; font-weight: 600; color: #6B7280; font-size: 0.65rem;">Mi</div>
+        <div style="padding: 6px 4px; text-align: center; font-weight: 600; color: #6B7280; font-size: 0.65rem;">Do</div>
+      </div>
+
+      <!-- Zeile 1: Verschiedene Typen -->
+      <div style="display: grid; grid-template-columns: 100px repeat(4, 1fr); border-bottom: 1px solid #E5E7EB; align-items: stretch;">
+        <div style="padding: 4px 8px; font-size: 0.7rem; color: #374151; display: flex; align-items: center;">Anna M.</div>
+
+        <!-- Einzelschicht: py-3 → groß -->
+        <div style="padding: 4px; background: white;">
+          <div style="background: #DBEAFE; color: #1E40AF; border-radius: 4px; padding: 12px 4px; text-align: center; font-size: 0.65rem; font-weight: 600;">
+            08:00–16:00
+          </div>
+        </div>
+
+        <!-- Freier Tag: py-3 → groß -->
+        <div style="padding: 4px; background: white;">
+          <div style="background: #D1FAE5; color: #065F46; border-radius: 4px; padding: 12px 4px; text-align: center; font-size: 0.65rem; font-weight: 900;">
+            F
+          </div>
+        </div>
+
+        <!-- Urlaub: py-3 → groß -->
+        <div style="padding: 4px; background: white;">
+          <div style="background: #FAEEDA; color: #633806; border-radius: 4px; padding: 12px 4px; text-align: center; font-size: 0.65rem; font-weight: 700;">
+            U
+          </div>
+        </div>
+
+        <!-- Splitschicht: py-0.5 je → KLEIN -->
+        <div style="padding: 4px; background: white;">
+          <div style="background: #DBEAFE; color: #1E40AF; border-radius: 4px; padding: 2px 4px; text-align: center; font-size: 0.65rem; font-weight: 600; margin-bottom: 2px;">
+            06:00–10:00
+          </div>
+          <div style="background: #D1FAE5; color: #065F46; border-radius: 4px; padding: 2px 4px; text-align: center; font-size: 0.65rem; font-weight: 600;">
+            14:00–18:00
+          </div>
+        </div>
+      </div>
+
+      <!-- Höhen-Annotations -->
+      <div style="display: grid; grid-template-columns: 100px repeat(4, 1fr); background: #FFF8F8; padding: 4px 0; border-top: 1px solid #FEE2E2;">
+        <div style="padding: 2px 8px; font-size: 0.6rem; color: #9CA3AF;"></div>
+        <div style="text-align: center; font-size: 0.6rem; color: #DC2626; font-weight: 700;">~44px</div>
+        <div style="text-align: center; font-size: 0.6rem; color: #DC2626; font-weight: 700;">~44px</div>
+        <div style="text-align: center; font-size: 0.6rem; color: #DC2626; font-weight: 700;">~44px</div>
+        <div style="text-align: center; font-size: 0.6rem; color: #DC2626; font-weight: 700;">~28px ⚠</div>
+      </div>
+    </div>
+
+    <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: 8px; padding: 0.6rem 0.75rem; margin-top: 0.75rem;">
+      <p style="font-size: 0.72rem; color: #991B1B; margin: 0; line-height: 1.5;">
+        <strong>Problem:</strong> Einzelschicht, Freier Tag und Urlaub nutzen <code>py-3</code> (12px oben + unten).
+        Die Splitschicht nutzt <code>py-0.5</code> (2px) — dadurch ist die Zeile bei Splitschichten deutlich niedriger.
+      </p>
+    </div>
+  </div>
+
+  <!-- LÖSUNG -->
+  <div>
+    <h3 style="color: #16A34A; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+      <span style="background: #DCFCE7; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 800;">✓</span>
+      Neu — feste Zellhöhe, immer gleich
+    </h3>
+
+    <!-- Mini-Tabelle: Lösung -->
+    <div style="border: 1px solid #E5E7EB; border-radius: 10px; overflow: hidden; font-size: 0.75rem;">
+      <!-- Header -->
+      <div style="display: grid; grid-template-columns: 100px repeat(4, 1fr); background: #F9FAFB; border-bottom: 1px solid #E5E7EB;">
+        <div style="padding: 6px 8px; font-weight: 600; color: #6B7280; font-size: 0.65rem; text-transform: uppercase;">MA</div>
+        <div style="padding: 6px 4px; text-align: center; font-weight: 600; color: #6B7280; font-size: 0.65rem;">Mo</div>
+        <div style="padding: 6px 4px; text-align: center; font-weight: 600; color: #6B7280; font-size: 0.65rem;">Di</div>
+        <div style="padding: 6px 4px; text-align: center; font-weight: 600; color: #6B7280; font-size: 0.65rem;">Mi</div>
+        <div style="padding: 6px 4px; text-align: center; font-weight: 600; color: #6B7280; font-size: 0.65rem;">Do</div>
+      </div>
+
+      <!-- Zeile: Alle gleich hoch via h-[52px] -->
+      <div style="display: grid; grid-template-columns: 100px repeat(4, 1fr); border-bottom: 1px solid #E5E7EB;">
+        <div style="padding: 4px 8px; font-size: 0.7rem; color: #374151; display: flex; align-items: center;">Anna M.</div>
+
+        <!-- Einzelschicht: flex-col, h-[52px], flex-1 -->
+        <div style="padding: 4px; height: 52px; box-sizing: border-box;">
+          <div style="background: #DBEAFE; color: #1E40AF; border-radius: 4px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 600; text-align: center;">
+            08:00–16:00
+          </div>
+        </div>
+
+        <!-- Freier Tag -->
+        <div style="padding: 4px; height: 52px; box-sizing: border-box;">
+          <div style="background: #D1FAE5; color: #065F46; border-radius: 4px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 900; text-align: center;">
+            F
+          </div>
+        </div>
+
+        <!-- Urlaub -->
+        <div style="padding: 4px; height: 52px; box-sizing: border-box;">
+          <div style="background: #FAEEDA; color: #633806; border-radius: 4px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; text-align: center;">
+            U
+          </div>
+        </div>
+
+        <!-- Splitschicht: flex-col, je flex-1 → gleiche Gesamthöhe wie Einzelschicht -->
+        <div style="padding: 4px; height: 52px; box-sizing: border-box; display: flex; flex-direction: column; gap: 2px;">
+          <div style="background: #DBEAFE; color: #1E40AF; border-radius: 4px; flex: 1; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 600; text-align: center;">
+            06:00–10:00
+          </div>
+          <div style="background: #D1FAE5; color: #065F46; border-radius: 4px; flex: 1; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 600; text-align: center;">
+            14:00–18:00
+          </div>
+        </div>
+      </div>
+
+      <!-- Höhen-Annotations -->
+      <div style="display: grid; grid-template-columns: 100px repeat(4, 1fr); background: #F0FDF4; padding: 4px 0; border-top: 1px solid #BBF7D0;">
+        <div style="padding: 2px 8px; font-size: 0.6rem; color: #9CA3AF;"></div>
+        <div style="text-align: center; font-size: 0.6rem; color: #16A34A; font-weight: 700;">52px ✓</div>
+        <div style="text-align: center; font-size: 0.6rem; color: #16A34A; font-weight: 700;">52px ✓</div>
+        <div style="text-align: center; font-size: 0.6rem; color: #16A34A; font-weight: 700;">52px ✓</div>
+        <div style="text-align: center; font-size: 0.6rem; color: #16A34A; font-weight: 700;">52px ✓</div>
+      </div>
+    </div>
+
+    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 0.6rem 0.75rem; margin-top: 0.75rem;">
+      <p style="font-size: 0.72rem; color: #166534; margin: 0; line-height: 1.5;">
+        <strong>Lösung:</strong> Die <code>&lt;td&gt;</code> bekommt eine feste Höhe (<code>h-[52px]</code>).
+        Alle Kacheln (Schicht, F, U, K…) füllen die volle Zellhöhe via <code>h-full</code>.
+        Bei Splitschicht teilen sich beide Kacheln die Höhe via <code>flex-1</code>.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top: 1.5rem; background: #F8FAFC; border-radius: 10px; padding: 1rem 1.25rem; border: 1px solid #E2E8F0;">
+  <h3 style="margin: 0 0 0.5rem 0; font-size: 0.8rem;">Technisch: was sich ändert</h3>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.72rem; color: #374151;">
+    <div>
+      <p style="margin: 0 0 0.3rem 0; font-weight: 700; color: #DC2626;">Vorher</p>
+      <code style="display: block; background: #FEF2F2; padding: 6px 8px; border-radius: 6px; line-height: 1.6; color: #7F1D1D;">
+        &lt;td p-1 align-top&gt;<br>
+        &nbsp; py-3 (Einzelschicht)<br>
+        &nbsp; py-0.5 (Split Teil 1)<br>
+        &nbsp; mt-0.5 + py-0.5 (Split Teil 2)<br>
+        → Höhe schwankt je nach Typ
+      </code>
+    </div>
+    <div>
+      <p style="margin: 0 0 0.3rem 0; font-weight: 700; color: #16A34A;">Nachher</p>
+      <code style="display: block; background: #F0FDF4; padding: 6px 8px; border-radius: 6px; line-height: 1.6; color: #14532D;">
+        &lt;td p-1 h-[52px]&gt;<br>
+        &nbsp; h-full (Einzelschicht)<br>
+        &nbsp; flex-col + gap-0.5 (Split)<br>
+        &nbsp; flex-1 (jeder Split-Teil)<br>
+        → Immer 52px, egal was drin ist
+      </code>
+    </div>
+  </div>
+</div>

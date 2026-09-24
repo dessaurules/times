@@ -1,0 +1,78 @@
+<h2>Dashboard-Layout: Widgets verschiebbar oder fix?</h2>
+<p class="subtitle">Die Chef-App hat aktuell ein drag-and-drop Grid (react-grid-layout). Soll das bleiben?</p>
+
+<div class="cards">
+  <div class="card" data-choice="fixed" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#F9FAFB; padding:16px; border-bottom:1px solid #E5E7EB;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div style="background:white;border:1px solid #E5E7EB;border-radius:10px;padding:10px;">
+          <div style="font-size:9px;color:#6B7280;">Mitarbeiter</div>
+          <div style="font-size:16px;font-weight:700;color:#111827;">12</div>
+        </div>
+        <div style="background:white;border:1px solid #E5E7EB;border-radius:10px;padding:10px;">
+          <div style="font-size:9px;color:#6B7280;">Aktiv heute</div>
+          <div style="font-size:16px;font-weight:700;color:#111827;">8</div>
+        </div>
+        <div style="background:white;border:1px solid #E5E7EB;border-radius:10px;padding:10px;">
+          <div style="font-size:9px;color:#6B7280;">Anträge</div>
+          <div style="font-size:16px;font-weight:700;color:#111827;">3</div>
+        </div>
+      </div>
+      <div style="background:white;border:1px solid #E5E7EB;border-radius:10px;padding:10px;">
+        <div style="font-size:9px;color:#6B7280;margin-bottom:6px;">Eingestempelt heute</div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;justify-content:space-between;font-size:9px;"><span style="color:#111827;">Anna M.</span><span style="color:#10B981;">● 07:30</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;"><span style="color:#111827;">Ben K.</span><span style="color:#10B981;">● 08:00</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;"><span style="color:#111827;">Clara R.</span><span style="color:#6B7280;">— frei</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Festes Grid (empfohlen)</h3>
+      <p>Responsives Raster, Widgets an fester Position. Einfacher, schneller, mobile-freundlich — kein drag & drop nötig</p>
+      <div class="pros-cons" style="margin-top:8px;">
+        <div class="pros"><h4>Pro</h4><ul><li>Einfacher Code</li><li>Besser auf Mobilgeräten</li><li>Konsistent mit Mitarbeiter-App</li></ul></div>
+        <div class="cons"><h4>Con</h4><ul><li>Kein individuelles Layout</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" data-choice="draggable" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#F9FAFB; padding:16px; border-bottom:1px solid #E5E7EB;">
+      <div style="position:relative;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div style="background:white;border:2px dashed #4F46E5;border-radius:10px;padding:10px;position:relative;">
+            <div style="position:absolute;top:4px;right:6px;font-size:10px;color:#4F46E5;cursor:grab;">⠿</div>
+            <div style="font-size:9px;color:#6B7280;">Mitarbeiter</div>
+            <div style="font-size:16px;font-weight:700;color:#111827;">12</div>
+          </div>
+          <div style="background:white;border:2px dashed #4F46E5;border-radius:10px;padding:10px;position:relative;">
+            <div style="position:absolute;top:4px;right:6px;font-size:10px;color:#4F46E5;cursor:grab;">⠿</div>
+            <div style="font-size:9px;color:#6B7280;">Aktiv heute</div>
+            <div style="font-size:16px;font-weight:700;color:#111827;">8</div>
+          </div>
+          <div style="background:white;border:2px dashed #4F46E5;border-radius:10px;padding:10px;position:relative;">
+            <div style="position:absolute;top:4px;right:6px;font-size:10px;color:#4F46E5;cursor:grab;">⠿</div>
+            <div style="font-size:9px;color:#6B7280;">Anträge</div>
+            <div style="font-size:16px;font-weight:700;color:#111827;">3</div>
+          </div>
+        </div>
+        <div style="background:white;border:2px dashed #4F46E5;border-radius:10px;padding:10px;position:relative;">
+          <div style="position:absolute;top:4px;right:6px;font-size:10px;color:#4F46E5;cursor:grab;">⠿</div>
+          <div style="font-size:9px;color:#6B7280;margin-bottom:6px;">Eingestempelt heute</div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <div style="display:flex;justify-content:space-between;font-size:9px;"><span style="color:#111827;">Anna M.</span><span style="color:#10B981;">● 07:30</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Drag & Drop behalten</h3>
+      <p>Widgets bleiben verschiebbar, aber im neuen Indigo-Design. Layout-Reihenfolge individuell anpassbar</p>
+      <div class="pros-cons" style="margin-top:8px;">
+        <div class="pros"><h4>Pro</h4><ul><li>Flexibles individuelles Layout</li><li>Bereits implementiert</li></ul></div>
+        <div class="cons"><h4>Con</h4><ul><li>Komplexer</li><li>Schlecht auf Mobilgeräten</li></ul></div>
+      </div>
+    </div>
+  </div>
+</div>

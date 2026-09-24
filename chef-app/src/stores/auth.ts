@@ -7,6 +7,7 @@ interface AuthState {
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => void
+  refresh: () => Promise<void>
   isGF: () => boolean
   isSL: () => boolean
 }
@@ -26,8 +27,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
-    pb.authStore.clear()
+    if (pb.authStore.isValid) pb.authStore.clear()
     set({ user: null })
+  },
+
+  refresh: async () => {
+    if (!pb.authStore.isValid) return
+    try {
+      const fresh = await pb.collection('users').authRefresh()
+      set({ user: fresh.record as unknown as User })
+    } catch (err) {
+      // Auto-Cancellation ist kein Auth-Fehler: das SDK bricht den laufenden
+      // Request ab, sobald ein zweiter mit gleichem requestKey startet.
+      // Ohne diesen Guard wirft ein paralleler Refresh den User aus der App,
+      // obwohl sein Token gültig ist.
+      if ((err as { isAbort?: boolean })?.isAbort) return
+      pb.authStore.clear()
+      set({ user: null })
+    }
   },
 
   isGF: () => get().user?.role === 'gf',

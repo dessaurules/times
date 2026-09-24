@@ -20,7 +20,7 @@ export default function BottomNav() {
           end={end}
           className={({ isActive }) =>
             cn(
-              'flex-1 flex flex-col items-center justify-center gap-1 py-2 text-[10px] font-medium transition-colors',
+              'flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[10px] font-medium transition-colors',
               isActive ? 'text-indigo-600' : 'text-[#9CA3AF]'
             )
           }

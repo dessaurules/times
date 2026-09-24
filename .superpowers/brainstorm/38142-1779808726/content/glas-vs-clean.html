@@ -1,0 +1,67 @@
+<h2>Glasoptik behalten oder auf cleane Karten wechseln?</h2>
+<p class="subtitle">Die Chef-App hat aktuell einen optionalen Glaseffekt (Farbverlauf-Hintergrund, halbtransparente Karten). Die Mitarbeiter-App nutzt saubere weiße Karten auf neutralem Hintergrund.</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">A — Glasoptik (aktuell, neu in Indigo)</div>
+    <div class="mockup-body" style="background: linear-gradient(135deg, #4338CA 0%, #7C3AED 100%); padding: 16px; border-radius: 0 0 12px 12px;" data-choice="glass" onclick="toggleSelect(this.closest('.mockup'))">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div style="background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:12px;">
+          <div style="font-size:9px;color:rgba(255,255,255,0.7);">Mitarbeiter</div>
+          <div style="font-size:20px;font-weight:700;color:white;">12</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:12px;">
+          <div style="font-size:9px;color:rgba(255,255,255,0.7);">Aktiv heute</div>
+          <div style="font-size:20px;font-weight:700;color:white;">8</div>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2);border-radius:12px;padding:12px;">
+        <div style="font-size:9px;color:rgba(255,255,255,0.7);margin-bottom:6px;">Eingestempelt</div>
+        <div style="font-size:9px;color:white;opacity:0.9;">Anna M. · 07:30</div>
+        <div style="font-size:9px;color:white;opacity:0.9;">Ben K. · 08:00</div>
+      </div>
+      <p style="color:rgba(255,255,255,0.8);font-size:10px;margin-top:10px;text-align:center;">Klick um zu wählen</p>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">B — Clean (wie Mitarbeiter-App)</div>
+    <div class="mockup-body" style="background: #F3F4F6; padding: 16px; border-radius: 0 0 12px 12px;" data-choice="clean" onclick="toggleSelect(this.closest('.mockup'))">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+          <div style="font-size:9px;color:#6B7280;">Mitarbeiter</div>
+          <div style="font-size:20px;font-weight:700;color:#111827;">12</div>
+          <div style="height:3px;background:#4F46E5;border-radius:2px;margin-top:6px;width:60%;"></div>
+        </div>
+        <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+          <div style="font-size:9px;color:#6B7280;">Aktiv heute</div>
+          <div style="font-size:20px;font-weight:700;color:#111827;">8</div>
+          <div style="height:3px;background:#10B981;border-radius:2px;margin-top:6px;width:70%;"></div>
+        </div>
+      </div>
+      <div style="background:white;border:1px solid #E5E7EB;border-radius:12px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <div style="font-size:9px;color:#6B7280;margin-bottom:6px;">Eingestempelt</div>
+        <div style="font-size:9px;color:#111827;">Anna M. · 07:30</div>
+        <div style="font-size:9px;color:#111827;">Ben K. · 08:00</div>
+      </div>
+      <p style="color:#6B7280;font-size:10px;margin-top:10px;text-align:center;">Klick um zu wählen</p>
+    </div>
+  </div>
+</div>
+
+<div class="options" style="margin-top:24px;">
+  <div class="option" data-choice="glass" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Glasoptik in Indigo</h3>
+      <p>Dunkler Farbverlauf-Hintergrund, halbtransparente Karten — auffälliger Look</p>
+    </div>
+  </div>
+  <div class="option" data-choice="clean" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Clean & modern</h3>
+      <p>Weißer Hintergrund, klare Karten mit Schatten — identisch mit Mitarbeiter-App</p>
+    </div>
+  </div>
+</div>

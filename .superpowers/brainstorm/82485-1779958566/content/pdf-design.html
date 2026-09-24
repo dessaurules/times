@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Export — Design-Vorschläge</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F3F4F6; color: #111827; }
+
+  .page-header {
+    background: white; border-bottom: 1px solid #E5E7EB;
+    padding: 1rem 2rem; position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .page-header h1 { font-size: 1rem; font-weight: 700; }
+  .page-header p { font-size: 0.75rem; color: #6B7280; margin-top: 2px; }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+  .label-chip {
+    display: inline-block; font-size: 0.6rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 3px 10px; border-radius: 99px; margin-bottom: 0.75rem;
+  }
+
+  /* A4 Preview Wrapper */
+  .a4-preview {
+    background: white;
+    width: 100%;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+    border-radius: 4px;
+    font-size: 10px;
+    color: #111827;
+    overflow: hidden;
+  }
+
+  .section-title {
+    font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; color: #111827;
+  }
+  .section-desc { font-size: 0.72rem; color: #6B7280; line-height: 1.5; margin-bottom: 1rem; }
+
+  .verdict { font-size: 0.7rem; background: #F0F9FF; border: 1px solid #BAE6FD;
+    border-radius: 8px; padding: 0.6rem 0.8rem; margin-top: 1rem; color: #0C4A6E; line-height: 1.5; }
+
+  /* Grid layout */
+  .designs { display: flex; flex-direction: column; gap: 3rem; }
+  .design-block { background: white; border-radius: 14px; overflow: hidden; border: 1px solid #E5E7EB; }
+  .design-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid #E5E7EB; }
+  .design-body { padding: 1.5rem; background: #F9FAFB; }
+
+  /* ── SHARED TABLE STYLES ── */
+  table { border-collapse: collapse; width: 100%; }
+  th, td { padding: 4px 8px; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <h1>PDF-Export — Zeitnachweis pro Person</h1>
+    <p>Aktuelles Design + 2 Redesign-Vorschläge · Schicht & Plan Chef-App</p>
+  </div>
+</div>
+
+<div class="container">
+<div class="designs">
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- AKTUELL                                                        -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="design-block">
+  <div class="design-header">
+    <span class="label-chip" style="background:#F3F4F6;color:#6B7280;">Aktuell</span>
+    <div class="section-title">Aktueller Aufbau</div>
+    <div class="section-desc">Kompakter Dokumentkopf mit 2×2 Metadaten-Grid, danach drei einzelne bordered Tabellen untereinander. Funktional, aber visuell wenig strukturiert — alle Abschnitte sehen ähnlich aus.</div>
+  </div>
+  <div class="design-body">
+    <div class="a4-preview" style="padding: 18mm 18mm 10mm;">
+
+      <!-- Kopf -->
+      <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
+        <span style="color:#6B7280;font-size:9px;">Muster GmbH · Schicht & Plan</span>
+        <span style="color:#6B7280;font-size:9px;">Mai 2026</span>
+      </div>
+      <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:12px;">Zeitnachweis</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;margin-bottom:16px;font-size:10px;">
+        <div><span style="color:#6B7280;">Mitarbeiter: </span><span style="font-weight:600;">Müller, Anna</span></div>
+        <div><span style="color:#6B7280;">Zeitraum: </span><span>01.05. – 31.05.2026</span></div>
+        <div><span style="color:#6B7280;">Abteilung: </span><span>Service</span></div>
+        <div><span style="color:#6B7280;">Soll-Stunden: </span><span>168 h (21 Arbeitstage)</span></div>
+      </div>
+
+      <!-- Stunden-Label -->
+      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#6B7280;margin-bottom:5px;">Stunden</div>
+
+      <!-- Stunden-Tabelle -->
+      <table style="border:1px solid #D1D5DB;font-size:9px;margin-bottom:14px;">
+        <thead>
+          <tr style="background:#F3F4F6;">
+            <th style="border:1px solid #D1D5DB;text-align:left;font-weight:600;color:#6B7280;width:30px;">Tag</th>
+            <th style="border:1px solid #D1D5DB;text-align:left;font-weight:600;color:#6B7280;width:70px;">Datum</th>
+            <th style="border:1px solid #D1D5DB;text-align:center;font-weight:600;color:#6B7280;width:40px;">Von</th>
+            <th style="border:1px solid #D1D5DB;text-align:center;font-weight:600;color:#6B7280;width:40px;">Bis</th>
+            <th style="border:1px solid #D1D5DB;text-align:center;font-weight:600;color:#6B7280;width:45px;">Pause</th>
+            <th style="border:1px solid #D1D5DB;text-align:center;font-weight:600;color:#6B7280;width:45px;">Netto</th>
+            <th style="border:1px solid #D1D5DB;text-align:left;font-weight:600;color:#6B7280;">Notiz</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="border:1px solid #D1D5DB;">Mo</td><td style="border:1px solid #D1D5DB;">05.05.2026</td><td style="border:1px solid #D1D5DB;text-align:center;">08:00</td><td style="border:1px solid #D1D5DB;text-align:center;">16:30</td><td style="border:1px solid #D1D5DB;text-align:center;">30 min</td><td style="border:1px solid #D1D5DB;text-align:center;font-weight:600;">8 h</td><td style="border:1px solid #D1D5DB;"></td></tr>
+          <tr><td style="border:1px solid #D1D5DB;">Di</td><td style="border:1px solid #D1D5DB;">06.05.2026</td><td style="border:1px solid #D1D5DB;text-align:center;">08:00</td><td style="border:1px solid #D1D5DB;text-align:center;">16:30</td><td style="border:1px solid #D1D5DB;text-align:center;">30 min</td><td style="border:1px solid #D1D5DB;text-align:center;font-weight:600;">8 h</td><td style="border:1px solid #D1D5DB;"></td></tr>
+          <tr><td style="border:1px solid #D1D5DB;">Mi</td><td style="border:1px solid #D1D5DB;">07.05.2026</td><td style="border:1px solid #D1D5DB;text-align:center;">08:00</td><td style="border:1px solid #D1D5DB;text-align:center;">16:30</td><td style="border:1px solid #D1D5DB;text-align:center;">30 min</td><td style="border:1px solid #D1D5DB;text-align:center;font-weight:600;">8 h</td><td style="border:1px solid #D1D5DB;"></td></tr>
+          <tr style="background:#F3F4F6;"><td style="border:1px solid #D1D5DB;" colspan="5" style="border:1px solid #D1D5DB;text-align:right;color:#6B7280;font-size:8px;font-weight:600;">Gesamt Ist-Stunden</td><td style="border:1px solid #D1D5DB;text-align:center;font-weight:700;">160 h</td><td style="border:1px solid #D1D5DB;"></td></tr>
+        </tbody>
+      </table>
+
+      <!-- Zusammenfassung-Label -->
+      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;color:#6B7280;margin-bottom:5px;">Zusammenfassung</div>
+
+      <!-- Zusammenfassung-Tabelle (schmal, links) -->
+      <table style="border:1px solid #D1D5DB;font-size:9px;width:auto;margin-bottom:20px;">
+        <tbody>
+          <tr><td style="border:1px solid #D1D5DB;color:#6B7280;width:180px;padding:4px 10px;">Soll-Stunden</td><td style="border:1px solid #D1D5DB;font-weight:600;padding:4px 10px;width:80px;">168 h</td></tr>
+          <tr><td style="border:1px solid #D1D5DB;color:#6B7280;padding:4px 10px;">Ist-Stunden</td><td style="border:1px solid #D1D5DB;font-weight:600;padding:4px 10px;">160 h</td></tr>
+          <tr><td style="border:1px solid #D1D5DB;color:#6B7280;padding:4px 10px;">Differenz</td><td style="border:1px solid #D1D5DB;font-weight:600;color:#EF4444;padding:4px 10px;">−8 h</td></tr>
+          <tr><td style="border:1px solid #D1D5DB;color:#6B7280;padding:4px 10px;">Resturlaub</td><td style="border:1px solid #D1D5DB;font-weight:700;color:#16A34A;padding:4px 10px;">12 Tage</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Unterschriften -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:20px;">
+        <div><div style="height:20px;"></div><div style="border-top:1px solid #6B7280;padding-top:3px;color:#6B7280;font-size:8px;">Ort, Datum &nbsp; Unterschrift Mitarbeiter</div></div>
+        <div><div style="height:20px;"></div><div style="border-top:1px solid #6B7280;padding-top:3px;color:#6B7280;font-size:8px;">Ort, Datum &nbsp; Unterschrift Leitung</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="verdict">
+    <strong>Was auffällt:</strong> Die Zusammenfassung-Tabelle ist schmal und links ausgerichtet — rechts bleibt weißer Leerraum. Alle drei Abschnitte (Stunden, Abwesenheiten, Zusammenfassung) sehen gleich aus und haben kein klares Gewicht. Der Dokumentkopf ist sehr nüchtern.
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- VORSCHLAG 1: Modernes Dokument mit KPI-Kopf                   -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="design-block" style="border:2px solid #4F46E5;">
+  <div class="design-header" style="background:#EEF2FF;">
+    <span class="label-chip" style="background:#4F46E5;color:white;">Vorschlag 1</span>
+    <div class="section-title" style="color:#3730A3;">Klarer Kopf mit KPI-Kacheln</div>
+    <div class="section-desc">Der Dokumentkopf zeigt die wichtigsten Kennzahlen (Soll, Ist, Differenz, Resturlaub) prominent als Kacheln — sofort lesbar ohne Tabelle. Die Stundentabelle wird ohne äußere Box, nur mit Linien gestaltet (moderner Stil). Abschnitte haben farbige Akzentlinien statt grauer Labels.</div>
+  </div>
+  <div class="design-body">
+    <div class="a4-preview" style="padding:14mm 18mm 10mm;">
+
+      <!-- Kopf: zweizeilig -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #4F46E5;">
+        <div>
+          <div style="font-size:15px;font-weight:800;color:#111827;letter-spacing:-0.01em;">Anna Müller</div>
+          <div style="font-size:9px;color:#6B7280;margin-top:2px;">Service · Muster GmbH</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;font-weight:700;color:#4F46E5;">Zeitnachweis</div>
+          <div style="font-size:9px;color:#6B7280;margin-top:1px;">01.05. – 31.05.2026</div>
+        </div>
+      </div>
+
+      <!-- KPI-Kacheln -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;">
+        <div style="background:#F3F4F6;border-radius:6px;padding:8px 10px;">
+          <div style="font-size:7.5px;color:#6B7280;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px;">Soll</div>
+          <div style="font-size:16px;font-weight:800;color:#111827;line-height:1;">168 h</div>
+          <div style="font-size:7.5px;color:#9CA3AF;margin-top:2px;">21 Arbeitstage</div>
+        </div>
+        <div style="background:#F3F4F6;border-radius:6px;padding:8px 10px;">
+          <div style="font-size:7.5px;color:#6B7280;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px;">Ist</div>
+          <div style="font-size:16px;font-weight:800;color:#111827;line-height:1;">160 h</div>
+          <div style="font-size:7.5px;color:#9CA3AF;margin-top:2px;">erfasst</div>
+        </div>
+        <div style="background:#FEF2F2;border-radius:6px;padding:8px 10px;border-left:3px solid #EF4444;">
+          <div style="font-size:7.5px;color:#6B7280;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px;">Differenz</div>
+          <div style="font-size:16px;font-weight:800;color:#EF4444;line-height:1;">−8 h</div>
+          <div style="font-size:7.5px;color:#9CA3AF;margin-top:2px;">Fehlzeit</div>
+        </div>
+        <div style="background:#F0FDF4;border-radius:6px;padding:8px 10px;border-left:3px solid #16A34A;">
+          <div style="font-size:7.5px;color:#6B7280;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px;">Resturlaub</div>
+          <div style="font-size:16px;font-weight:800;color:#16A34A;line-height:1;">12 T</div>
+          <div style="font-size:7.5px;color:#9CA3AF;margin-top:2px;">von 30 gesamt</div>
+        </div>
+      </div>
+
+      <!-- Stunden-Abschnitt -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+        <div style="width:3px;height:14px;background:#4F46E5;border-radius:2px;"></div>
+        <span style="font-size:9px;font-weight:700;color:#111827;text-transform:uppercase;letter-spacing:0.08em;">Stunden</span>
+      </div>
+
+      <!-- Stunden-Tabelle: nur Linien, keine äußere Box -->
+      <table style="font-size:9px;margin-bottom:16px;border-top:1px solid #E5E7EB;">
+        <thead>
+          <tr style="background:#FAFAFA;">
+            <th style="border-bottom:1px solid #E5E7EB;text-align:left;font-weight:600;color:#6B7280;padding:4px 6px;width:30px;">Tag</th>
+            <th style="border-bottom:1px solid #E5E7EB;text-align:left;font-weight:600;color:#6B7280;padding:4px 6px;width:70px;">Datum</th>
+            <th style="border-bottom:1px solid #E5E7EB;text-align:center;font-weight:600;color:#6B7280;padding:4px 6px;width:40px;">Von</th>
+            <th style="border-bottom:1px solid #E5E7EB;text-align:center;font-weight:600;color:#6B7280;padding:4px 6px;width:40px;">Bis</th>
+            <th style="border-bottom:1px solid #E5E7EB;text-align:center;font-weight:600;color:#6B7280;padding:4px 6px;width:45px;">Pause</th>
+            <th style="border-bottom:1px solid #E5E7EB;text-align:center;font-weight:600;color:#6B7280;padding:4px 6px;width:45px;">Netto</th>
+            <th style="border-bottom:1px solid #E5E7EB;text-align:left;font-weight:600;color:#6B7280;padding:4px 6px;">Notiz</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="border-bottom:1px solid #F3F4F6;padding:4px 6px;">Mo</td><td style="border-bottom:1px solid #F3F4F6;padding:4px 6px;">05.05.2026</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 6px;">08:00</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 6px;">16:30</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 6px;">30 min</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;font-weight:600;padding:4px 6px;">8 h</td><td style="border-bottom:1px solid #F3F4F6;padding:4px 6px;"></td></tr>
+          <tr><td style="border-bottom:1px solid #F3F4F6;padding:4px 6px;">Di</td><td style="border-bottom:1px solid #F3F4F6;padding:4px 6px;">06.05.2026</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 6px;">08:00</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 6px;">16:30</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 6px;">30 min</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;font-weight:600;padding:4px 6px;">8 h</td><td style="border-bottom:1px solid #F3F4F6;padding:4px 6px;"></td></tr>
+          <tr><td style="border-bottom:1px solid #F3F4F6;padding:4px 6px;">Mi</td><td style="border-bottom:1px solid #F3F4F6;padding:4px 6px;">07.05.2026</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 6px;">08:00</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 6px;">16:30</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 6px;">30 min</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;font-weight:600;padding:4px 6px;">8 h</td><td style="border-bottom:1px solid #F3F4F6;padding:4px 6px;"></td></tr>
+          <tr style="background:#F9FAFB;"><td colspan="5" style="padding:4px 6px;text-align:right;color:#6B7280;font-size:8px;font-weight:600;border-top:1px solid #E5E7EB;">Gesamt Ist-Stunden</td><td style="text-align:center;font-weight:700;padding:4px 6px;border-top:1px solid #E5E7EB;">160 h</td><td style="border-top:1px solid #E5E7EB;"></td></tr>
+        </tbody>
+      </table>
+
+      <!-- Unterschriften -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:20px;">
+        <div><div style="height:20px;"></div><div style="border-top:1px solid #9CA3AF;padding-top:3px;color:#6B7280;font-size:8px;">Ort, Datum · Unterschrift Mitarbeiter</div></div>
+        <div><div style="height:20px;"></div><div style="border-top:1px solid #9CA3AF;padding-top:3px;color:#6B7280;font-size:8px;">Ort, Datum · Unterschrift Leitung</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="verdict" style="margin:0 1.5rem 1.5rem;">
+    <strong>Was sich ändert:</strong> Soll/Ist/Differenz/Resturlaub sofort im Blick — ohne Tabellen lesen zu müssen. Die Stundentabelle verliert den schweren äußeren Rahmen, wirkt leichter. Klarer Trenner zwischen Name/Metadaten und Detailtabelle. Keine separate Zusammenfassungs-Tabelle mehr nötig.
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- VORSCHLAG 2: Zweispaltiger Aufbau                             -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="design-block" style="border:2px solid #0891B2;">
+  <div class="design-header" style="background:#ECFEFF;">
+    <span class="label-chip" style="background:#0891B2;color:white;">Vorschlag 2</span>
+    <div class="section-title" style="color:#155E75;">Zweispaltiger Aufbau — Tabelle links, Zusammenfassung rechts</div>
+    <div class="section-desc">Die Seite wird in zwei Bereiche geteilt: links die Stundentabelle (breiter Teil), rechts eine schmale Spalte mit Zusammenfassung und Abwesenheiten. Der Kopf bleibt schlank. Platzsparender, wirkt wie ein professionelles Businessdokument.</div>
+  </div>
+  <div class="design-body">
+    <div class="a4-preview" style="padding:14mm 18mm 10mm;">
+
+      <!-- Schmaler Kopf -->
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;border-bottom:1px solid #E5E7EB;padding-bottom:8px;">
+        <div>
+          <span style="font-size:12px;font-weight:800;color:#111827;">Zeitnachweis · Anna Müller</span>
+          <span style="font-size:9px;color:#6B7280;margin-left:10px;">Service · Muster GmbH</span>
+        </div>
+        <span style="font-size:9px;color:#6B7280;">Mai 2026</span>
+      </div>
+
+      <!-- Zweispaltiges Layout -->
+      <div style="display:grid;grid-template-columns:1fr 160px;gap:16px;align-items:start;">
+
+        <!-- Linke Spalte: Stundentabelle -->
+        <div>
+          <div style="font-size:8px;font-weight:700;color:#0891B2;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:5px;">Zeiterfassung</div>
+          <table style="font-size:9px;border-top:2px solid #0891B2;width:100%;">
+            <thead>
+              <tr style="background:#F9FAFB;">
+                <th style="border-bottom:1px solid #E5E7EB;text-align:left;font-weight:600;color:#6B7280;padding:4px 5px;">Tag</th>
+                <th style="border-bottom:1px solid #E5E7EB;text-align:left;font-weight:600;color:#6B7280;padding:4px 5px;">Datum</th>
+                <th style="border-bottom:1px solid #E5E7EB;text-align:center;font-weight:600;color:#6B7280;padding:4px 5px;">Von</th>
+                <th style="border-bottom:1px solid #E5E7EB;text-align:center;font-weight:600;color:#6B7280;padding:4px 5px;">Bis</th>
+                <th style="border-bottom:1px solid #E5E7EB;text-align:center;font-weight:600;color:#6B7280;padding:4px 5px;">Pause</th>
+                <th style="border-bottom:1px solid #E5E7EB;text-align:center;font-weight:600;color:#6B7280;padding:4px 5px;">Netto</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="border-bottom:1px solid #F3F4F6;padding:4px 5px;">Mo</td><td style="border-bottom:1px solid #F3F4F6;padding:4px 5px;">05.05.</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 5px;">08:00</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 5px;">16:30</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 5px;">30'</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;font-weight:700;padding:4px 5px;">8 h</td></tr>
+              <tr><td style="border-bottom:1px solid #F3F4F6;padding:4px 5px;">Di</td><td style="border-bottom:1px solid #F3F4F6;padding:4px 5px;">06.05.</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 5px;">08:00</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 5px;">16:30</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 5px;">30'</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;font-weight:700;padding:4px 5px;">8 h</td></tr>
+              <tr><td style="border-bottom:1px solid #F3F4F6;padding:4px 5px;">Mi</td><td style="border-bottom:1px solid #F3F4F6;padding:4px 5px;">07.05.</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 5px;">08:00</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 5px;">16:30</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 5px;">30'</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;font-weight:700;padding:4px 5px;">8 h</td></tr>
+              <tr><td style="border-bottom:1px solid #F3F4F6;padding:4px 5px;">Do</td><td style="border-bottom:1px solid #F3F4F6;padding:4px 5px;">08.05.</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 5px;">10:00</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 5px;">19:00</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;padding:4px 5px;">45'</td><td style="border-bottom:1px solid #F3F4F6;text-align:center;font-weight:700;padding:4px 5px;">8:15 h</td></tr>
+              <tr style="background:#F9FAFB;"><td colspan="5" style="padding:4px 5px;text-align:right;font-size:8px;color:#6B7280;font-weight:600;border-top:1px solid #E5E7EB;">Gesamt</td><td style="text-align:center;font-weight:800;padding:4px 5px;border-top:1px solid #E5E7EB;color:#0891B2;">160 h</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Rechte Spalte: Zusammenfassung + Abwesenheiten -->
+        <div>
+          <div style="font-size:8px;font-weight:700;color:#0891B2;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:5px;">Übersicht</div>
+          <div style="border-top:2px solid #0891B2;">
+            <!-- KPI-Zeilen -->
+            <div style="padding:5px 0;border-bottom:1px solid #F3F4F6;">
+              <div style="font-size:7.5px;color:#6B7280;font-weight:600;">Soll-Stunden</div>
+              <div style="font-size:13px;font-weight:800;color:#111827;">168 h</div>
+            </div>
+            <div style="padding:5px 0;border-bottom:1px solid #F3F4F6;">
+              <div style="font-size:7.5px;color:#6B7280;font-weight:600;">Ist-Stunden</div>
+              <div style="font-size:13px;font-weight:800;color:#111827;">160 h</div>
+            </div>
+            <div style="padding:5px 0;border-bottom:1px solid #E5E7EB;background:#FEF2F2;margin:0 -2px;padding:5px 2px;">
+              <div style="font-size:7.5px;color:#991B1B;font-weight:600;">Differenz</div>
+              <div style="font-size:13px;font-weight:800;color:#EF4444;">−8 h</div>
+            </div>
+            <div style="padding:5px 0;border-bottom:1px solid #F3F4F6;margin-top:4px;">
+              <div style="font-size:7.5px;color:#6B7280;font-weight:600;">Urlaub genommen</div>
+              <div style="font-size:11px;font-weight:700;color:#111827;">3 Tage</div>
+            </div>
+            <div style="padding:5px 0;border-bottom:1px solid #F3F4F6;">
+              <div style="font-size:7.5px;color:#6B7280;font-weight:600;">Krank</div>
+              <div style="font-size:11px;font-weight:700;color:#111827;">2 Tage</div>
+            </div>
+            <div style="padding:5px 0;background:#F0FDF4;margin:0 -2px;padding:5px 2px;">
+              <div style="font-size:7.5px;color:#166534;font-weight:600;">Resturlaub</div>
+              <div style="font-size:13px;font-weight:800;color:#16A34A;">12 Tage</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Unterschriften -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:24px;border-top:1px solid #E5E7EB;padding-top:10px;">
+        <div><div style="height:16px;"></div><div style="border-top:1px solid #9CA3AF;padding-top:3px;color:#6B7280;font-size:8px;">Ort, Datum · Unterschrift Mitarbeiter</div></div>
+        <div><div style="height:16px;"></div><div style="border-top:1px solid #9CA3AF;padding-top:3px;color:#6B7280;font-size:8px;">Ort, Datum · Unterschrift Leitung</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="verdict" style="margin:0 1.5rem 1.5rem;">
+    <strong>Was sich ändert:</strong> Stundentabelle und Zusammenfassung liegen nebeneinander — der Bericht passt kompakter auf eine Seite. Die Übersichtsspalte rechts macht Soll/Ist/Differenz/Resturlaub sofort greifbar. Wirkt wie ein modernes Businessdokument (ähnlich Lohnabrechnung oder Invoice).
+  </div>
+</div>
+
+</div><!-- /designs -->
+</div><!-- /container -->
+
+</body>
+</html>

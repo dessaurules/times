@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dienstplan — Design-Vorschau</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F3F4F6; color: #111827; }
+  .page-header { background: white; border-bottom: 1px solid #E5E7EB; padding: 1rem 2rem; position: sticky; top: 0; z-index: 10; }
+  .page-header h1 { font-size: 1rem; font-weight: 700; }
+  .page-header p { font-size: 0.72rem; color: #6B7280; margin-top: 2px; }
+  .container { max-width: 1300px; margin: 0 auto; padding: 2rem; display: flex; flex-direction: column; gap: 2.5rem; }
+
+  .card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid #E5E7EB; }
+  .card-header { padding: 0.9rem 1.25rem; border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; gap: 10px; }
+  .badge { font-size: 0.6rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 10px; border-radius: 99px; }
+  .card-title { font-size: 0.85rem; font-weight: 700; }
+  .card-desc { font-size: 0.7rem; color: #6B7280; margin-top: 2px; line-height: 1.5; }
+  .card-body { padding: 1rem; background: #F9FAFB; overflow-x: auto; }
+
+  /* ── TABELLE GEMEINSAM ── */
+  .dp-table { border-collapse: collapse; width: 100%; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #E5E7EB; font-size: 0.72rem; }
+
+  /* Shift-Kacheln */
+  .shift { border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 600; text-align: center; height: 100%; flex-direction: column; }
+  .shift-blue   { background: #DBEAFE; color: #1E40AF; }
+  .shift-green  { background: #D1FAE5; color: #065F46; }
+  .shift-amber  { background: #FEF3C7; color: #92400E; }
+  .shift-purple { background: #EDE9FE; color: #5B21B6; }
+  .shift-rose   { background: #FFE4E6; color: #9F1239; }
+  .absence-u    { background: #FAEEDA; color: #633806; border-radius: 4px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; }
+  .free-day     { background: #D1FAE5; color: #065F46; border-radius: 4px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 900; }
+  .empty-cell   { height: 100%; display: flex; align-items: center; justify-content: center; }
+  .empty-cell span { font-size: 0.6rem; color: #D1D5DB; border: 1px dashed #E5E7EB; border-radius: 3px; padding: 2px 6px; }
+
+  /* blink */
+  @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+  .blink { animation: blink 1.6s step-start infinite; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Dienstplan — Vorschau mit Zeiterfassungs-Tabellendesign</h1>
+  <p>Links: aktuelles Design · Rechts: neues Design (Zeiterfassungs-Stil)</p>
+</div>
+
+<div class="container">
+
+<!-- ══════════════════════════════════════════ -->
+<!-- AKTUELL                                    -->
+<!-- ══════════════════════════════════════════ -->
+<div class="card">
+  <div class="card-header">
+    <span class="badge" style="background:#F3F4F6;color:#6B7280;">Aktuell</span>
+    <div>
+      <div class="card-title">Aktuelles Dienstplan-Design</div>
+      <div class="card-desc">Größere Abstände im Header, Name als "Vorname Nachname", Abt.-Header leicht anders styled</div>
+    </div>
+  </div>
+  <div class="card-body">
+    <table class="dp-table">
+      <thead style="background:white;position:sticky;top:0;z-index:2;">
+        <tr>
+          <!-- Name sticky left -->
+          <th style="position:sticky;left:0;z-index:3;background:white;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:8px 12px;text-align:left;min-width:110px;font-size:0.65rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:0.05em;">Mitarbeiter</th>
+          <!-- Tage -->
+          <th style="width:96px;min-width:96px;text-align:center;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px 8px;background:white;">
+            <div style="font-weight:700;font-size:0.8rem;">Mo</div>
+            <div style="font-size:0.65rem;color:#6B7280;">19.05.</div>
+          </th>
+          <th style="width:96px;min-width:96px;text-align:center;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px 8px;background:white;">
+            <div style="font-weight:700;font-size:0.8rem;">Di</div>
+            <div style="font-size:0.65rem;color:#6B7280;">20.05.</div>
+          </th>
+          <th style="width:96px;min-width:96px;text-align:center;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px 8px;background:#FEF3C7;">
+            <div style="font-weight:700;font-size:0.8rem;">Mi</div>
+            <div style="font-size:0.65rem;color:#6B7280;">21.05.</div>
+          </th>
+          <th style="width:96px;min-width:96px;text-align:center;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px 8px;background:white;color:#4F46E5;">
+            <div style="font-weight:700;font-size:0.8rem;">Do</div>
+            <div style="font-size:0.65rem;">22.05.</div>
+          </th>
+          <th style="width:96px;min-width:96px;text-align:center;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px 8px;background:white;">
+            <div style="font-weight:700;font-size:0.8rem;">Fr</div>
+            <div style="font-size:0.65rem;color:#6B7280;">23.05.</div>
+          </th>
+          <!-- Σ h sticky right -->
+          <th style="position:sticky;right:0;z-index:3;background:#EEF2FF;border-bottom:1px solid #E5E7EB;border-left:2px solid #C7D2FE;padding:4px 8px;min-width:80px;text-align:center;">
+            <span style="font-size:0.6rem;font-weight:700;color:#4F46E5;text-transform:uppercase;letter-spacing:0.08em;">Σ h</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Abt. Header: aktuell -->
+        <tr>
+          <td colspan="6" style="background:#EEF2FF;color:#4338CA;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:6px 12px;cursor:pointer;">
+            ▾ Service
+          </td>
+          <td style="position:sticky;right:0;background:#EEF2FF;border-left:2px solid #C7D2FE;border-bottom:1px solid #E5E7EB;"></td>
+        </tr>
+        <!-- MA 1 -->
+        <tr>
+          <td style="position:sticky;left:0;z-index:1;background:white;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px 8px;min-width:110px;">
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span style="font-size:0.6rem;color:#D1D5DB;">⋮⋮</span>
+              <span style="font-size:0.8rem;color:#374151;">Ronny Beckmann</span>
+            </div>
+          </td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;width:96px;height:52px;"><div class="shift shift-blue">08:00–16:00</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;width:96px;height:52px;background:#FEF3C7/30;"><div class="free-day">F</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;width:96px;height:52px;background:#FEF9C3;"><div class="absence-u">U</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;width:96px;height:52px;"><div class="shift shift-blue">10:00–18:00</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;width:96px;height:52px;"><div class="empty-cell"><span>+</span></div></td>
+          <td style="position:sticky;right:0;background:#EEF2FF/80;border-left:2px solid #C7D2FE;border-bottom:1px solid #E5E7EB;padding:6px 8px;min-width:80px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
+              <span style="font-size:0.8rem;font-weight:700;color:#1F2937;">26 h</span>
+              <span style="font-size:0.6rem;font-weight:600;color:#B45309;background:#FFF7ED;padding:1px 4px;border-radius:3px;">−14</span>
+            </div>
+            <div style="margin-top:2px;height:2px;background:#E5E7EB;border-radius:99px;overflow:hidden;">
+              <div style="height:100%;width:65%;background:#818CF8;border-radius:99px;"></div>
+            </div>
+          </td>
+        </tr>
+        <!-- MA 2 -->
+        <tr>
+          <td style="position:sticky;left:0;z-index:1;background:white;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px 8px;min-width:110px;">
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span style="font-size:0.6rem;color:#D1D5DB;">⋮⋮</span>
+              <span style="font-size:0.8rem;color:#374151;">Sandy Bienert</span>
+            </div>
+          </td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;"><div class="shift shift-green">14:00–22:00</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;"><div class="shift shift-amber">11:00–19:00</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;background:#FEF9C3;">
+            <div style="display:flex;flex-direction:column;height:100%;gap:2px;">
+              <div class="shift shift-purple" style="flex:1;font-size:0.6rem;">06–10</div>
+              <div class="shift shift-blue" style="flex:1;font-size:0.6rem;">14–18</div>
+            </div>
+          </td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;"><div class="empty-cell"><span>+</span></div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;"><div class="shift shift-blue">08:00–16:00</div></td>
+          <td style="position:sticky;right:0;background:#EEF2FF/80;border-left:2px solid #C7D2FE;border-bottom:1px solid #E5E7EB;padding:6px 8px;min-width:80px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
+              <span style="font-size:0.8rem;font-weight:700;color:#1F2937;">38 h</span>
+              <span style="font-size:0.6rem;font-weight:600;color:#16A34A;background:#F0FDF4;padding:1px 4px;border-radius:3px;">±0</span>
+            </div>
+            <div style="margin-top:2px;height:2px;background:#E5E7EB;border-radius:99px;overflow:hidden;">
+              <div style="height:100%;width:100%;background:#34D399;border-radius:99px;"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- NEU                                         -->
+<!-- ══════════════════════════════════════════ -->
+<div class="card" style="border:2px solid #4F46E5;">
+  <div class="card-header" style="background:#EEF2FF;">
+    <span class="badge" style="background:#4F46E5;color:white;">Neu</span>
+    <div>
+      <div class="card-title" style="color:#3730A3;">Dienstplan mit Zeiterfassungs-Design</div>
+      <div class="card-desc">
+        Kompakterer Header · Name als "Nachname, Vorname" · Abt.-Header identisch zu Zeiterfassung ·
+        Reihenfolge folgt Dienstplan-rowOrder
+      </div>
+    </div>
+  </div>
+  <div class="card-body">
+    <table class="dp-table">
+      <thead style="background:white;position:sticky;top:0;z-index:2;">
+        <tr>
+          <!-- Name sticky left — kompakter -->
+          <th style="position:sticky;left:0;z-index:3;background:white;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:6px 10px;text-align:left;min-width:110px;font-size:0.65rem;font-weight:600;color:#6B7280;text-transform:uppercase;letter-spacing:0.05em;">Mitarbeiter</th>
+          <!-- Tage — py-1.5 statt py-2 -->
+          <th style="width:96px;min-width:96px;text-align:center;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:5px 8px;background:white;">
+            <div style="font-weight:700;font-size:0.78rem;color:#111827;">Mo</div>
+            <div style="font-size:0.62rem;color:#6B7280;">19.05.</div>
+          </th>
+          <th style="width:96px;min-width:96px;text-align:center;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:5px 8px;background:white;">
+            <div style="font-weight:700;font-size:0.78rem;color:#111827;">Di</div>
+            <div style="font-size:0.62rem;color:#6B7280;">20.05.</div>
+          </th>
+          <th style="width:96px;min-width:96px;text-align:center;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:5px 8px;background:#FEF3C7;">
+            <div style="font-weight:700;font-size:0.78rem;color:#92400E;">Mi</div>
+            <div style="font-size:0.62rem;color:#92400E;">21.05.</div>
+            <div style="font-size:0.55rem;background:#FDE68A;color:#78350F;padding:1px 4px;border-radius:3px;margin-top:1px;">Feiertag</div>
+          </th>
+          <th style="width:96px;min-width:96px;text-align:center;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:5px 8px;background:white;color:#4F46E5;">
+            <div style="font-weight:700;font-size:0.78rem;">Do</div>
+            <div style="font-size:0.62rem;">22.05.</div>
+          </th>
+          <th style="width:96px;min-width:96px;text-align:center;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:5px 8px;background:white;">
+            <div style="font-weight:700;font-size:0.78rem;color:#111827;">Fr</div>
+            <div style="font-size:0.62rem;color:#6B7280;">23.05.</div>
+          </th>
+          <!-- Σ h sticky right -->
+          <th style="position:sticky;right:0;z-index:3;background:#EEF2FF;border-bottom:1px solid #E5E7EB;border-left:2px solid #C7D2FE;padding:5px 8px;min-width:80px;text-align:center;">
+            <span style="font-size:0.6rem;font-weight:700;color:#4F46E5;text-transform:uppercase;letter-spacing:0.08em;">Σ h</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Abt. Header: NEU — identisch zu Zeiterfassung -->
+        <tr>
+          <td colspan="6" style="background:#EEF2FF;color:#4338CA;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:4px 10px;border-top:1px solid #E0E7FF;border-bottom:1px solid #E0E7FF;cursor:pointer;">
+            ▾ Service
+          </td>
+          <td style="position:sticky;right:0;background:#EEF2FF;border-left:2px solid #C7D2FE;border-top:1px solid #E0E7FF;border-bottom:1px solid #E0E7FF;"></td>
+        </tr>
+        <!-- MA 1: "Beckmann, Ronny" — Reihenfolge wie Dienstplan -->
+        <tr>
+          <td style="position:sticky;left:0;z-index:1;background:white;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:3px 8px;min-width:110px;">
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span style="font-size:0.55rem;color:#D1D5DB;">⋮⋮</span>
+              <span style="font-size:0.75rem;font-weight:600;color:#111827;">Beckmann, Ronny</span>
+            </div>
+          </td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;width:96px;height:52px;"><div class="shift shift-blue">08:00–16:00</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;width:96px;height:52px;"><div class="free-day">F</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;width:96px;height:52px;background:#FFFBEB;"><div class="absence-u">U</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;width:96px;height:52px;"><div class="shift shift-blue">10:00–18:00</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;width:96px;height:52px;"><div class="empty-cell"><span>+</span></div></td>
+          <td style="position:sticky;right:0;background:rgba(238,242,255,0.8);border-left:2px solid #C7D2FE;border-bottom:1px solid #E5E7EB;padding:4px 8px;min-width:80px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
+              <span style="font-size:0.8rem;font-weight:700;color:#1F2937;">26 h</span>
+              <span style="font-size:0.6rem;font-weight:600;color:#B45309;background:#FFF7ED;padding:1px 4px;border-radius:3px;">−14</span>
+            </div>
+            <div style="margin-top:2px;height:2px;background:#E5E7EB;border-radius:99px;overflow:hidden;">
+              <div style="height:100%;width:65%;background:#818CF8;border-radius:99px;"></div>
+            </div>
+          </td>
+        </tr>
+        <!-- MA 2 -->
+        <tr>
+          <td style="position:sticky;left:0;z-index:1;background:white;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:3px 8px;min-width:110px;">
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span style="font-size:0.55rem;color:#D1D5DB;">⋮⋮</span>
+              <span style="font-size:0.75rem;font-weight:600;color:#111827;">Bienert, Sandy</span>
+            </div>
+          </td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;"><div class="shift shift-green">14:00–22:00</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;"><div class="shift shift-amber">11:00–19:00</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;background:#FFFBEB;">
+            <div style="display:flex;flex-direction:column;height:100%;gap:2px;">
+              <div class="shift shift-purple" style="flex:1;font-size:0.6rem;">06–10</div>
+              <div class="shift shift-blue" style="flex:1;font-size:0.6rem;">14–18</div>
+            </div>
+          </td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;"><div class="empty-cell"><span>+</span></div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;"><div class="shift shift-blue">08:00–16:00</div></td>
+          <td style="position:sticky;right:0;background:rgba(238,242,255,0.8);border-left:2px solid #C7D2FE;border-bottom:1px solid #E5E7EB;padding:4px 8px;min-width:80px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
+              <span style="font-size:0.8rem;font-weight:700;color:#1F2937;">38 h</span>
+              <span style="font-size:0.6rem;font-weight:600;color:#16A34A;background:#F0FDF4;padding:1px 4px;border-radius:3px;">±0</span>
+            </div>
+            <div style="margin-top:2px;height:2px;background:#E5E7EB;border-radius:99px;overflow:hidden;">
+              <div style="height:100%;width:100%;background:#34D399;border-radius:99px;"></div>
+            </div>
+          </td>
+        </tr>
+        <!-- Abt. Header 2 -->
+        <tr>
+          <td colspan="6" style="background:#EEF2FF;color:#4338CA;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:4px 10px;border-top:1px solid #E0E7FF;border-bottom:1px solid #E0E7FF;cursor:pointer;">
+            ▾ Küche
+          </td>
+          <td style="position:sticky;right:0;background:#EEF2FF;border-left:2px solid #C7D2FE;border-top:1px solid #E0E7FF;border-bottom:1px solid #E0E7FF;"></td>
+        </tr>
+        <tr>
+          <td style="position:sticky;left:0;z-index:1;background:white;border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:3px 8px;min-width:110px;">
+            <div style="display:flex;align-items:center;gap:4px;">
+              <span style="font-size:0.55rem;color:#D1D5DB;">⋮⋮</span>
+              <span style="font-size:0.75rem;font-weight:600;color:#111827;">Hofmann, Steffi</span>
+            </div>
+          </td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;"><div class="shift shift-rose">07:00–15:00</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;"><div class="shift shift-rose">07:00–15:00</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;background:#FFFBEB;"><div class="empty-cell"><span>+</span></div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;"><div class="shift shift-rose">07:00–15:00</div></td>
+          <td style="border-bottom:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:4px;height:52px;"><div class="shift shift-rose">07:00–15:00</div></td>
+          <td style="position:sticky;right:0;background:rgba(238,242,255,0.8);border-left:2px solid #C7D2FE;border-bottom:1px solid #E5E7EB;padding:4px 8px;min-width:80px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
+              <span style="font-size:0.8rem;font-weight:700;color:#1F2937;">32 h</span>
+              <span style="font-size:0.6rem;font-weight:600;color:#B45309;background:#FFF7ED;padding:1px 4px;border-radius:3px;">−8</span>
+            </div>
+            <div style="margin-top:2px;height:2px;background:#E5E7EB;border-radius:99px;overflow:hidden;">
+              <div style="height:100%;width:80%;background:#818CF8;border-radius:99px;"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Unterschiede aufzeigen -->
+  <div style="padding:1rem 1.25rem;background:white;border-top:1px solid #E5E7EB;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+    <div style="padding:0.75rem;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB;">
+      <div style="font-size:0.65rem;font-weight:700;color:#4F46E5;text-transform:uppercase;margin-bottom:4px;">Name-Format</div>
+      <div style="font-size:0.72rem;color:#374151;"><span style="text-decoration:line-through;color:#9CA3AF;">"Ronny Beckmann"</span><br>→ <strong>"Beckmann, Ronny"</strong></div>
+    </div>
+    <div style="padding:0.75rem;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB;">
+      <div style="font-size:0.65rem;font-weight:700;color:#4F46E5;text-transform:uppercase;margin-bottom:4px;">Abt.-Header</div>
+      <div style="font-size:0.72rem;color:#374151;">Gleicher Indigo-Stil wie Zeiterfassung: <code>border-y border-indigo-100</code></div>
+    </div>
+    <div style="padding:0.75rem;background:#F9FAFB;border-radius:8px;border:1px solid #E5E7EB;">
+      <div style="font-size:0.65rem;font-weight:700;color:#4F46E5;text-transform:uppercase;margin-bottom:4px;">Reihenfolge</div>
+      <div style="font-size:0.72rem;color:#374151;">Zeiterfassung nutzt <code>rowOrder</code> aus localStorage — identisch zur Dienstplan-Sortierung</div>
+    </div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

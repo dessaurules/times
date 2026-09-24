@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.react-grid-item {
+  transition: none !important;
+}
+
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0; }
@@ -10,38 +14,64 @@
   animation: blink 1.6s step-start infinite;
 }
 
+@keyframes cell-pop {
+  0%   { transform: scale(0.55); opacity: 0; }
+  60%  { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+@keyframes cell-clear {
+  0%   { opacity: 1; }
+  40%  { opacity: 0.25; }
+  100% { opacity: 1; }
+}
+
+@keyframes pulse-cell {
+  0%   { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.35); }
+  70%  { box-shadow: 0 0 0 5px rgba(79, 70, 229, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+}
+
+.just-filled    { animation: cell-pop   280ms ease-out forwards; }
+.just-cleared   { animation: cell-clear 200ms ease-out forwards; }
+.drag-over-anim { animation: pulse-cell 400ms ease-out infinite; }
+.drag-src {
+  outline: 2px dashed #4F46E5 !important;
+  outline-offset: -2px;
+}
+
 @layer base {
   :root {
-    /* ── Schicht & Plan Amber-Theme ──────────────────── */
-    --primary:           #BA7517;
+    /* ── Schicht & Plan Indigo-Theme ──────────────────── */
+    --primary:           #4F46E5;
     --primary-foreground:#FFFFFF;
-    --primary-light:     rgba(186,117,23,0.12);
-    --primary-hover:     #9E6312;
+    --primary-light:     rgba(79,70,229,0.10);
+    --primary-hover:     #4338CA;
 
-    --background:        #F5F2EE;
-    --bg:                #F5F2EE;
-    --foreground:        #1A1917;
-    --text:              #1A1917;
-    --text-muted:        #706D6A;
+    --background:        #F3F4F6;
+    --bg:                #F3F4F6;
+    --foreground:        #111827;
+    --text:              #111827;
+    --text-muted:        #6B7280;
 
     --card:              #FFFFFF;
-    --card-foreground:   #1A1917;
+    --card-foreground:   #111827;
 
-    --border:            #EDE7DC;
-    --input:             #EDE7DC;
-    --ring:              #BA7517;
+    --border:            #E5E7EB;
+    --input:             #E5E7EB;
+    --ring:              #4F46E5;
 
-    --muted-foreground:  #706D6A;
-    --muted:             #F5F2EE;
+    --muted-foreground:  #6B7280;
+    --muted:             #F3F4F6;
 
     --popover:           #FFFFFF;
-    --popover-foreground:#1A1917;
+    --popover-foreground:#111827;
 
-    --secondary:         #F5F2EE;
-    --secondary-foreground: #1A1917;
+    --secondary:         #F3F4F6;
+    --secondary-foreground: #111827;
 
-    --accent:            rgba(186,117,23,0.08);
-    --accent-foreground: #633806;
+    --accent:            rgba(79,70,229,0.08);
+    --accent-foreground: #4F46E5;
 
     --destructive:       #DC2626;
     --destructive-foreground: #FFFFFF;

@@ -1,0 +1,163 @@
+<h2>Push-Benachrichtigungen — Welche sollen aktiv sein?</h2>
+<p class="subtitle">Wähle alle Szenarien aus, bei denen Mitarbeiter eine echte System-Push auf ihr Handy bekommen sollen.</p>
+
+<style>
+  .push-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .push-item {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .push-item:hover { border-color: #4F46E5; }
+  .push-item.selected {
+    border-color: #4F46E5;
+    background: #f5f4ff;
+  }
+  .push-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+    width: 36px;
+    text-align: center;
+    margin-top: 2px;
+  }
+  .push-content { flex: 1; }
+  .push-title { font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 3px; }
+  .push-desc { font-size: 12px; color: #6b7280; line-height: 1.5; }
+  .push-preview {
+    margin-top: 8px;
+    background: #1f2937;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .push-preview-icon {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, #4F46E5, #7C3AED);
+    border-radius: 6px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .push-preview-text { flex: 1; }
+  .push-preview-title { font-size: 11px; font-weight: 700; color: white; }
+  .push-preview-body { font-size: 11px; color: #9ca3af; margin-top: 1px; }
+  .push-preview-time { font-size: 10px; color: #6b7280; margin-top: 2px; }
+  .tag {
+    display: inline-flex; align-items: center;
+    font-size: 10px; font-weight: 600;
+    padding: 2px 7px; border-radius: 99px;
+    margin-top: 4px;
+  }
+  .tag-green { background: #ecfdf5; color: #059669; }
+  .tag-amber { background: #fffbeb; color: #d97706; }
+  .tag-blue  { background: #eff6ff; color: #2563eb; }
+</style>
+
+<div class="push-list" data-multiselect>
+
+  <!-- 1. Einstempel-Erinnerung -->
+  <div class="push-item" data-choice="einstempel" onclick="toggleSelect(this)">
+    <div class="push-icon">⏰</div>
+    <div class="push-content">
+      <div class="push-title">Einstempel-Erinnerung</div>
+      <div class="push-desc">Wenn ein Mitarbeiter 20 Minuten nach geplantem Schichtbeginn noch nicht gestempelt hat, kommt eine Erinnerung.</div>
+      <div class="push-preview">
+        <div class="push-preview-icon">⏰</div>
+        <div class="push-preview-text">
+          <div class="push-preview-title">Schicht & Plan — Erinnerung</div>
+          <div class="push-preview-body">Du hast heute um 08:00 Uhr Schichtbeginn — bitte vergiss nicht einzustempeln.</div>
+          <div class="push-preview-time">08:20 Uhr</div>
+        </div>
+      </div>
+      <span class="tag tag-green">Bereits geplant ✓</span>
+    </div>
+  </div>
+
+  <!-- 2. Ausstempel-Erinnerung -->
+  <div class="push-item" data-choice="ausstempel" onclick="toggleSelect(this)">
+    <div class="push-icon">🚪</div>
+    <div class="push-content">
+      <div class="push-title">Ausstempel-Erinnerung</div>
+      <div class="push-desc">Wenn ein Mitarbeiter noch aktiv gestempelt ist, obwohl die geplante Schicht längst vorbei ist (z.B. 30 Min. nach Schichtende).</div>
+      <div class="push-preview">
+        <div class="push-preview-icon">🚪</div>
+        <div class="push-preview-text">
+          <div class="push-preview-title">Schicht & Plan — Erinnerung</div>
+          <div class="push-preview-body">Deine Schicht endet um 16:00 Uhr. Bitte vergiss nicht auszustempeln!</div>
+          <div class="push-preview-time">16:30 Uhr</div>
+        </div>
+      </div>
+      <span class="tag tag-amber">Neu</span>
+    </div>
+  </div>
+
+  <!-- 3. Neuer Dienstplan -->
+  <div class="push-item" data-choice="dienstplan" onclick="toggleSelect(this)">
+    <div class="push-icon">📅</div>
+    <div class="push-content">
+      <div class="push-title">Neuer Dienstplan veröffentlicht</div>
+      <div class="push-desc">Sobald der Chef einen neuen Dienstplan für eine Woche freigibt, werden alle betroffenen Mitarbeiter benachrichtigt.</div>
+      <div class="push-preview">
+        <div class="push-preview-icon">📅</div>
+        <div class="push-preview-text">
+          <div class="push-preview-title">Schicht & Plan — Dienstplan</div>
+          <div class="push-preview-body">Dein Dienstplan für KW 23 (02.–08. Jun.) wurde veröffentlicht. Schau ihn dir an!</div>
+          <div class="push-preview-time">Jetzt</div>
+        </div>
+      </div>
+      <span class="tag tag-green">Bereits geplant ✓</span>
+    </div>
+  </div>
+
+  <!-- 4. Antrag genehmigt/abgelehnt -->
+  <div class="push-item" data-choice="antrag" onclick="toggleSelect(this)">
+    <div class="push-icon">✅</div>
+    <div class="push-content">
+      <div class="push-title">Urlaubsantrag genehmigt / abgelehnt</div>
+      <div class="push-desc">Wenn der Chef einen Abwesenheitsantrag bearbeitet, bekommt der Mitarbeiter sofort eine Push — nicht nur die In-App-Bell.</div>
+      <div class="push-preview">
+        <div class="push-preview-icon">✅</div>
+        <div class="push-preview-text">
+          <div class="push-preview-title">Schicht & Plan — Antrag</div>
+          <div class="push-preview-body">Dein Urlaubsantrag (12.–16. Jun.) wurde genehmigt. Schönen Urlaub! 🎉</div>
+          <div class="push-preview-time">Jetzt</div>
+        </div>
+      </div>
+      <span class="tag tag-blue">Upgrade von In-App-Bell</span>
+    </div>
+  </div>
+
+  <!-- 5. Morgen-Schicht-Erinnerung -->
+  <div class="push-item" data-choice="morgen" onclick="toggleSelect(this)">
+    <div class="push-icon">🌅</div>
+    <div class="push-content">
+      <div class="push-title">Morgen-Schicht-Erinnerung</div>
+      <div class="push-desc">Jeden Abend um 18:00 Uhr eine Erinnerung, wenn der Mitarbeiter am nächsten Tag eine Schicht hat.</div>
+      <div class="push-preview">
+        <div class="push-preview-icon">🌅</div>
+        <div class="push-preview-text">
+          <div class="push-preview-title">Schicht & Plan — Morgen</div>
+          <div class="push-preview-body">Morgen hast du Frühschicht: 07:00–15:00 Uhr (Küche). Gute Nacht! 😴</div>
+          <div class="push-preview-time">18:00 Uhr</div>
+        </div>
+      </div>
+      <span class="tag tag-amber">Neu</span>
+    </div>
+  </div>
+
+</div>
+
+<p style="font-size:12px;color:#9ca3af;margin-top:16px;text-align:center">Mehrfachauswahl möglich — klick auf alle die du möchtest</p>
