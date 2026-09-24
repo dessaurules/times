@@ -366,8 +366,8 @@ export default function MitarbeiterModal({ employeeId, onClose, onSaved }: Props
 
                       <Card title="Beschäftigung">
                         <div className="grid grid-cols-2 gap-3">
-                          <F label="Eintrittsdatum *">
-                            <Input type="date" value={form.start_date} onChange={e => upd('start_date', e.target.value)} required />
+                          <F label="Eintrittsdatum">
+                            <Input type="date" value={form.start_date} onChange={e => upd('start_date', e.target.value)} />
                           </F>
                           <F label="Austrittsdatum">
                             <Input type="date" value={form.end_date} onChange={e => upd('end_date', e.target.value)} />
